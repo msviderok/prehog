@@ -43,6 +43,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      h3:
+        specifier: 2.0.1-rc.4
+        version: 2.0.1-rc.4
       shadcn:
         specifier: ^4.6.0
         version: 4.6.0(@types/node@25.6.0)(typescript@pnpm+@typescript+typescript6@^6.0.0)
