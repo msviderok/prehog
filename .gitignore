@@ -1,4 +1,5 @@
 dist
+.nitro
 .wrangler
 .output
 .vercel

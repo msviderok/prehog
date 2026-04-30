@@ -1,12 +1,16 @@
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
-  vitest: npm:@voidzero-dev/vite-plus-test@latest
   vite-plus: latest
+  vitest: npm:@voidzero-dev/vite-plus-test@latest
 overrides:
   babel-preset-solid: 1.9.6
   solid-js: 1.9.7
   vite: "catalog:"
   vitest: "catalog:"
+
+patchedDependencies:
+  "@solidjs/start": patches/@solidjs__start.patch
+  "@solidjs/vite-plugin-nitro-2": patches/@solidjs__vite-plugin-nitro-2.patch
 peerDependencyRules:
   allowAny:
     - vite

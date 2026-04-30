@@ -2,7 +2,7 @@ import { Button as ButtonPrimitive } from "@msviderok/base-ui-solid/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { mergeProps, splitProps } from "solid-js";
 
-import { cn } from "~/lib/utils";
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-xs/relaxed font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -39,13 +39,8 @@ const buttonVariants = cva(
   },
 );
 
-function Button(
-  props: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>,
-) {
-  const mergedProps = mergeProps(
-    { variant: "default" as const, size: "default" as const },
-    props,
-  );
+function Button(props: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  const mergedProps = mergeProps({ variant: "default" as const, size: "default" as const }, props);
   const [local, rest] = splitProps(mergedProps, ["class", "variant", "size"]);
   return (
     <ButtonPrimitive

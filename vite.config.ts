@@ -6,5 +6,17 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   fmt: {},
   lint: { options: { typeAware: true, typeCheck: true } },
-  plugins: [solidStart(), tailwindcss(), nitro()],
+  plugins: [
+    solidStart(),
+    tailwindcss(),
+    nitro({
+      preset: "vercel",
+      externals: {
+        inline: ["@solidjs/start", "h3", "srvx", "rou3"],
+      },
+    }),
+  ],
+  resolve: {
+    tsconfigPaths: true,
+  },
 });
