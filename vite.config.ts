@@ -1,22 +1,13 @@
-import { defineConfig } from "vite-plus";
-import { nitroV2Plugin as nitro } from "@solidjs/vite-plugin-nitro-2";
-import { solidStart } from "@solidjs/start/config";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from 'vite'
+import { devtools } from '@tanstack/devtools-vite'
+import tailwindcss from '@tailwindcss/vite'
+
+import { tanstackStart } from '@tanstack/solid-start/plugin/vite'
+
+import solidPlugin from 'vite-plugin-solid'
+import { nitro } from 'nitro/vite'
 
 export default defineConfig({
-  fmt: {},
-  lint: { options: { typeAware: true, typeCheck: true } },
-  plugins: [
-    solidStart(),
-    tailwindcss(),
-    nitro({
-      preset: "vercel",
-      externals: {
-        inline: ["@solidjs/start", "h3", "srvx", "rou3"],
-      },
-    }),
-  ],
-  resolve: {
-    tsconfigPaths: true,
-  },
-});
+  resolve: { tsconfigPaths: true },
+  plugins: [devtools(), nitro(), tailwindcss(), tanstackStart(), solidPlugin({ ssr: true })],
+})

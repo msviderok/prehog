@@ -1,7 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Grandstander:ital,wght@0,100..900;1,100..900&display=swap");
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import url('https://fonts.googleapis.com/css2?family=Grandstander:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -41,7 +41,7 @@
 }
 
 @theme inline {
-  --font-sans: "Grandstander", sans-serif;
+  --font-sans: 'Grandstander', sans-serif;
   --color-main: var(--main);
   --color-background: var(--background);
   --color-secondary-background: var(--secondary-background);
@@ -67,8 +67,15 @@
 }
 
 @layer base {
+  html {
+    height: 100%;
+    width: 100%;
+  }
+
   body {
     @apply text-foreground font-base bg-background;
+    height: 100%;
+    width: 100%;
   }
 
   h1,

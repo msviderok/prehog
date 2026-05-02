@@ -39,8 +39,13 @@ const buttonVariants = cva(
   },
 );
 
-function Button(props: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
-  const mergedProps = mergeProps({ variant: "default" as const, size: "default" as const }, props);
+function Button(
+  props: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>,
+) {
+  const mergedProps = mergeProps(
+    { variant: "default" as const, size: "default" as const },
+    props,
+  );
   const [local, rest] = splitProps(mergedProps, ["class", "variant", "size"]);
   return (
     <ButtonPrimitive

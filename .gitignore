@@ -1,29 +1,12 @@
+node_modules
+.DS_Store
 dist
+dist-ssr
+*.local
+.env
 .nitro
+.tanstack
 .wrangler
 .output
-.vercel
-.netlify
 .vinxi
-app.config.timestamp_*.js
-
-# Environment
-.env
-.env*.local
-
-# dependencies
-/node_modules
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-*.launch
-.settings/
-
-# Temp
-gitignore
-
-# System Files
-.DS_Store
-Thumbs.db
+__unconfig*
