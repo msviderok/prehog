@@ -26,6 +26,33 @@ type ConvexClientWithNestedAuth = ConvexClient & {
   }
 }
 
+function decodeJwtPayload(token: string) {
+  const [, payload] = token.split('.')
+
+  if (!payload) {
+    return null
+  }
+
+  try {
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as {
+      aud?: string | string[]
+      azp?: string
+      exp?: number
+      iss?: string
+      sub?: string
+    }
+  } catch {
+    return null
+  }
+}
+
+function hasConvexAudience(token: string) {
+  const payload = decodeJwtPayload(token)
+  const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : []
+
+  return audiences.includes('convex')
+}
+
 export function useConvexClerkAuth() {
   const context = useContext(ConvexClerkAuthContext)
 
@@ -59,16 +86,15 @@ export function ConvexClerkProvider(props: ParentProps<{ client: ConvexClient }>
 
   const fetchAccessToken = async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
     try {
-      return (
-        (await auth.getToken({ template: 'convex', skipCache: forceRefreshToken })) ??
-        (await auth.getToken({ skipCache: forceRefreshToken }))
-      )
-    } catch {
-      try {
-        return await auth.getToken({ skipCache: forceRefreshToken })
-      } catch {
+      const token = await auth.getToken({ template: 'convex', skipCache: forceRefreshToken })
+
+      if (token && !hasConvexAudience(token)) {
         return null
       }
+
+      return token
+    } catch {
+      return null
     }
   }
 
