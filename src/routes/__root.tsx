@@ -1,9 +1,11 @@
+import { env } from '@/env'
+import { CurrentUserBootstrapProvider } from '@/integrations/convex/current-user-bootstrap'
+import AppConvexProvider from '@/integrations/convex/provider'
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/solid-router'
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
-
-import { HydrationScript } from 'solid-js/web'
+import { ClerkProvider } from 'clerk-solidjs'
 import { Suspense } from 'solid-js'
-
+import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles.css?url'
 
 export const Route = createRootRouteWithContext()({
@@ -21,10 +23,16 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body>
-        <Suspense>
-          <Outlet />
-          <TanStackRouterDevtools />
-        </Suspense>
+        <ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
+          <AppConvexProvider>
+            <CurrentUserBootstrapProvider>
+              <Suspense>
+                <Outlet />
+                <TanStackRouterDevtools />
+              </Suspense>
+            </CurrentUserBootstrapProvider>
+          </AppConvexProvider>
+        </ClerkProvider>
         <Scripts />
       </body>
     </html>

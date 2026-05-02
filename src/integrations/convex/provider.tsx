@@ -1,12 +1,15 @@
-import { setupConvex, ConvexProvider } from 'convex-solidjs'
+import { setupConvex } from 'convex-solidjs'
 import type { JSXElement } from 'solid-js'
+import { ConvexClerkProvider } from './convex-clerk'
+import { env } from '@/env'
 
-const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL
+const CONVEX_URL = env.VITE_CONVEX_URL
 if (!CONVEX_URL) {
-  console.error('missing envar CONVEX_URL')
+  console.error('missing envar VITE_CONVEX_URL')
 }
-const client = setupConvex(CONVEX_URL)
+
+export const client = setupConvex(CONVEX_URL)
 
 export default function AppConvexProvider(props: { children: JSXElement }) {
-  return <ConvexProvider client={client}>{props.children}</ConvexProvider>
+  return <ConvexClerkProvider client={client}>{props.children}</ConvexClerkProvider>
 }
