@@ -1,16 +1,31 @@
 import { MainScene } from '@/components/scenes/MainScene'
+import { useConvexClerkAuth } from '@/integrations/convex/convex-clerk'
+import { cn, scaleToFit } from '@/lib/utils'
 import { createFileRoute } from '@tanstack/solid-router'
+import { ClerkLoading, SignedIn, SignedOut, SignIn } from 'clerk-solidjs-tanstack-start'
 import { onCleanup, onMount, type ParentProps } from 'solid-js'
 import { createStore } from 'solid-js/store'
 
-export const Route = createFileRoute('/')({ component: Home })
+export const Route = createFileRoute('/')({
+  component: Home,
+})
 
-export default function Home() {
+function Home() {
+  const user = useConvexClerkAuth()
+
   return (
-    <main class="h-screen w-screen flex items-center">
-      <MainContainer>
-        <MainScene />
-      </MainContainer>
+    <main class={cn('h-screen w-screen flex items-center', user.isAuthenticated() === false && 'justify-center')}>
+      <SignedOut>
+        <SignIn />
+      </SignedOut>
+      <SignedIn>
+        <MainContainer>
+          <MainScene />
+        </MainContainer>
+      </SignedIn>
+      <ClerkLoading>
+        <p>Still loading</p>
+      </ClerkLoading>
     </main>
   )
 }
@@ -22,14 +37,6 @@ function MainContainer(props: ParentProps<{}>) {
   onMount(() => {
     const rect = ref.getBoundingClientRect()
 
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (window.innerHeight < entry.target.scrollHeight) {
-          setCoords('scale', window.innerHeight / entry.target.scrollHeight)
-        }
-      }
-    })
-
     setCoords({
       x: rect.left,
       y: rect.top,
@@ -37,6 +44,15 @@ function MainContainer(props: ParentProps<{}>) {
       height: rect.height,
       x2: rect.left + rect.width,
       y2: rect.top + rect.height,
+      scale: scaleToFit(rect.height),
+    })
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (window.innerHeight < entry.target.scrollHeight) {
+          setCoords('scale', scaleToFit(entry.target.scrollHeight))
+        }
+      }
     })
 
     ro.observe(ref)

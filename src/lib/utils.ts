@@ -24,3 +24,15 @@ export function defaultProps<P, D extends Partial<P>, C extends { [K in Extract<
   // eslint-disable-next-line solid/reactivity
   return mergeProps(defaults, props) as PropsMergeWithDefault<P, D>
 }
+
+/**
+ * Scales the content to fit the container.
+ * @param contentHeight - The height of the content.
+ * @param containerHeight - The height of the container (_default_: `window.innerHeight`)
+ */
+export function scaleToFit(contentHeight: number, containerHeight?: number) {
+  if (containerHeight === undefined) {
+    containerHeight = typeof window !== 'undefined' ? window.innerHeight : 0
+  }
+  return containerHeight < contentHeight ? containerHeight / contentHeight : 1
+}

@@ -1,4 +1,4 @@
-import { useAuth } from 'clerk-solidjs'
+import { useAuth } from 'clerk-solidjs-tanstack-start'
 import { useMutation } from 'convex-solidjs'
 import { createContext, createEffect, createSignal, useContext, type Accessor, type ParentProps } from 'solid-js'
 import { api } from '../../../convex/_generated/api'

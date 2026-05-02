@@ -1,4 +1,4 @@
-import { useAuth } from 'clerk-solidjs'
+import { useAuth } from 'clerk-solidjs-tanstack-start'
 import type { ConvexClient } from 'convex/browser'
 import { ConvexProvider } from 'convex-solidjs'
 import {

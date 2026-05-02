@@ -8,8 +8,8 @@ if (!CONVEX_URL) {
   console.error('missing envar VITE_CONVEX_URL')
 }
 
-export const client = setupConvex(CONVEX_URL)
-
 export default function AppConvexProvider(props: { children: JSXElement }) {
+  const client = setupConvex(CONVEX_URL)
+
   return <ConvexClerkProvider client={client}>{props.children}</ConvexClerkProvider>
 }
