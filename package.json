@@ -33,6 +33,7 @@
     "lucide-solid": "^1.14.0",
     "nitro": "npm:nitro-nightly@latest",
     "solid-js": "^1.9.12",
+    "svix": "^1.92.2",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.1.18",
     "tslib": "^2.8.1",

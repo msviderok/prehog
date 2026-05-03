@@ -1,5 +1,4 @@
 import { env } from '@/env'
-import { CurrentUserBootstrapProvider } from '@/integrations/convex/current-user-bootstrap'
 import AppConvexProvider from '@/integrations/convex/provider'
 import { ErrorComponent, HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/solid-router'
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
@@ -26,12 +25,10 @@ function RootComponent() {
       <body>
         <ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
           <AppConvexProvider>
-            <CurrentUserBootstrapProvider>
-              <Suspense>
-                <Outlet />
-                <TanStackRouterDevtools />
-              </Suspense>
-            </CurrentUserBootstrapProvider>
+            <Suspense>
+              <Outlet />
+              <TanStackRouterDevtools />
+            </Suspense>
           </AppConvexProvider>
         </ClerkProvider>
         <Scripts />

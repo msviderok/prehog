@@ -1,6 +1,6 @@
 import { useAuth } from 'clerk-solidjs-tanstack-start'
 import type { ConvexClient } from 'convex/browser'
-import { ConvexProvider } from 'convex-solidjs'
+import { ConvexProvider, useQuery } from 'convex-solidjs'
 import {
   createContext,
   createEffect,
@@ -11,6 +11,7 @@ import {
   type Accessor,
   type ParentProps,
 } from 'solid-js'
+import { api } from '../../../convex/_generated/api'
 
 type ConvexClerkAuthState = {
   isAuthenticated: Accessor<boolean>
@@ -49,11 +50,10 @@ function decodeJwtPayload(token: string) {
 function hasConvexAudience(token: string) {
   const payload = decodeJwtPayload(token)
   const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : []
-
   return audiences.includes('convex')
 }
 
-export function useConvexClerkAuth() {
+function useConvexClerkAuth() {
   const context = useContext(ConvexClerkAuthContext)
 
   if (!context) {
@@ -63,12 +63,27 @@ export function useConvexClerkAuth() {
   return context
 }
 
+export function useCurrentUser() {
+  const { isLoading, isAuthenticated } = useConvexClerkAuth()
+  const user = useQuery(api.users.current, {})
+
+  // Combine the authentication state with the user existence check
+  return {
+    get isLoading() {
+      return isLoading() || (isAuthenticated() && user === null)
+    },
+    get isAuthenticated() {
+      return isAuthenticated() && user !== null
+    },
+  }
+}
+
 export function ConvexClerkProvider(props: ParentProps<{ client: ConvexClient }>) {
   const auth = useAuth()
   const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
   const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false)
   const isLoading = createMemo(() => !hasResolvedInitialAuth())
-  const isAuthenticated = createMemo(() => Boolean(auth.isSignedIn()) && Boolean(isConvexAuthenticated()))
+  const isAuthenticated = createMemo(() => !!(auth.isSignedIn() && isConvexAuthenticated()))
   const authBindingKey = createMemo(() => {
     if (!auth.isLoaded()) {
       return null
