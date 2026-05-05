@@ -1,18 +1,12 @@
 import { onCleanup, onMount } from 'solid-js'
 import { defaultProps } from './utils'
 
-const MAX_DELTA_SECONDS = 1 / 20
+const TICK = 16.66666666 // 60 fps;
 
-export function createGameLoop(options: {
-  autostart?: boolean
-  fn: (timestamp: number, deltaSeconds: number) => void
-}) {
+export function createGameLoop(options: { autostart?: boolean; fn: (timestamp: number) => void }) {
   let mainGameLoop: number | undefined
-  let previousTimestamp = 0
-  const props = defaultProps(options, {
-    autostart: true,
-    fn: () => {},
-  })
+  let tickTimer = 0
+  const props = defaultProps(options, { autostart: true, fn: () => {} })
 
   if (props.autostart) {
     onMount(() => start())
@@ -20,14 +14,19 @@ export function createGameLoop(options: {
   }
 
   function gameLoop(timestamp: number) {
-    const deltaSeconds = previousTimestamp ? Math.min(MAX_DELTA_SECONDS, (timestamp - previousTimestamp) / 1000) : 0
-    previousTimestamp = timestamp
-    props.fn(timestamp, deltaSeconds)
-    mainGameLoop = requestAnimationFrame(gameLoop)
+    if (!tickTimer) tickTimer = timestamp
+
+    const delta = timestamp - tickTimer
+    if (delta < TICK) {
+      return start()
+    }
+
+    tickTimer += TICK
+    props.fn(timestamp)
+    start()
   }
 
   function start() {
-    previousTimestamp = 0
     mainGameLoop = requestAnimationFrame(gameLoop)
   }
 
@@ -36,8 +35,6 @@ export function createGameLoop(options: {
       cancelAnimationFrame(mainGameLoop)
       mainGameLoop = undefined
     }
-
-    previousTimestamp = 0
   }
 
   return { start, stop }

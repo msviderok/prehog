@@ -10,14 +10,19 @@ export const current = query({
   },
 })
 
-export const updateEventBatch = mutation({
+export const updateMe = mutation({
   args: {
-    userId: v.id('users'),
+    x: v.number(),
+    y: v.number(),
     actions: v.array(userEvent),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUserOrThrow(ctx)
-    await ctx.db.patch('users', user?._id, { eventBatches: args.actions.splice(0, 100) })
+    await ctx.db.patch('users', user._id, {
+      eventBatches: args.actions.splice(0, 100),
+      x: args.x,
+      y: args.y,
+    })
   },
 })
 
@@ -28,9 +33,14 @@ export const upsertFromClerk = internalMutation({
   async handler(ctx, { data }) {
     const user = await Users.userByExternalId(ctx, data.id)
     if (user === null) {
-      await ctx.db.insert('users', { externalId: data.id, eventBatches: [] })
+      await ctx.db.insert('users', {
+        externalId: data.id,
+        eventBatches: [{ type: 'move', x: 0, y: 100, timeSinceBatchStart: Date.now() }],
+        x: 0,
+        y: 100,
+      })
     } else {
-      await ctx.db.patch(user._id, { externalId: data.id, eventBatches: [] })
+      await ctx.db.patch(user._id, { externalId: data.id })
     }
   },
 })

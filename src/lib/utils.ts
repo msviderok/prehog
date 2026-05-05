@@ -36,3 +36,11 @@ export function scaleToFit(contentHeight: number, containerHeight?: number) {
   }
   return containerHeight < contentHeight ? containerHeight / contentHeight : 1
 }
+
+export function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t
+}
+
+export function clamp(val: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, val))
+}

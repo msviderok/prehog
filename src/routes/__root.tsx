@@ -1,7 +1,6 @@
 import { env } from '@/env'
 import AppConvexProvider from '@/integrations/convex/provider'
 import { ErrorComponent, HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/solid-router'
-import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
 import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
@@ -27,7 +26,6 @@ function RootComponent() {
           <AppConvexProvider>
             <Suspense>
               <Outlet />
-              <TanStackRouterDevtools />
             </Suspense>
           </AppConvexProvider>
         </ClerkProvider>

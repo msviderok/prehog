@@ -6,7 +6,7 @@ export const userEvent = v.union(
     type: v.literal('move'),
     x: v.number(),
     y: v.number(),
-    timeSinceLastBatch: v.number(),
+    timeSinceBatchStart: v.number(),
   }),
 )
 
@@ -15,5 +15,7 @@ export default defineSchema({
     // this the Clerk ID, stored in the subject JWT field
     externalId: v.string(),
     eventBatches: v.array(userEvent),
+    x: v.number(),
+    y: v.number(),
   }).index('by_externalId', ['externalId']),
 })

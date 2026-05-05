@@ -6,6 +6,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  mergeProps,
   onCleanup,
   useContext,
   type Accessor,
@@ -69,6 +70,7 @@ export function useCurrentUser() {
 
   // Combine the authentication state with the user existence check
   return {
+    data: user.data,
     get isLoading() {
       return isLoading() || (isAuthenticated() && user === null)
     },
