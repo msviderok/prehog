@@ -1,5 +1,5 @@
 import { env } from '@/env'
-import AppConvexProvider from '@/integrations/convex/provider'
+import { ConvexClerkProvider } from '@/lib/integrations/convex-clerk'
 import { ErrorComponent, HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/solid-router'
 import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 import { Suspense } from 'solid-js'
@@ -23,11 +23,11 @@ function RootComponent() {
       </head>
       <body>
         <ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
-          <AppConvexProvider>
+          <ConvexClerkProvider>
             <Suspense>
               <Outlet />
             </Suspense>
-          </AppConvexProvider>
+          </ConvexClerkProvider>
         </ClerkProvider>
         <Scripts />
       </body>

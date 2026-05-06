@@ -1,18 +1,23 @@
+import { env } from '@/env'
 import { useAuth } from 'clerk-solidjs-tanstack-start'
+import { ConvexProvider, setupConvex, useQuery } from 'convex-solidjs'
 import type { ConvexClient } from 'convex/browser'
-import { ConvexProvider, useQuery } from 'convex-solidjs'
 import {
   createContext,
   createEffect,
   createMemo,
   createSignal,
-  mergeProps,
   onCleanup,
   useContext,
   type Accessor,
   type ParentProps,
 } from 'solid-js'
 import { api } from '../../../convex/_generated/api'
+
+const CONVEX_URL = env.VITE_CONVEX_URL
+if (!CONVEX_URL) {
+  console.error('missing envar VITE_CONVEX_URL')
+}
 
 type ConvexClerkAuthState = {
   isAuthenticated: Accessor<boolean>
@@ -80,7 +85,8 @@ export function useCurrentUser() {
   }
 }
 
-export function ConvexClerkProvider(props: ParentProps<{ client: ConvexClient }>) {
+export function ConvexClerkProvider(props: ParentProps) {
+  const client = setupConvex(CONVEX_URL)
   const auth = useAuth()
   const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
   const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false)
@@ -123,7 +129,7 @@ export function ConvexClerkProvider(props: ParentProps<{ client: ConvexClient }>
       return
     }
 
-    const authClient = (props.client as ConvexClientWithNestedAuth).client
+    const authClient = (client as ConvexClientWithNestedAuth).client
     const bindingKey = authBindingKey()
     const isLoaded = auth.isLoaded()
     const isSignedIn = auth.isSignedIn() ?? false
@@ -170,7 +176,7 @@ export function ConvexClerkProvider(props: ParentProps<{ client: ConvexClient }>
 
   return (
     <ConvexClerkAuthContext.Provider value={{ isAuthenticated, isLoading }}>
-      <ConvexProvider client={props.client}>{props.children}</ConvexProvider>
+      <ConvexProvider client={client}>{props.children}</ConvexProvider>
     </ConvexClerkAuthContext.Provider>
   )
 }

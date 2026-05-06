@@ -2,12 +2,12 @@ import { useGlobalState } from '@/components/GlobalStateContext'
 import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
 import { clamp } from '@/lib/utils'
-import { createEffect, onMount, type ParentProps } from 'solid-js'
+import { onMount, type ParentProps } from 'solid-js'
 
 const MOVEMENT_SPEED = 0.5
+const DT_MOD = 10
 const PLAYER_WIDTH = 32
 const PLAYER_HEIGHT = 80
-let temp = 0
 
 export function MainContainer(props: ParentProps<{}>) {
   createKeyboardListener()
@@ -16,21 +16,20 @@ export function MainContainer(props: ParentProps<{}>) {
   let containerRef!: HTMLDivElement
   const { setSceneSettings, setMe, me, keyPressed, sceneSettings, batchInterval, samplingInterval } = useGlobalState()
 
-  createEffect(() => {
-    console.log(sceneSettings)
-  })
-
   let eventBatch: any[] = []
   let batchingStartTime = 0
   let samplingStartTime = 0
+  let lastTimestamp = performance.now()
+  let dt = 0
+  let s50 = 0
 
   createGameLoop({
     autostart: true,
     fn: (timestamp) => {
+      dt = (timestamp - lastTimestamp) / DT_MOD
+      lastTimestamp = timestamp
       /** ––– CAMERA VIEWPORT ––– */
 
-      // 50% of the screen width
-      const s50 = window.innerWidth * 0.5
       /**
        * Scrollable width of the screen to allow free player movement at the first 50%
        * of the viewport width at the start and end of the scene
@@ -39,7 +38,6 @@ export function MainContainer(props: ParentProps<{}>) {
       // Viewport "camera" position
       const cameraOffsetX = clamp(me.realPosition.x > s50 ? me.realPosition.x - s50 : 0, 0, sceneRealWidth)
 
-      // frameRef.style.transform = `scale(${sceneSettings.scale})`
       sceneSettings.ref.style.height = `${sceneSettings.realSceneSize.height}px`
       sceneSettings.ref.style.width = `${sceneSettings.realSceneSize.width}px`
       sceneSettings.ref.style.transform = `translateX(${-cameraOffsetX}px)`
@@ -61,16 +59,12 @@ export function MainContainer(props: ParentProps<{}>) {
       me.ref.style.width = `${playerWidth}px`
       me.ref.style.height = `${playerHeight}px`
 
-      if (timestamp - temp >= 1000) {
-        temp = timestamp
-      }
-
       // Keyboard input
       if (keyPressed.d || keyPressed.a) {
         // Push to the batch at the sampling interval
         if (timestamp - samplingStartTime >= samplingInterval()) {
           const newY = me.y
-          const newX = me.x + (keyPressed.d ? MOVEMENT_SPEED : -MOVEMENT_SPEED)
+          const newX = me.x + (keyPressed.d ? MOVEMENT_SPEED : -MOVEMENT_SPEED) * dt
           const fixedY = clamp(newY, 0, 100)
           const fixedX = clamp(newX, 0, 100)
           const event = {
@@ -99,6 +93,7 @@ export function MainContainer(props: ParentProps<{}>) {
   })
 
   onMount(() => {
+    s50 = window.innerWidth * 0.5 // 50% of the screen width
     const containerRect = containerRef.getBoundingClientRect()
     const sceneRect = sceneSettings.ref.getBoundingClientRect()
     setSceneSettings({
@@ -113,7 +108,7 @@ export function MainContainer(props: ParentProps<{}>) {
 
   return (
     <div ref={containerRef} class="overflow-hidden flex items-center w-full h-full">
-      <div class="w-min h-min relative">{props.children}</div>
+      <div class="w-min h-min relative border-y-8">{props.children}</div>
     </div>
   )
 }
