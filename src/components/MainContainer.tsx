@@ -1,11 +1,8 @@
 import { useGlobalState } from '@/components/GlobalStateContext'
 import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
-import { UserEventQueue } from '@/lib/UserEventQueue'
-import { clamp, scaleToFit } from '@/lib/utils'
-import { useMutation } from 'convex-solidjs'
-import { onCleanup, onMount, type ParentProps } from 'solid-js'
-import { api } from '../../convex/_generated/api'
+import { clamp } from '@/lib/utils'
+import { createEffect, onMount, type ParentProps } from 'solid-js'
 
 const MOVEMENT_SPEED = 0.5
 const PLAYER_WIDTH = 32
@@ -18,11 +15,12 @@ export function MainContainer(props: ParentProps<{}>) {
   // oxlint-disable-next-line no-unassigned-vars
   let containerRef!: HTMLDivElement
   const { setSceneSettings, setMe, me, keyPressed, sceneSettings, batchInterval, samplingInterval } = useGlobalState()
-  const updateMe = useMutation(api.users.updateMe)
 
-  const eventQueue = new UserEventQueue<any>()
+  createEffect(() => {
+    console.log(sceneSettings)
+  })
+
   let eventBatch: any[] = []
-  let lastSubmittedBatch: any[] = []
   let batchingStartTime = 0
   let samplingStartTime = 0
 
@@ -37,10 +35,14 @@ export function MainContainer(props: ParentProps<{}>) {
        * Scrollable width of the screen to allow free player movement at the first 50%
        * of the viewport width at the start and end of the scene
        */
-      const sceneRealWidth = sceneSettings.scaledSize.sceneWidth - window.innerWidth
+      const sceneRealWidth = sceneSettings.realSceneSize.width - window.innerWidth
       // Viewport "camera" position
       const cameraOffsetX = clamp(me.realPosition.x > s50 ? me.realPosition.x - s50 : 0, 0, sceneRealWidth)
-      sceneSettings.ref.style.transform = `translateX(${-cameraOffsetX}px) scale(${sceneSettings.scale})`
+
+      // frameRef.style.transform = `scale(${sceneSettings.scale})`
+      sceneSettings.ref.style.height = `${sceneSettings.realSceneSize.height}px`
+      sceneSettings.ref.style.width = `${sceneSettings.realSceneSize.width}px`
+      sceneSettings.ref.style.transform = `translateX(${-cameraOffsetX}px)`
 
       /** ––– PLAYER POSITION ––– */
       // Player position
@@ -88,7 +90,6 @@ export function MainContainer(props: ParentProps<{}>) {
 
           if (eventBatch.length === 0) return
           // void updateMe.mutate({ actions: eventBatch, x: me.x, y: me.y })
-          lastSubmittedBatch = eventBatch
           eventBatch = []
         }
 
@@ -99,41 +100,20 @@ export function MainContainer(props: ParentProps<{}>) {
 
   onMount(() => {
     const containerRect = containerRef.getBoundingClientRect()
-
+    const sceneRect = sceneSettings.ref.getBoundingClientRect()
     setSceneSettings({
+      originalWidth: sceneRect.width,
+      originalHeight: sceneRect.height,
       x: containerRect.left,
       y: containerRect.top,
-      sceneWidth: containerRef.scrollWidth,
-      sceneHeight: containerRef.scrollHeight,
-      viewportWidth: containerRect.width,
-      viewportHeight: containerRect.height,
       x2: containerRect.left + containerRect.width,
       y2: containerRect.top + containerRect.height,
-      scale: scaleToFit(containerRect.height),
-    })
-
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (window.innerHeight < entry.target.scrollHeight) {
-          setSceneSettings('scale', scaleToFit(entry.target.scrollHeight))
-        }
-      }
-    })
-
-    ro.observe(containerRef)
-
-    // window.addEventListener('beforeunload', () => {
-    //   void updateMe.mutate({ actions: lastSubmittedBatch, x: me.x, y: me.y })
-    // })
-
-    onCleanup(() => {
-      ro.disconnect()
     })
   })
 
   return (
-    <div ref={containerRef} class="w-full h-full origin-top-left relative">
-      {props.children}
+    <div ref={containerRef} class="overflow-hidden flex items-center w-full h-full">
+      <div class="w-min h-min relative">{props.children}</div>
     </div>
   )
 }

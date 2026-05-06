@@ -8,7 +8,7 @@ import {
   type ParentProps,
   type Setter,
 } from 'solid-js'
-import { createStore, unwrap, type SetStoreFunction, type Store } from 'solid-js/store'
+import { createStore, type SetStoreFunction, type Store } from 'solid-js/store'
 
 const LSK_SAMPLING = 'sampling'
 const LSK_BATCHING = 'batching'
@@ -24,10 +24,6 @@ interface KeyPressed {
 interface CommonSceneSettings {
   x: number
   y: number
-  viewportWidth: number
-  viewportHeight: number
-  sceneWidth: number
-  sceneHeight: number
   x2: number
   y2: number
 }
@@ -35,14 +31,15 @@ interface CommonSceneSettings {
 interface SceneSettings extends CommonSceneSettings {
   ref: HTMLElement
   scale: number
-  scaledSize: CommonSceneSettings
+  originalWidth: number
+  originalHeight: number
   worldUnit: {
     x: number
     y: number
   }
-  screenUnit: {
-    x: number
-    y: number
+  realSceneSize: {
+    width: number
+    height: number
   }
 }
 
@@ -78,35 +75,23 @@ export function GlobalStateProvider(props: ParentProps) {
     ref: null as any,
     x: 0,
     y: 0,
-    viewportWidth: 0,
-    viewportHeight: 0,
-    sceneWidth: 0,
-    sceneHeight: 0,
+    originalWidth: 0,
+    originalHeight: 0,
     x2: 0,
     y2: 0,
-    scale: 1,
-    get scaledSize(): CommonSceneSettings {
-      return {
-        x: sceneSettings.x * sceneSettings.scale,
-        y: sceneSettings.y * sceneSettings.scale,
-        viewportWidth: sceneSettings.viewportWidth * sceneSettings.scale,
-        viewportHeight: sceneSettings.viewportHeight * sceneSettings.scale,
-        sceneWidth: sceneSettings.sceneWidth * sceneSettings.scale,
-        sceneHeight: sceneSettings.sceneHeight * sceneSettings.scale,
-        x2: sceneSettings.x2 * sceneSettings.scale,
-        y2: sceneSettings.y2 * sceneSettings.scale,
-      }
+    get scale() {
+      return Math.min(window.innerHeight / this.originalHeight, 1)
     },
     get worldUnit() {
       return {
-        x: this.scaledSize.sceneWidth / 100,
-        y: this.scaledSize.sceneHeight / 100,
+        x: this.realSceneSize.width / 100,
+        y: this.realSceneSize.height / 100,
       }
     },
-    get screenUnit() {
+    get realSceneSize() {
       return {
-        x: window.innerWidth / 100,
-        y: window.innerHeight / 100,
+        width: this.originalWidth * this.scale,
+        height: Math.min(window.innerHeight, this.originalHeight),
       }
     },
   })

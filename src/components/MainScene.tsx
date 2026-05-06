@@ -6,7 +6,7 @@ export function MainScene(props: ParentProps<{}>) {
   return (
     <div
       ref={(el) => setSceneSettings('ref', el)}
-      class="relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated] border-r-[20px] border-green-400"
+      class="relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated]"
       style={{
         width: '6043px',
         height: '1080px',

@@ -18,7 +18,7 @@ export function Player() {
   return (
     <span
       ref={(el) => setMe('ref', el)}
-      class="z-10 h-20 w-8 bg-red-300 absolute border-2 border-blue-800 rounded-sm"
+      class="z-10 h-20 w-8 bg-red-300 absolute border sm:border-2 border-blue-800 rounded-sm"
     />
   )
 }

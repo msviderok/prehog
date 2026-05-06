@@ -20,7 +20,7 @@ function Home() {
   return (
     <main
       class={cn(
-        'h-screen w-screen flex items-center overflow-hidden',
+        'h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden',
         user.isAuthenticated === false && 'justify-center',
       )}
     >
