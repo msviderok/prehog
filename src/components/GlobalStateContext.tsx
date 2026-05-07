@@ -2,6 +2,7 @@ import {
   createContext,
   createEffect,
   createSignal,
+  onCleanup,
   onMount,
   useContext,
   type Accessor,
@@ -48,6 +49,7 @@ interface MeSettings {
   rect: DOMRect
   x: number
   y: number
+  size: number
   realPosition: {
     x: number
     y: number
@@ -99,6 +101,7 @@ export function GlobalStateProvider(props: ParentProps) {
     ref: null as any,
     x: 0,
     y: 0,
+    size: 300,
     get rect() {
       return this.ref.getBoundingClientRect()
     },
@@ -119,6 +122,23 @@ export function GlobalStateProvider(props: ParentProps) {
     const initBatching = localStorage.getItem(LSK_BATCHING)
     if (initSampling) setSamplingInterval(+initSampling)
     if (initBatching) setBatchInterval(+initBatching)
+
+    const root = document.documentElement
+
+    queueMicrotask(() => {
+      root.style.setProperty('--scale', `${sceneSettings.scale}`)
+      root.style.setProperty('--sprite-player-size', `${Math.floor(me.size * sceneSettings.scale)}px`)
+    })
+
+    function onWindowResize() {
+      root.style.setProperty('--scale', `${sceneSettings.scale}`)
+      root.style.setProperty('--sprite-player-size', `${Math.floor(me.size * sceneSettings.scale)}px`)
+    }
+
+    window.addEventListener('resize', onWindowResize)
+    onCleanup(() => {
+      window.removeEventListener('resize', onWindowResize)
+    })
   })
 
   return (

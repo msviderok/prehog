@@ -2,32 +2,41 @@ import { useGlobalState } from '@/components/GlobalStateContext'
 import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
 import { clamp } from '@/lib/utils'
-import { onMount, type ParentProps } from 'solid-js'
+import { createEffect, onMount, type ParentProps } from 'solid-js'
 
-const MOVEMENT_SPEED = 0.5
+const MOVEMENT_SPEED = 0.1
 const DT_MOD = 10
-const PLAYER_WIDTH = 32
-const PLAYER_HEIGHT = 80
 
 export function MainContainer(props: ParentProps<{}>) {
   createKeyboardListener()
 
   // oxlint-disable-next-line no-unassigned-vars
   let containerRef!: HTMLDivElement
-  const { setSceneSettings, setMe, me, keyPressed, sceneSettings, batchInterval, samplingInterval } = useGlobalState()
+  const { setMe, me, keyPressed, sceneSettings, batchInterval, samplingInterval } = useGlobalState()
 
   let eventBatch: any[] = []
   let batchingStartTime = 0
   let samplingStartTime = 0
   let lastTimestamp = performance.now()
   let dt = 0
+  let speed = 0
+
+  let moveDirection: 1 | -1 = 1
+  createEffect(() => {
+    moveDirection = keyPressed.d ? 1 : -1
+  })
+
   let s50 = 0
+  onMount(() => {
+    s50 = window.innerWidth * 0.5 // 50% of the screen width
+  })
 
   createGameLoop({
     autostart: true,
     fn: (timestamp) => {
       dt = (timestamp - lastTimestamp) / DT_MOD
       lastTimestamp = timestamp
+      speed = moveDirection * MOVEMENT_SPEED * dt
       /** ––– CAMERA VIEWPORT ––– */
 
       /**
@@ -37,35 +46,32 @@ export function MainContainer(props: ParentProps<{}>) {
       const sceneRealWidth = sceneSettings.realSceneSize.width - window.innerWidth
       // Viewport "camera" position
       const cameraOffsetX = clamp(me.realPosition.x > s50 ? me.realPosition.x - s50 : 0, 0, sceneRealWidth)
+      const lastHalfScreenOffset = cameraOffsetX >= sceneRealWidth
 
       sceneSettings.ref.style.height = `${sceneSettings.realSceneSize.height}px`
       sceneSettings.ref.style.width = `${sceneSettings.realSceneSize.width}px`
       sceneSettings.ref.style.transform = `translateX(${-cameraOffsetX}px)`
 
       /** ––– PLAYER POSITION ––– */
-      // Player position
-      const playerWidth = sceneSettings.scale * PLAYER_WIDTH
-      const playerHeight = sceneSettings.scale * PLAYER_HEIGHT
       const playerTop = sceneSettings.worldUnit.y * me.y
-
-      const lastHalfScreenOffset = cameraOffsetX >= sceneRealWidth
       const playerLeft = clamp(
-        me.realPosition.x + (lastHalfScreenOffset ? -cameraOffsetX : 0),
-        0,
-        window.innerWidth * (lastHalfScreenOffset ? 1 : 0.5) - me.rect.width,
+        me.realPosition.x - me.rect.width / 2 + (lastHalfScreenOffset ? -cameraOffsetX : 0),
+        0 + me.rect.width / 2,
+        window.innerWidth * (lastHalfScreenOffset ? 1 : 0.5) - me.rect.width / 2,
       )
       me.ref.style.top = `${playerTop}px`
       me.ref.style.left = `${playerLeft}px`
-      me.ref.style.width = `${playerWidth}px`
-      me.ref.style.height = `${playerHeight}px`
 
       // Keyboard input
       if (keyPressed.d || keyPressed.a) {
         // Push to the batch at the sampling interval
         if (timestamp - samplingStartTime >= samplingInterval()) {
-          const newY = me.y
-          const newX = me.x + (keyPressed.d ? MOVEMENT_SPEED : -MOVEMENT_SPEED) * dt
-          const fixedY = clamp(newY, 0, 100)
+          const newX =
+            me.x +
+            ((me.rect.left <= 0 && moveDirection === -1) || (me.rect.right >= window.innerWidth && moveDirection === 1)
+              ? 0
+              : speed)
+          const fixedY = clamp(me.y, 0, 100)
           const fixedX = clamp(newX, 0, 100)
           const event = {
             type: 'move',
@@ -90,20 +96,6 @@ export function MainContainer(props: ParentProps<{}>) {
         return
       }
     },
-  })
-
-  onMount(() => {
-    s50 = window.innerWidth * 0.5 // 50% of the screen width
-    const containerRect = containerRef.getBoundingClientRect()
-    const sceneRect = sceneSettings.ref.getBoundingClientRect()
-    setSceneSettings({
-      originalWidth: sceneRect.width,
-      originalHeight: sceneRect.height,
-      x: containerRect.left,
-      y: containerRect.top,
-      x2: containerRect.left + containerRect.width,
-      y2: containerRect.top + containerRect.height,
-    })
   })
 
   return (

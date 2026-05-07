@@ -1,0 +1,37 @@
+@theme inline {
+  @keyframes player-idle {
+    from {
+      background-position-x: 0;
+    }
+    to {
+      background-position-x: calc(-1 * var(--sprite-player-size) * 86);
+    }
+  }
+  @keyframes player-walk {
+    from {
+      background-position-x: 0;
+    }
+    to {
+      background-position-x: calc(-1 * var(--sprite-player-size) * 11);
+    }
+  }
+}
+
+@utility player {
+  box-sizing: content-box;
+  background-position-y: 0;
+  image-rendering: pixelated;
+  width: var(--sprite-player-size);
+  height: var(--sprite-player-size);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+@utility player-idle {
+  background-image: url('../sprites/main/idle.png');
+  animation: player-idle 10000ms steps(86) infinite;
+}
+@utility player-walk {
+  background-image: url('../sprites/main/walk.png');
+  animation: player-walk 900ms steps(11) infinite;
+}

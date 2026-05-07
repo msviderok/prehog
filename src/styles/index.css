@@ -2,6 +2,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import './player.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -21,6 +22,8 @@
   --chart-4: oklch(0.775 0.168 162.85);
   --chart-5: oklch(0.669 0.184 248.81);
   --chart-active-dot: oklch(0 0 0);
+
+  --scale: 1;
 }
 
 .dark {

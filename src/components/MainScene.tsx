@@ -1,8 +1,14 @@
-import { type ParentProps } from 'solid-js'
+import { onMount, type ParentProps } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
 
 export function MainScene(props: ParentProps<{}>) {
-  const { setSceneSettings } = useGlobalState()
+  const { setSceneSettings, sceneSettings } = useGlobalState()
+
+  onMount(() => {
+    const sceneRect = sceneSettings.ref.getBoundingClientRect()
+    setSceneSettings({ originalWidth: sceneRect.width, originalHeight: sceneRect.height })
+  })
+
   return (
     <div
       ref={(el) => setSceneSettings('ref', el)}

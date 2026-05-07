@@ -12,7 +12,7 @@ const solidjsTailwindBestPractices = [
 "Utilize TypeScript's strict mode",
 "Utilize @apply directive in CSS files for reusable styles",
 "Implement responsive design using Tailwind's responsive classes",
-"Use Tailwind's CSS in /src/styles.css for global styles",
+"Use Tailwind's CSS in /src/styles/index.css for global styles",
 "Implement dark mode using Tailwind's dark variant",
 ];
 

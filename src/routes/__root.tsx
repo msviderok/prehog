@@ -4,7 +4,7 @@ import { ErrorComponent, HeadContent, Outlet, Scripts, createRootRouteWithContex
 import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
-import styleCss from '../styles.css?url'
+import styleCss from '../styles/index.css?url'
 
 export const Route = createRootRouteWithContext()({
   head: () => ({
