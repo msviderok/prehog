@@ -4,7 +4,7 @@
       background-position-x: 0;
     }
     to {
-      background-position-x: calc(-1 * var(--sprite-player-size) * 86);
+      background-position-x: calc(-1 * var(--size) * 86);
     }
   }
   @keyframes player-walk {
@@ -12,19 +12,31 @@
       background-position-x: 0;
     }
     to {
-      background-position-x: calc(-1 * var(--sprite-player-size) * 11);
+      background-position-x: calc(-1 * var(--size) * 11);
     }
   }
 }
 
 @utility player {
+  --sprite-player-original-size: 300px;
+  --size: round(nearest, calc(var(--sprite-player-original-size) * var(--scale)), 1px);
+  --running-mod: 1;
+
+  position: absolute;
+  top: 0;
+  left: 0;
   box-sizing: content-box;
   background-position-y: 0;
   image-rendering: pixelated;
-  width: var(--sprite-player-size);
-  height: var(--sprite-player-size);
+  width: var(--size);
+  height: var(--size);
   background-repeat: no-repeat;
   background-size: cover;
+  translate: -50% -50%;
+  transform-origin: center bottom;
+  transform: translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0)) rotateX(var(--rx, 0)) rotateY(var(--ry, 0))
+    rotateZ(var(--rz, 0)) skewX(calc((var(--running-mod) - 1) * -10deg))
+    scale3d(var(--sx, 1), var(--sy, 1), var(--sz, 1));
 }
 
 @utility player-idle {
@@ -33,5 +45,5 @@
 }
 @utility player-walk {
   background-image: url('../sprites/main/walk.png');
-  animation: player-walk 900ms steps(11) infinite;
+  animation: player-walk calc(900ms / var(--running-mod, 1)) steps(11) infinite;
 }

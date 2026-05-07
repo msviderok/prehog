@@ -8,12 +8,17 @@ const DEBUG = false
 
 export function Player() {
   let hydrated = false
-  const { setMe, keyPressed } = useGlobalState()
+  const { setMe, keyPressed, me } = useGlobalState()
   const { data } = useQuery(api.users.current, {})
   const lastFacingDirection = createMemo((lastDirection) => {
     if (!keyPressed.a && !keyPressed.d) return lastDirection
     return keyPressed.a ? 'left' : 'right'
   }, 'right')
+
+  createEffect(() => {
+    if (!me.ref) return
+    me.ref.style.setProperty('--sx', lastFacingDirection() === 'left' ? '-1' : '1')
+  })
 
   createEffect(() => {
     const d = data()
@@ -26,9 +31,8 @@ export function Player() {
     <span
       ref={(el) => setMe('ref', el)}
       class={cn(
-        'z-10 player player-idle absolute -translate-1/2',
+        'player player-idle',
         (keyPressed.d || keyPressed.a) && 'player-walk',
-        lastFacingDirection() === 'left' && 'rotate-y-180',
         DEBUG && 'border-2 border-blue-600',
       )}
     />

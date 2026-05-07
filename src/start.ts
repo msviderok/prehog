@@ -4,5 +4,6 @@ import { createStart } from '@tanstack/solid-start'
 export const startInstance = createStart(() => {
   return {
     requestMiddleware: [clerkMiddleware()],
+    defaultSsr: false,
   }
 })

@@ -9,6 +9,7 @@ export function createKeyboardListener() {
     if (e.code === 'KeyS' || e.code === 'ArrowDown') return setKeyPressed('s', true)
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') return setKeyPressed('a', true)
     if (e.code === 'KeyD' || e.code === 'ArrowRight') return setKeyPressed('d', true)
+    if (e.key === 'Shift') return setKeyPressed('shift', true)
   }
 
   function onKeyUp(e: KeyboardEvent) {
@@ -16,6 +17,7 @@ export function createKeyboardListener() {
     if (e.code === 'KeyS' || e.code === 'ArrowDown') return setKeyPressed('s', false)
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') return setKeyPressed('a', false)
     if (e.code === 'KeyD' || e.code === 'ArrowRight') return setKeyPressed('d', false)
+    if (e.key === 'Shift') return setKeyPressed('shift', false)
   }
 
   onMount(() => {

@@ -1,4 +1,4 @@
-import { onMount, type ParentProps } from 'solid-js'
+import { For, onMount, type ParentProps } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
 
 export function MainScene(props: ParentProps<{}>) {
@@ -23,6 +23,21 @@ export function MainScene(props: ParentProps<{}>) {
         'background-position': 'top left',
       }}
     >
+      <For each={sceneSettings.nodes}>
+        {(i) => {
+          const x = () => i.x * sceneSettings.realSceneSize.width
+          const y = () => i.y * sceneSettings.realSceneSize.height
+          return (
+            <span
+              data-node={JSON.stringify({ x: x(), y: y() })}
+              class="absolute top-0 left-0 size-4 -translate-1/2 rounded-2xl bg-red-500 border-2 border-blue-500 cursor-pointer"
+              style={{
+                transform: `translate3d(${x()}px,${y()}px,0)`,
+              }}
+            />
+          )
+        }}
+      </For>
       {props.children}
     </div>
   )

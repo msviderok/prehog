@@ -1,3 +1,4 @@
+import { clamp } from '@/lib/utils'
 import {
   createContext,
   createEffect,
@@ -20,6 +21,7 @@ interface KeyPressed {
   a: boolean
   s: boolean
   d: boolean
+  shift: boolean
 }
 
 interface CommonSceneSettings {
@@ -31,6 +33,7 @@ interface CommonSceneSettings {
 
 interface SceneSettings extends CommonSceneSettings {
   ref: HTMLElement
+  rect: DOMRect
   scale: number
   originalWidth: number
   originalHeight: number
@@ -42,6 +45,7 @@ interface SceneSettings extends CommonSceneSettings {
     width: number
     height: number
   }
+  nodes: Array<{ x: number; y: number }>
 }
 
 interface MeSettings {
@@ -70,7 +74,13 @@ const GlobalStateContext = createContext<{
 }>()
 
 export function GlobalStateProvider(props: ParentProps) {
-  const [keyPressed, setKeyPressed] = createStore({ w: false, s: false, a: false, d: false })
+  const [keyPressed, setKeyPressed] = createStore({
+    w: false,
+    s: false,
+    a: false,
+    d: false,
+    shift: false,
+  })
   const [samplingInterval, setSamplingInterval] = createSignal(10)
   const [batchInterval, setBatchInterval] = createSignal(100)
   const [sceneSettings, setSceneSettings] = createStore<SceneSettings>({
@@ -81,8 +91,10 @@ export function GlobalStateProvider(props: ParentProps) {
     originalHeight: 0,
     x2: 0,
     y2: 0,
-    get scale() {
-      return Math.min(window.innerHeight / this.originalHeight, 1)
+    nodes: [],
+    scale: 1,
+    get rect() {
+      return this.ref.getBoundingClientRect()
     },
     get worldUnit() {
       return {
@@ -116,6 +128,11 @@ export function GlobalStateProvider(props: ParentProps) {
   createEffect(() => localStorage.setItem(LSK_SAMPLING, `${samplingInterval()}`))
   createEffect(() => localStorage.setItem(LSK_BATCHING, `${batchInterval()}`))
   createEffect(() => localStorage.setItem(LSK_ME_POSITION, JSON.stringify(me)))
+  createEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--scale', `${sceneSettings.scale}`)
+    me.ref.style.setProperty('--running-mod', `${keyPressed.shift ? 2.5 : 1}`)
+  })
 
   onMount(() => {
     const initSampling = localStorage.getItem(LSK_SAMPLING)
@@ -123,21 +140,30 @@ export function GlobalStateProvider(props: ParentProps) {
     if (initSampling) setSamplingInterval(+initSampling)
     if (initBatching) setBatchInterval(+initBatching)
 
-    const root = document.documentElement
-
     queueMicrotask(() => {
-      root.style.setProperty('--scale', `${sceneSettings.scale}`)
-      root.style.setProperty('--sprite-player-size', `${Math.floor(me.size * sceneSettings.scale)}px`)
+      setSceneSettings('scale', Math.min(window.innerHeight / sceneSettings.originalHeight, 1))
     })
 
     function onWindowResize() {
-      root.style.setProperty('--scale', `${sceneSettings.scale}`)
-      root.style.setProperty('--sprite-player-size', `${Math.floor(me.size * sceneSettings.scale)}px`)
+      setSceneSettings('scale', Math.min(window.innerHeight / sceneSettings.originalHeight, 1))
+    }
+
+    function onClick(e: MouseEvent) {
+      const target = e.target as HTMLElement
+      if (target.dataset.node) {
+        navigator.clipboard.writeText(target.dataset.node)
+        return
+      }
+      const x = clamp((e.clientX - sceneSettings.rect.left) / sceneSettings.realSceneSize.width, 0, 1)
+      const y = clamp((e.clientY - sceneSettings.rect.top) / sceneSettings.realSceneSize.height, 0, 1)
+      setSceneSettings('nodes', sceneSettings.nodes.length, { x, y })
     }
 
     window.addEventListener('resize', onWindowResize)
+    document.addEventListener('click', onClick)
     onCleanup(() => {
       window.removeEventListener('resize', onWindowResize)
+      document.removeEventListener('click', onClick)
     })
   })
 

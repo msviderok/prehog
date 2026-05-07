@@ -4,7 +4,7 @@ import { MainScene } from '@/components/MainScene'
 import { Player } from '@/components/Player'
 import { useCurrentUser } from '@/lib/integrations/convex-clerk'
 import { cn } from '@/lib/utils'
-import { createFileRoute } from '@tanstack/solid-router'
+import { ClientOnly, createFileRoute } from '@tanstack/solid-router'
 import { ClerkLoading, SignedIn, SignedOut, SignIn } from 'clerk-solidjs-tanstack-start'
 import { Show } from 'solid-js'
 
@@ -27,12 +27,14 @@ function Home() {
       <Show
         when={!DEBUG}
         fallback={
-          <GlobalStateProvider>
-            <MainContainer>
-              <MainScene />
-              <Player />
-            </MainContainer>
-          </GlobalStateProvider>
+          <ClientOnly>
+            <GlobalStateProvider>
+              <MainContainer>
+                <MainScene />
+                <Player />
+              </MainContainer>
+            </GlobalStateProvider>
+          </ClientOnly>
         }
       >
         <SignedOut>

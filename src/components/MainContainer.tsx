@@ -3,8 +3,9 @@ import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
 import { clamp } from '@/lib/utils'
 import { createEffect, onMount, type ParentProps } from 'solid-js'
+import { ClientOnly } from '@tanstack/solid-router'
 
-const MOVEMENT_SPEED = 0.1
+const MOVEMENT_SPEED = 0.15
 const DT_MOD = 10
 
 export function MainContainer(props: ParentProps<{}>) {
@@ -36,7 +37,7 @@ export function MainContainer(props: ParentProps<{}>) {
     fn: (timestamp) => {
       dt = (timestamp - lastTimestamp) / DT_MOD
       lastTimestamp = timestamp
-      speed = moveDirection * MOVEMENT_SPEED * dt
+      speed = moveDirection * MOVEMENT_SPEED * dt * (keyPressed.shift ? 2 : 1)
       /** ––– CAMERA VIEWPORT ––– */
 
       /**
@@ -59,8 +60,9 @@ export function MainContainer(props: ParentProps<{}>) {
         0 + me.rect.width / 2,
         window.innerWidth * (lastHalfScreenOffset ? 1 : 0.5) - me.rect.width / 2,
       )
-      me.ref.style.top = `${playerTop}px`
-      me.ref.style.left = `${playerLeft}px`
+
+      me.ref.style.setProperty('--tx', `${playerLeft}px`)
+      me.ref.style.setProperty('--ty', `${playerTop}px`)
 
       // Keyboard input
       if (keyPressed.d || keyPressed.a) {

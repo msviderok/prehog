@@ -5,6 +5,7 @@ import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 export const Route = createRootRouteWithContext()({
   head: () => ({
@@ -22,13 +23,15 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body>
-        <ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
-          <ConvexClerkProvider>
-            <Suspense>
-              <Outlet />
-            </Suspense>
-          </ConvexClerkProvider>
-        </ClerkProvider>
+        <TooltipProvider>
+          <ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
+            <ConvexClerkProvider>
+              <Suspense>
+                <Outlet />
+              </Suspense>
+            </ConvexClerkProvider>
+          </ClerkProvider>
+        </TooltipProvider>
         <Scripts />
       </body>
     </html>

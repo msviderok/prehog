@@ -1,6 +1,7 @@
-import { Button as ButtonPrimitive } from "@msviderok/base-ui-solid/button";
+import { ClientOnly } from "@tanstack/solid-router";
 import { cva, type VariantProps } from "class-variance-authority";
 import { mergeProps, splitProps } from "solid-js";
+import { Button as ButtonPrimitive } from "./button-primitive";
 
 import { cn } from "@/lib/utils";
 
@@ -62,4 +63,12 @@ function Button(
   );
 }
 
-export { Button, buttonVariants };
+function ClientOnlyButton(props: Parameters<typeof Button>[0]) {
+  return (
+    <ClientOnly>
+      <Button {...props} />
+    </ClientOnly>
+  );
+}
+
+export { ClientOnlyButton as Button, buttonVariants };

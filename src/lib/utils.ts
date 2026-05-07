@@ -1,5 +1,6 @@
-import { type ClassValue, clsx } from 'clsx'
-import { mergeProps } from 'solid-js'
+import { clsx, type ClassValue } from 'clsx'
+import { createMemo, createSignal, mergeProps, onMount, Show, type JSX } from 'solid-js'
+import { createComponent } from 'solid-js/web'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -43,4 +44,33 @@ export function lerp(a: number, b: number, t: number) {
 
 export function clamp(val: number, min: number, max: number) {
   return Math.min(max, Math.max(min, val))
+}
+
+// Based on TanStack Router's Solid ClientOnly:
+// https://github.com/TanStack/router/blob/4eed408f127b3fcc92e1cf39889edd8bce8486c8/packages/solid-router/src/ClientOnly.tsx
+export function clientOnly<TProps extends object>(
+  Component: (props: TProps) => JSX.Element,
+  fallback?: JSX.Element,
+): (props: TProps) => JSX.Element {
+  return (props) => {
+    const hydrated = useHydrated()
+    return createComponent(Show, {
+      keyed: true,
+      get when() {
+        return hydrated()
+      },
+      get fallback() {
+        return fallback ?? null
+      },
+      get children() {
+        return createMemo(() => Component(props))
+      },
+    }) as unknown as JSX.Element
+  }
+}
+
+export function useHydrated(): () => boolean {
+  const [hydrated, setHydrated] = createSignal(false)
+  onMount(() => setHydrated(true))
+  return () => hydrated()
 }

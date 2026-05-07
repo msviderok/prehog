@@ -1,15 +1,15 @@
 export default {
   source: {
-    package: "@base-ui/react",
-    version: "^1.0.0",
+    package: '@base-ui/react',
+    version: '^1.0.0',
   },
   target: {
-    package: "@msviderok/base-ui-solid",
-    version: "1.0.0-beta.9",
+    package: '@msviderok/base-ui-solid',
+    version: '1.0.0-beta.10',
   },
   importMap: {
-    "lucide-react": "lucide-solid",
+    'lucide-react': 'lucide-solid',
   },
-  componentsDir: "src/components/ui",
-  libDir: "src/lib",
-};
+  componentsDir: 'src/components/ui',
+  libDir: 'src/lib',
+}
