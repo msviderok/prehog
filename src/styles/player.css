@@ -21,6 +21,7 @@
   --sprite-player-original-size: 300px;
   --size: round(nearest, calc(var(--sprite-player-original-size) * var(--scale)), 1px);
   --running-mod: 1;
+  --facing-dir: 1;
 
   position: absolute;
   top: 0;
@@ -35,8 +36,8 @@
   translate: -50% -50%;
   transform-origin: center bottom;
   transform: translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0)) rotateX(var(--rx, 0)) rotateY(var(--ry, 0))
-    rotateZ(var(--rz, 0)) skewX(calc((var(--running-mod) - 1) * -10deg))
-    scale3d(var(--sx, 1), var(--sy, 1), var(--sz, 1));
+    rotateZ(var(--rz, 0)) skewX(calc(var(--skx, 0deg) * var(--running-mod, 1))) skewY(var(--sky, 0deg))
+    scale3d(calc(var(--sx, 1) * var(--facing-dir, 1)), var(--sy, 1), var(--sz, 1));
 }
 
 @utility player-idle {

@@ -46,31 +46,22 @@ export function clamp(val: number, min: number, max: number) {
   return Math.min(max, Math.max(min, val))
 }
 
-// Based on TanStack Router's Solid ClientOnly:
-// https://github.com/TanStack/router/blob/4eed408f127b3fcc92e1cf39889edd8bce8486c8/packages/solid-router/src/ClientOnly.tsx
-export function clientOnly<TProps extends object>(
-  Component: (props: TProps) => JSX.Element,
-  fallback?: JSX.Element,
-): (props: TProps) => JSX.Element {
-  return (props) => {
-    const hydrated = useHydrated()
-    return createComponent(Show, {
-      keyed: true,
-      get when() {
-        return hydrated()
-      },
-      get fallback() {
-        return fallback ?? null
-      },
-      get children() {
-        return createMemo(() => Component(props))
-      },
-    }) as unknown as JSX.Element
-  }
+export function collisionDetected<T extends { left: number; top: number; right: number; bottom: number }>(a: T, b: T) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
 }
 
-export function useHydrated(): () => boolean {
-  const [hydrated, setHydrated] = createSignal(false)
-  onMount(() => setHydrated(true))
-  return () => hydrated()
+export function createRectFromCoords({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }): DOMRect {
+  return {
+    x: x1,
+    y: y1,
+    left: x1,
+    top: y1,
+    width: x2 - x1,
+    height: y2 - y1,
+    right: x2,
+    bottom: y2,
+    toJSON() {
+      return JSON.stringify(this)
+    },
+  }
 }

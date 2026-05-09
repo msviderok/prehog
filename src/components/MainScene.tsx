@@ -1,17 +1,18 @@
 import { For, onMount, type ParentProps } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
+import { SceneNodes } from './SceneNodes'
 
 export function MainScene(props: ParentProps<{}>) {
-  const { setSceneSettings, sceneSettings } = useGlobalState()
+  const { setSceneState, sceneState } = useGlobalState()
 
   onMount(() => {
-    const sceneRect = sceneSettings.ref.getBoundingClientRect()
-    setSceneSettings({ originalWidth: sceneRect.width, originalHeight: sceneRect.height })
+    const sceneRect = sceneState.ref.getBoundingClientRect()
+    setSceneState({ originalWidth: sceneRect.width, originalHeight: sceneRect.height })
   })
 
   return (
     <div
-      ref={(el) => setSceneSettings('ref', el)}
+      ref={(el) => setSceneState('ref', el)}
       class="relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated]"
       style={{
         width: '6043px',
@@ -23,22 +24,32 @@ export function MainScene(props: ParentProps<{}>) {
         'background-position': 'top left',
       }}
     >
-      <For each={sceneSettings.nodes}>
-        {(i) => {
-          const x = () => i.x * sceneSettings.realSceneSize.width
-          const y = () => i.y * sceneSettings.realSceneSize.height
-          return (
-            <span
-              data-node={JSON.stringify({ x: x(), y: y() })}
-              class="absolute top-0 left-0 size-4 -translate-1/2 rounded-2xl bg-red-500 border-2 border-blue-500 cursor-pointer"
-              style={{
-                transform: `translate3d(${x()}px,${y()}px,0)`,
-              }}
-            />
-          )
-        }}
-      </For>
+      {/* <XYNodes /> */}
+      <SceneNodes />
       {props.children}
     </div>
+  )
+}
+
+function XYNodes() {
+  const { nodes, sceneState } = useGlobalState()
+  return (
+    <For each={nodes}>
+      {(i) => {
+        const x = () => i.x * sceneState.realSceneSize.width
+        const y = () => i.y * sceneState.realSceneSize.height
+        const size = () => sceneState.worldUnit.y * 1.5
+        return (
+          <span
+            class="absolute top-0 left-0 -translate-1/2 rounded-2xl bg-red-500 border-2 border-blue-500 cursor-pointer"
+            style={{
+              transform: `translate3d(${x()}px,${y()}px,0)`,
+              height: `${size()}px`,
+              width: `${size()}px`,
+            }}
+          />
+        )
+      }}
+    </For>
   )
 }

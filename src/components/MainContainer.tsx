@@ -1,9 +1,8 @@
 import { useGlobalState } from '@/components/GlobalStateContext'
 import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
-import { clamp } from '@/lib/utils'
+import { clamp, collisionDetected } from '@/lib/utils'
 import { createEffect, onMount, type ParentProps } from 'solid-js'
-import { ClientOnly } from '@tanstack/solid-router'
 
 const MOVEMENT_SPEED = 0.15
 const DT_MOD = 10
@@ -13,7 +12,8 @@ export function MainContainer(props: ParentProps<{}>) {
 
   // oxlint-disable-next-line no-unassigned-vars
   let containerRef!: HTMLDivElement
-  const { setMe, me, keyPressed, sceneSettings, batchInterval, samplingInterval } = useGlobalState()
+  const { setPlayer, setNodes, player, keyPressed, nodes, sceneState, batchInterval, samplingInterval } =
+    useGlobalState()
 
   let eventBatch: any[] = []
   let batchingStartTime = 0
@@ -44,36 +44,41 @@ export function MainContainer(props: ParentProps<{}>) {
        * Scrollable width of the screen to allow free player movement at the first 50%
        * of the viewport width at the start and end of the scene
        */
-      const sceneRealWidth = sceneSettings.realSceneSize.width - window.innerWidth
+      const sceneRealWidth = sceneState.realSceneSize.width - window.innerWidth
       // Viewport "camera" position
-      const cameraOffsetX = clamp(me.realPosition.x > s50 ? me.realPosition.x - s50 : 0, 0, sceneRealWidth)
+      const cameraOffsetX = clamp(player.realPosition.x > s50 ? player.realPosition.x - s50 : 0, 0, sceneRealWidth)
       const lastHalfScreenOffset = cameraOffsetX >= sceneRealWidth
 
-      sceneSettings.ref.style.height = `${sceneSettings.realSceneSize.height}px`
-      sceneSettings.ref.style.width = `${sceneSettings.realSceneSize.width}px`
-      sceneSettings.ref.style.transform = `translateX(${-cameraOffsetX}px)`
+      sceneState.ref.style.height = `${sceneState.realSceneSize.height}px`
+      sceneState.ref.style.width = `${sceneState.realSceneSize.width}px`
+      sceneState.ref.style.transform = `translateX(${-cameraOffsetX}px)`
 
       /** ––– PLAYER POSITION ––– */
-      const playerTop = sceneSettings.worldUnit.y * me.y
+      const playerTop = Math.floor(sceneState.worldUnit.y * player.y)
       const playerLeft = clamp(
-        me.realPosition.x - me.rect.width / 2 + (lastHalfScreenOffset ? -cameraOffsetX : 0),
-        0 + me.rect.width / 2,
-        window.innerWidth * (lastHalfScreenOffset ? 1 : 0.5) - me.rect.width / 2,
+        Math.floor(player.realPosition.x - player.rect.width / 2 + (lastHalfScreenOffset ? -cameraOffsetX : 0)),
+        Math.floor(0 + player.rect.width / 2),
+        Math.floor(window.innerWidth * (lastHalfScreenOffset ? 1 : 0.5) - player.rect.width / 2),
       )
 
-      me.ref.style.setProperty('--tx', `${playerLeft}px`)
-      me.ref.style.setProperty('--ty', `${playerTop}px`)
+      player.ref.style.setProperty('--tx', `${playerLeft}px`)
+      player.ref.style.setProperty('--ty', `${playerTop}px`)
+
+      for (const node of nodes) {
+        setNodes(node.idx, 'open', collisionDetected(player.rect, node.realHitbox))
+      }
 
       // Keyboard input
       if (keyPressed.d || keyPressed.a) {
         // Push to the batch at the sampling interval
         if (timestamp - samplingStartTime >= samplingInterval()) {
           const newX =
-            me.x +
-            ((me.rect.left <= 0 && moveDirection === -1) || (me.rect.right >= window.innerWidth && moveDirection === 1)
+            player.x +
+            ((player.rect.left <= 0 && moveDirection === -1) ||
+            (player.rect.right >= window.innerWidth && moveDirection === 1)
               ? 0
               : speed)
-          const fixedY = clamp(me.y, 0, 100)
+          const fixedY = clamp(player.y, 0, 100)
           const fixedX = clamp(newX, 0, 100)
           const event = {
             type: 'move',
@@ -81,7 +86,7 @@ export function MainContainer(props: ParentProps<{}>) {
             x: fixedX,
             timeSinceBatchStart: timestamp - samplingStartTime,
           }
-          setMe({ x: fixedX, y: fixedY })
+          setPlayer({ x: fixedX, y: fixedY })
           eventBatch.push(event)
           samplingStartTime = timestamp
         }
