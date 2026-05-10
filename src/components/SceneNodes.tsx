@@ -3,6 +3,7 @@ import { createMemo, Index, type JSX } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { useGlobalState } from './GlobalStateContext'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
+import { Sidebar } from 'lucide-solid'
 
 const DEBUG = false
 
@@ -33,6 +34,27 @@ function NodePopover(props: Scene.NodePopover) {
     }
   })
 
+  const contentStyle = createMemo<Pick<JSX.CSSProperties, 'transform-origin'>>(() => {
+    const { align, side } = props.positioner
+
+    switch (true) {
+      case side === 'top' && align === 'start':
+        return { 'transform-origin': 'bottom left' }
+      case side === 'left' && align === 'end':
+        return { 'transform-origin': 'bottom right' }
+      case side === 'right' && align === 'center':
+        return { 'transform-origin': 'left' }
+      case side === 'top' && align === 'end':
+        return { 'transform-origin': 'bottom right' }
+      case side === 'left' && align === 'start':
+        return { 'transform-origin': 'top right' }
+      case side === 'bottom' && align === 'end':
+        return { 'transform-origin': 'top right' }
+      default:
+        return { 'transform-origin': 'center center' }
+    }
+  })
+
   return (
     <>
       <span
@@ -51,7 +73,8 @@ function NodePopover(props: Scene.NodePopover) {
         <PopoverContent
           portalContainerRef={sceneState.ref}
           {...props.positioner}
-          class={cn('opacity-0', props.open && 'opacity-100')}
+          style={contentStyle()}
+          class={cn('opacity-0 scale-0', props.open && 'opacity-100 scale-100 duration-200 delay-100 ease-out')}
         >
           {props.text}
         </PopoverContent>
