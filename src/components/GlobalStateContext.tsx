@@ -1,4 +1,5 @@
 import { clamp, createRectFromCoords } from '@/lib/utils'
+import { useMutation } from 'convex-solidjs'
 import {
   createContext,
   createEffect,
@@ -11,6 +12,7 @@ import {
   type Setter,
 } from 'solid-js'
 import { createStore, type SetStoreFunction, type Store } from 'solid-js/store'
+import { api } from '../../convex/_generated/api'
 
 const LSK_SAMPLING = 'sampling'
 const LSK_BATCHING = 'batching'
@@ -19,19 +21,27 @@ const LSK_ME_POSITION = 'me_position'
 const GlobalStateContext = createContext<{
   keyPressed: Store<GlobalState.KeyPressed>
   setKeyPressed: SetStoreFunction<GlobalState.KeyPressed>
+
   samplingInterval: Accessor<number>
   setSamplingInterval: Setter<number>
   batchInterval: Accessor<number>
   setBatchInterval: Setter<number>
+
   sceneState: Store<Scene.State>
   setSceneState: SetStoreFunction<Scene.State>
-  player: Store<GlobalState.Player>
-  setPlayer: SetStoreFunction<GlobalState.Player>
   nodes: Store<Scene.Nodes>
   setNodes: SetStoreFunction<Scene.Nodes>
+
+  player: Store<GlobalState.Player>
+  setPlayer: SetStoreFunction<GlobalState.Player>
+
+  rtc: Store<GlobalState.RTC>
+  setRtc: SetStoreFunction<GlobalState.RTC>
 }>()
 
 export function GlobalStateProvider(props: ParentProps) {
+  const setOnline = useMutation(api.users.setOnline)
+
   const [samplingInterval, setSamplingInterval] = createSignal(10)
   const [batchInterval, setBatchInterval] = createSignal(100)
 
@@ -92,6 +102,12 @@ export function GlobalStateProvider(props: ParentProps) {
     },
   })
 
+  const [rtc, setRtc] = createStore<GlobalState.RTC>({
+    pc: new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }),
+    ref: null,
+    stream: null,
+  })
+
   createEffect(() => localStorage.setItem(LSK_SAMPLING, `${samplingInterval()}`))
   createEffect(() => localStorage.setItem(LSK_BATCHING, `${batchInterval()}`))
   createEffect(() => localStorage.setItem(LSK_ME_POSITION, JSON.stringify({ x: player.x, y: player.y })))
@@ -126,9 +142,23 @@ export function GlobalStateProvider(props: ParentProps) {
       // setSceneState('nodes', sceneState.nodes.length, { x, y })
     }
 
+    setOnline.mutate({ online: true })
+    function goOnline() {
+      void setOnline.mutate({ online: true })
+    }
+    function goOffline() {
+      void setOnline.mutate({ online: false })
+    }
+
     window.addEventListener('resize', onWindowResize)
+    window.addEventListener('beforeunload', goOffline)
+    window.addEventListener('focusin', goOnline)
+    window.addEventListener('focusout', goOffline)
     document.addEventListener('click', onClick)
     onCleanup(() => {
+      window.removeEventListener('beforeunload', goOffline)
+      window.removeEventListener('focusin', goOnline)
+      window.removeEventListener('focusout', goOffline)
       window.removeEventListener('resize', onWindowResize)
       document.removeEventListener('click', onClick)
     })
@@ -139,16 +169,22 @@ export function GlobalStateProvider(props: ParentProps) {
       value={{
         keyPressed,
         setKeyPressed,
-        sceneState,
-        setSceneState,
+
         samplingInterval,
         setSamplingInterval,
         batchInterval,
         setBatchInterval,
-        player,
-        setPlayer,
+
+        sceneState,
+        setSceneState,
         nodes,
         setNodes,
+
+        player,
+        setPlayer,
+
+        rtc,
+        setRtc,
       }}
     >
       {props.children}

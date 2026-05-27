@@ -3,15 +3,14 @@ import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
 import { clamp, collisionDetected } from '@/lib/utils'
 import { createEffect, onMount, type ParentProps } from 'solid-js'
+import { VideoCall } from './VideoCall'
+import { ActionBar } from './ActionBar'
 
 const MOVEMENT_SPEED = 0.15
 const DT_MOD = 10
 
 export function MainContainer(props: ParentProps<{}>) {
   createKeyboardListener()
-
-  // oxlint-disable-next-line no-unassigned-vars
-  let containerRef!: HTMLDivElement
   const { setPlayer, setNodes, player, keyPressed, nodes, sceneState, batchInterval, samplingInterval } =
     useGlobalState()
 
@@ -106,7 +105,8 @@ export function MainContainer(props: ParentProps<{}>) {
   })
 
   return (
-    <div ref={containerRef} class="overflow-hidden flex items-center w-full h-full">
+    <div class="overflow-hidden flex items-center w-full h-full">
+      <ActionBar />
       <div class="w-min h-min relative border-y-8">{props.children}</div>
     </div>
   )

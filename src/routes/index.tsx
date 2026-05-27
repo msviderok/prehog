@@ -13,7 +13,6 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   const user = useCurrentUser()
-
   return (
     <main
       class={cn(

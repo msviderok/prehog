@@ -6,32 +6,69 @@ import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { neobrutalism } from '@clerk/ui/themes'
 
 export const Route = createRootRouteWithContext()({
-  head: () => ({
-    links: [{ rel: 'stylesheet', href: styleCss }],
-  }),
-  shellComponent: RootComponent,
+  head: () => ({ links: [{ rel: 'stylesheet', href: styleCss }] }),
   errorComponent: ErrorComponent,
+  shellComponent: RootComponent,
 })
 
 function RootComponent() {
   return (
-    <html>
+    <html class="dark">
       <head>
         <HydrationScript />
         <HeadContent />
       </head>
       <body>
-        <TooltipProvider>
-          <ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
-            <ConvexClerkProvider>
-              <Suspense>
+        <Suspense>
+          <TooltipProvider>
+            <ClerkProvider
+              publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}
+              appearance={{
+                theme: neobrutalism,
+                layout: {
+                  unsafe_disableDevelopmentModeWarnings: true,
+                },
+                elements: {
+                  socialButtonsBlockButtonText: {
+                    color: 'var(--color-blue-text)',
+                  },
+                  lastAuthenticationStrategyBadge: {
+                    backgroundColor: 'var(--color-blue-400)',
+                    borderWidth: '2px',
+                    borderColor: 'var(--color-blue-text)',
+                    boxShadow: 'none',
+                    color: 'var(--color-blue-text)',
+                  },
+                  button: {
+                    backgroundColor: 'var(--color-blue-200)',
+                    color: 'var(--color-blue-700)',
+                    '&:hover': {
+                      backgroundColor: 'var(--color-blue-400)',
+                    },
+                  },
+                  footer: {
+                    backgroundColor: 'var(--color-card)',
+                  },
+                  footerActionLink: {
+                    color: 'var(--color-blue-600)',
+                  },
+                },
+                variables: {
+                  colorText: 'var(--color-blue-900)',
+                  colorBackground: 'var(--color-card)',
+                },
+              }}
+            >
+              <ConvexClerkProvider>
                 <Outlet />
-              </Suspense>
-            </ConvexClerkProvider>
-          </ClerkProvider>
-        </TooltipProvider>
+              </ConvexClerkProvider>
+            </ClerkProvider>
+          </TooltipProvider>
+        </Suspense>
+
         <Scripts />
       </body>
     </html>

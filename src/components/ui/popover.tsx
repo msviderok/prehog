@@ -2,13 +2,37 @@ import { cn } from '@/lib/utils'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { ClientOnly } from '@tanstack/solid-router'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'
+import { cva, type VariantProps } from 'class-variance-authority'
+
+const popoverVariants = cva(
+  'z-50 w-72 rounded-base border-2 border-border p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all',
+  {
+    variants: {
+      variant: {
+        default: 'bg-yellow-200 text-yellow-800',
+        scenery: 'bg-yellow-500 text-yellow-800 pointer-events-none',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  },
+)
 
 function Popover(props: PopoverPrimitive.Root.Props) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+  return (
+    <ClientOnly>
+      <PopoverPrimitive.Root data-slot="popover" {...props} />
+    </ClientOnly>
+  )
 }
 
 function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+  return (
+    <ClientOnly>
+      <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+    </ClientOnly>
+  )
 }
 
 export type PopoverContentPositionerProps = Pick<
@@ -26,29 +50,40 @@ export type PopoverContentPositionerProps = Pick<
   | 'positionMethod'
   | 'trackAnchor'
 >
-function PopoverContent(
-  props: PopoverPrimitive.Popup.Props &
-    PopoverContentPositionerProps & {
-      portalContainerRef?: HTMLElement
-    },
-) {
+
+export type PopoverContentProps = PopoverPrimitive.Popup.Props &
+  PopoverContentPositionerProps &
+  VariantProps<typeof popoverVariants> & {
+    portalContainerRef?: HTMLElement
+  }
+
+function PopoverContent(props: PopoverContentProps) {
   const mergedProps = mergeProps(
     {
-      align: 'end' as const,
-      alignOffset: 0,
-      side: 'top' as const,
-      sideOffset: 0,
+      variant: 'default' as const,
       arrowPadding: 15,
-      trackAnchor: false,
-      collisionAvoidance: {
-        align: 'none',
-        side: 'none',
-        fallbackAxisSide: 'none',
+      get align(): PopoverContentPositionerProps['align'] {
+        return props.variant === 'scenery' ? 'end' : 'start'
       },
-    } satisfies PopoverPrimitive.Positioner.Props,
+      get alignOffset(): PopoverContentPositionerProps['alignOffset'] {
+        return props.variant === 'scenery' ? 0 : 10
+      },
+      get side(): PopoverContentPositionerProps['side'] {
+        return props.variant === 'scenery' ? 'top' : 'bottom'
+      },
+      get sideOffset(): PopoverContentPositionerProps['sideOffset'] {
+        return props.variant === 'scenery' ? 0 : 10
+      },
+      get trackAnchor(): PopoverContentPositionerProps['trackAnchor'] {
+        return props.variant === 'scenery' ? false : undefined
+      },
+      get collisionAvoidance(): PopoverContentPositionerProps['collisionAvoidance'] {
+        return props.variant === 'scenery' ? { align: 'none', side: 'none', fallbackAxisSide: 'none' } : undefined
+      },
+    },
     props,
   )
-  const [portal, positioner, popup, rest] = splitProps(
+  const [portal, positioner, popup, misc, rest] = splitProps(
     mergedProps,
     ['portalContainerRef'],
     [
@@ -65,49 +100,76 @@ function PopoverContent(
       'positionMethod',
       'trackAnchor',
     ],
-    ['class', 'children'],
+    ['class', 'style'],
+    ['variant'],
   )
 
   return (
-    <PopoverPrimitive.Portal container={portal.portalContainerRef} keepMounted>
-      {/* <PopoverPrimitive.Backdrop class="fixed inset-0 min-h-dvh bg-black opacity-10 transition-all duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 dark:opacity-70 supports-[-webkit-touch-callout:none]:absolute" /> */}
-      <PopoverPrimitive.Positioner {...positioner} class="isolate z-50">
-        <PopoverPrimitive.Popup
-          data-slot="popover-content"
-          class={cn(
-            'z-50 w-72 rounded-base border-2 border-border bg-main p-4 text-foreground outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all',
-            popup.class,
-          )}
-          {...rest}
-        >
-          <PopoverPrimitive.Arrow class="data-[side=bottom]:top-[-9px] data-[side=left]:right-[-14px] data-[side=left]:rotate-90 data-[side=right]:left-[-14px] data-[side=right]:-rotate-90 data-[side=top]:bottom-[-9px] data-[side=top]:rotate-180">
-            <ArrowSvg />
-          </PopoverPrimitive.Arrow>
-          {popup.children}
-        </PopoverPrimitive.Popup>
-      </PopoverPrimitive.Positioner>
-    </PopoverPrimitive.Portal>
+    <ClientOnly>
+      <PopoverPrimitive.Portal container={portal.portalContainerRef}>
+        <PopoverPrimitive.Positioner {...positioner} class="isolate z-50">
+          <PopoverPrimitive.Popup
+            data-slot="popover-content"
+            data-variant={misc.variant}
+            style={{
+              ...(typeof popup.style === 'object' ? popup.style : {}),
+              '--arrow-offset': misc.variant === 'default' ? '2px' : '0px',
+            }}
+            class={cn(
+              'group z-50 w-72 rounded-base border-2 border-border bg-card p-4 text-card-foreground outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all',
+              popup.class,
+            )}
+            {...rest}
+          />
+        </PopoverPrimitive.Positioner>
+      </PopoverPrimitive.Portal>
+    </ClientOnly>
+  )
+}
+
+function PopoverArrow(props: ComponentProps<'div'>) {
+  return (
+    <PopoverPrimitive.Arrow
+      data-slot="popover-arrow"
+      {...props}
+      class={cn(
+        'data-[side=bottom]:top-[calc(-9px+var(--arrow-offset))] data-[side=left]:right-[calc(-14px+var(--arrow-offset))] data-[side=left]:rotate-90 data-[side=right]:left-[calc(-14px+var(--arrow-offset))] data-[side=right]:-rotate-90 data-[side=top]:bottom-[calc(-9px+var(--arrow-offset))] data-[side=top]:rotate-180',
+        props.class,
+      )}
+    >
+      <ArrowSvg />
+    </PopoverPrimitive.Arrow>
   )
 }
 
 function PopoverHeader(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
-  return <div data-slot="popover-header" class={cn('flex flex-col gap-1 text-xs', local.class)} {...rest} />
+  return (
+    <ClientOnly>
+      <div data-slot="popover-header" class={cn('flex flex-col gap-1 text-xs', local.class)} {...rest} />
+    </ClientOnly>
+  )
 }
 
 function PopoverTitle(props: PopoverPrimitive.Title.Props) {
   const [local, rest] = splitProps(props, ['class'])
-  return <PopoverPrimitive.Title data-slot="popover-title" class={cn('text-sm font-medium', local.class)} {...rest} />
+  return (
+    <ClientOnly>
+      <PopoverPrimitive.Title data-slot="popover-title" class={cn('text-sm font-medium', local.class)} {...rest} />
+    </ClientOnly>
+  )
 }
 
 function PopoverDescription(props: PopoverPrimitive.Description.Props) {
   const [local, rest] = splitProps(props, ['class'])
   return (
-    <PopoverPrimitive.Description
-      data-slot="popover-description"
-      class={cn('text-muted-foreground', local.class)}
-      {...rest}
-    />
+    <ClientOnly>
+      <PopoverPrimitive.Description
+        data-slot="popover-description"
+        class={cn('text-muted-foreground', local.class)}
+        {...rest}
+      />
+    </ClientOnly>
   )
 }
 
@@ -117,7 +179,7 @@ function ArrowSvg(props: ComponentProps<'svg'>) {
       {' '}
       <path
         d="M9.66437 2.60207L4.80758 6.97318C4.07308 7.63423 3.11989 8 2.13172 8H0V10H20V8H18.5349C17.5468 8 16.5936 7.63423 15.8591 6.97318L11.0023 2.60207C10.622 2.2598 10.0447 2.25979 9.66437 2.60207Z"
-        class="fill-main"
+        class="group-data-[variant=scenery]:fill-yellow-500 fill-yellow-200"
       />{' '}
       <path
         d="M8.99542 1.85876C9.75604 1.17425 10.9106 1.17422 11.6713 1.85878L16.5281 6.22989C17.0789 6.72568 17.7938 7.00001 18.5349 7.00001L15.89 7L11.0023 2.60207C10.622 2.2598 10.0447 2.2598 9.66436 2.60207L4.77734 7L2.13171 7.00001C2.87284 7.00001 3.58774 6.72568 4.13861 6.22989L8.99542 1.85876Z"
@@ -131,54 +193,4 @@ function ArrowSvg(props: ComponentProps<'svg'>) {
   )
 }
 
-function ClientOnlyPopover(props: Parameters<typeof Popover>[0]) {
-  return (
-    <ClientOnly>
-      <Popover {...props} />
-    </ClientOnly>
-  )
-}
-function ClientOnlyPopoverContent(props: Parameters<typeof PopoverContent>[0]) {
-  return (
-    <ClientOnly>
-      <PopoverContent {...props} />
-    </ClientOnly>
-  )
-}
-function ClientOnlyPopoverDescription(props: Parameters<typeof PopoverDescription>[0]) {
-  return (
-    <ClientOnly>
-      <PopoverDescription {...props} />
-    </ClientOnly>
-  )
-}
-function ClientOnlyPopoverHeader(props: Parameters<typeof PopoverHeader>[0]) {
-  return (
-    <ClientOnly>
-      <PopoverHeader {...props} />
-    </ClientOnly>
-  )
-}
-function ClientOnlyPopoverTitle(props: Parameters<typeof PopoverTitle>[0]) {
-  return (
-    <ClientOnly>
-      <PopoverTitle {...props} />
-    </ClientOnly>
-  )
-}
-function ClientOnlyPopoverTrigger(props: Parameters<typeof PopoverTrigger>[0]) {
-  return (
-    <ClientOnly>
-      <PopoverTrigger {...props} />
-    </ClientOnly>
-  )
-}
-
-export {
-  ClientOnlyPopover as Popover,
-  ClientOnlyPopoverContent as PopoverContent,
-  ClientOnlyPopoverDescription as PopoverDescription,
-  ClientOnlyPopoverHeader as PopoverHeader,
-  ClientOnlyPopoverTitle as PopoverTitle,
-  ClientOnlyPopoverTrigger as PopoverTrigger,
-}
+export { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger, PopoverArrow }

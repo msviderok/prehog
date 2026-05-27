@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { createMemo, Index, type JSX } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { useGlobalState } from './GlobalStateContext'
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
+import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Sidebar } from 'lucide-solid'
 
 const DEBUG = false
@@ -71,11 +71,13 @@ function NodePopover(props: Scene.NodePopover) {
           }}
         />
         <PopoverContent
+          variant="scenery"
           portalContainerRef={sceneState.ref}
           {...props.positioner}
           style={contentStyle()}
           class={cn('opacity-0 scale-0', props.open && 'opacity-100 scale-100 duration-200 delay-100 ease-out')}
         >
+          <PopoverArrow />
           {props.text}
         </PopoverContent>
       </Popover>

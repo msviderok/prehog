@@ -13,7 +13,7 @@ export function MainScene(props: ParentProps<{}>) {
   return (
     <div
       ref={(el) => setSceneState('ref', el)}
-      class="relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated]"
+      class="relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated] brightness-100"
       style={{
         width: '6043px',
         height: '1080px',

@@ -1,59 +1,65 @@
-import type { PopoverContentPositionerProps } from './components/ui/popover'
+import type { PopoverContentPositionerProps } from "./components/ui/popover";
 
 declare global {
   namespace GlobalState {
     interface KeyPressed {
-      w: boolean
-      s: boolean
-      a: boolean
-      d: boolean
-      shift: boolean
+      w: boolean;
+      s: boolean;
+      a: boolean;
+      d: boolean;
+      shift: boolean;
     }
 
     interface Player {
-      ref: HTMLElement
-      rect: DOMRect
-      x: number
-      y: number
-      size: number
+      ref: HTMLElement;
+      rect: DOMRect;
+      x: number;
+      y: number;
+      size: number;
       realPosition: {
-        x: number
-        y: number
-      }
+        x: number;
+        y: number;
+      };
+    }
+
+    interface RTC {
+      ref: HTMLVideoElement | null;
+      stream: MediaStream | null;
+      pc: RTCPeerConnection;
     }
   }
 
   namespace Scene {
     interface CommonNodeProps {
-      ref: HTMLElement
-      idx: number
-      x: number
-      y: number
-      text: string
-      open: boolean
+      ref: HTMLElement;
+      idx: number;
+      x: number;
+      y: number;
+      text: string;
+      open: boolean;
     }
 
     interface NodePopover extends CommonNodeProps {
-      type: 'popover'
-      hitbox: DOMRect
-      realHitbox: DOMRect
-      positioner: PopoverContentPositionerProps
+      type: "popover";
+      hitbox: DOMRect;
+      realHitbox: DOMRect;
+      positioner: PopoverContentPositionerProps;
     }
 
-    type Node = NodePopover
+    type Node = NodePopover;
 
-    type Nodes = Node[]
+    type Nodes = Node[];
 
     interface State {
-      ref: HTMLElement
-      rect: DOMRect
-      scale: number
-      originalWidth: number
-      originalHeight: number
-      worldUnit: { x: number; y: number }
-      realSceneSize: { width: number; height: number }
+      ref: HTMLElement;
+      rect: DOMRect;
+      scale: number;
+      originalWidth: number;
+      originalHeight: number;
+      worldUnit: { x: number; y: number };
+      realSceneSize: { width: number; height: number };
     }
   }
 }
 
-export {}
+export {};
