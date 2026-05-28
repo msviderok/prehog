@@ -151,12 +151,12 @@ export function GlobalStateProvider(props: ParentProps) {
     }
 
     window.addEventListener('resize', onWindowResize)
-    window.addEventListener('beforeunload', goOffline)
+    // window.addEventListener('beforeunload', goOffline)
     window.addEventListener('focusin', goOnline)
     window.addEventListener('focusout', goOffline)
     document.addEventListener('click', onClick)
     onCleanup(() => {
-      window.removeEventListener('beforeunload', goOffline)
+      // window.removeEventListener('beforeunload', goOffline)
       window.removeEventListener('focusin', goOnline)
       window.removeEventListener('focusout', goOffline)
       window.removeEventListener('resize', onWindowResize)

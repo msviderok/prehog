@@ -1,6 +1,6 @@
 import { useQuery } from 'convex-solidjs'
 import { Headset, MessageSquareText } from 'lucide-solid'
-import { createSignal, For } from 'solid-js'
+import { createEffect, createSignal, For } from 'solid-js'
 import { api } from '../../convex/_generated/api'
 import { Chat } from './Chat'
 import { useGlobalState } from './GlobalStateContext'
@@ -24,8 +24,7 @@ export function ActionBar() {
 function ChatAction() {
   const [open, setOpen] = createSignal(true)
   const { rtc } = useGlobalState()
-
-  const { data: allUsers } = useQuery(api.users.listAllUsers, {})
+  const { data: allUsers } = useQuery(api.users.listAllUsers, {}, { initialData: [], keepPreviousData: true })
 
   return (
     <Collapsible open={open()} onOpenChange={setOpen}>
@@ -40,6 +39,7 @@ function ChatAction() {
         <CardContent>
           <For each={allUsers()}>
             {(user) => {
+              console.log(123)
               return (
                 <div class="flex gap-3 items-center">
                   <Avatar user={user} />

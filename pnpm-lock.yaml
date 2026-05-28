@@ -101,6 +101,9 @@ importers:
       '@clerk/ui':
         specifier: 'catalog:'
         version: 1.13.1(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react-dom@19.2.6(react@19.2.6))(react-native@0.85.3(@babel/core@7.29.7)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))(react@19.2.6)(typescript@6.0.3)
+      '@convex-dev/presence':
+        specifier: ^0.3.0
+        version: 0.3.0(convex@1.39.1(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))(react-dom@19.2.6(react@19.2.6))(react-native@0.85.3(@babel/core@7.29.7)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))(react@19.2.6)
       '@msviderok/base-ui-solid':
         specifier: 'catalog:'
         version: 1.0.0-beta.11(solid-js@1.9.7)
@@ -425,6 +428,20 @@ packages:
   '@cloudflare/kv-asset-handler@0.4.2':
     resolution: {integrity: sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==}
     engines: {node: '>=18.0.0'}
+
+  '@convex-dev/presence@0.3.0':
+    resolution: {integrity: sha512-adV+ao1L77u+egobyJabNwuai/0y/VgzMbqZiy+Q49JmX6fbSaiYg6FpFVACqPaq3giOfjrN2k+5mK2jTAUG0g==}
+    peerDependencies:
+      convex: ^1.24.8
+      expo-crypto: '>=14.1.0'
+      react: ~18.3.1 || ^19.0.0
+      react-dom: ~18.3.1 || ^19.0.0
+      react-native: '>=0.79.0'
+    peerDependenciesMeta:
+      expo-crypto:
+        optional: true
+      react-native:
+        optional: true
 
   '@deno/shim-deno-test@0.5.0':
     resolution: {integrity: sha512-4nMhecpGlPi0cSzT67L+Tm+GOJqvuk8gqHBziqcUQOarnuIax1z96/gJHCSIz2Z0zhxE6Rzwb3IZXPtFh51j+w==}
@@ -6398,6 +6415,14 @@ snapshots:
       - typescript
 
   '@cloudflare/kv-asset-handler@0.4.2': {}
+
+  '@convex-dev/presence@0.3.0(convex@1.39.1(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))(react-dom@19.2.6(react@19.2.6))(react-native@0.85.3(@babel/core@7.29.7)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6))(react@19.2.6)':
+    dependencies:
+      convex: 1.39.1(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6)
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+    optionalDependencies:
+      react-native: 0.85.3(@babel/core@7.29.7)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@6.0.6)
 
   '@deno/shim-deno-test@0.5.0': {}
 

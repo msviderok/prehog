@@ -106,7 +106,7 @@ function MessagesContainer(props: { chat: FunctionReturnType<typeof api.chats.by
   const { data: messages } = useQuery(
     api.chats.messages,
     () => ({ chatId: props.chat.chat._id }),
-    () => ({ enabled: props.chat.chat._id != null, initialData: [] }),
+    () => ({ enabled: props.chat.chat._id != null, initialData: [], keepPreviousData: true }),
   )
 
   createEffect(

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@clerk/ui": "catalog:",
+    "@convex-dev/presence": "^0.3.0",
     "@msviderok/base-ui-solid": "catalog:",
     "@solid-primitives/scheduled": "^1.5.3",
     "@solid-primitives/storage": "^4.3.4",
