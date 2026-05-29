@@ -4,21 +4,19 @@ import { mergeProps, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm font-base ring-offset-white transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) text-shade-(--v-color)/30 border-shade-(--v-color)/30 font-base ring-offset-white transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] disabled:pointer-events-none disabled:opacity-50 data-pressed:[--boxShadowY-dynamic:0px] data-pressed:bg-shade-(--v-color)/20 data-pressed:text-tint-(--v-color)/60 data-pressed:border-tint-(--v-color)/60 border-2 shadow-shadow hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px]',
   {
     variants: {
       variant: {
-        default:
-          'bg-primary border-2 border-border shadow-shadow hover:translate-y-boxShadowY hover:shadow-none data-panel-open:shadow-none data-panel-open:translate-y-boxShadowY data-panel-open:bg-shade-primary/10 data-panel-open:text-tint-primary/100 contrast-color-primary data-panel-open:contrast-color-shade-primary/20 data-popup-open:shadow-none data-popup-open:translate-y-boxShadowY data-popup-open:bg-shade-primary/10 data-popup-open:text-tint-primary/100 data-popup-open:contrast-color-shade-primary/20',
-        noShadow: 'text-primary-foreground bg-primary border-2 border-border',
-        reverse:
-          'text-primary-foreground bg-primary border-2 border-border hover:translate-y-reverseBoxShadowY hover:shadow-shadow',
+        default: 'v-primary',
+        plain:
+          '[--boxShadowY-dynamic:0px] translate-y-0 hover:[--boxShadowY-dynamic:0] border-transparent bg-gray-100/10 active:shadow-primary active:scale-90 ease-out duration-150',
       },
       size: {
         default: 'h-10 px-4 py-2',
-        sm: 'h-9 px-3',
-        lg: 'h-11 px-8',
-        icon: 'size-10',
+        sm: 'size-6 [&_svg]:size-3.5',
+        icon: 'size-8 [&_svg]:size-4.5',
+        'icon-xs': 'size-5 [&_svg]:size-3.5',
       },
     },
     defaultVariants: {
@@ -30,17 +28,11 @@ const buttonVariants = cva(
 
 function Button(props: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   const mergedProps = mergeProps({ variant: 'default' as const, size: 'default' as const }, props)
-  const [local, rest] = splitProps(mergedProps, ['class', 'variant', 'size'])
+  const [local, rest] = splitProps(mergedProps, ['class', 'size', 'variant'])
   return (
     <ButtonPrimitive
       data-slot="button"
-      class={cn(
-        buttonVariants({
-          variant: local.variant,
-          size: local.size,
-          class: local.class,
-        }),
-      )}
+      class={cn(buttonVariants({ size: local.size, variant: local.variant, class: local.class }))}
       {...rest}
     />
   )

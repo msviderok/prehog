@@ -1,21 +1,16 @@
-import { ClientOnly } from "@tanstack/solid-router";
-import { Tooltip as TooltipPrimitive } from "@msviderok/base-ui-solid/tooltip";
-import { mergeProps, splitProps } from "solid-js";
-
-import { cn } from "@/lib/utils";
+import { ClientOnly } from '@tanstack/solid-router'
+import { Tooltip as TooltipPrimitive } from '@msviderok/base-ui-solid/tooltip'
+import { mergeProps, splitProps } from 'solid-js'
+import { cn } from '@/lib/utils'
 
 function TooltipProvider(props: TooltipPrimitive.Provider.Props) {
-  const mergedProps = mergeProps({ delay: 0 }, props);
-  const [local, rest] = splitProps(mergedProps, ["delay"]);
+  const mergedProps = mergeProps({ delay: 0 }, props)
+  const [local, rest] = splitProps(mergedProps, ['delay'])
   return (
     <ClientOnly>
-      <TooltipPrimitive.Provider
-        data-slot="tooltip-provider"
-        delay={local.delay}
-        {...rest}
-      />
+      <TooltipPrimitive.Provider data-slot="tooltip-provider" delay={local.delay} {...rest} />
     </ClientOnly>
-  );
+  )
 }
 
 function Tooltip(props: TooltipPrimitive.Root.Props) {
@@ -23,7 +18,7 @@ function Tooltip(props: TooltipPrimitive.Root.Props) {
     <ClientOnly>
       <TooltipPrimitive.Root data-slot="tooltip" {...props} />
     </ClientOnly>
-  );
+  )
 }
 
 function TooltipTrigger(props: TooltipPrimitive.Trigger.Props) {
@@ -31,33 +26,23 @@ function TooltipTrigger(props: TooltipPrimitive.Trigger.Props) {
     <ClientOnly>
       <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
     </ClientOnly>
-  );
+  )
 }
 
 function TooltipContent(
   props: TooltipPrimitive.Popup.Props &
-    Pick<
-      TooltipPrimitive.Positioner.Props,
-      "align" | "alignOffset" | "side" | "sideOffset"
-    >,
+    Pick<TooltipPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>,
 ) {
   const mergedProps = mergeProps(
     {
-      side: "top" as const,
+      side: 'top' as const,
       sideOffset: 4,
-      align: "center" as const,
+      align: 'center' as const,
       alignOffset: 0,
     },
     props,
-  );
-  const [local, rest] = splitProps(mergedProps, [
-    "class",
-    "side",
-    "sideOffset",
-    "align",
-    "alignOffset",
-    "children",
-  ]);
+  )
+  const [local, rest] = splitProps(mergedProps, ['class', 'side', 'sideOffset', 'align', 'alignOffset', 'children'])
   return (
     <ClientOnly>
       <TooltipPrimitive.Portal>
@@ -71,7 +56,7 @@ function TooltipContent(
           <TooltipPrimitive.Popup
             data-slot="tooltip-content"
             class={cn(
-              "z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+              'z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
               local.class,
             )}
             {...rest}
@@ -82,12 +67,7 @@ function TooltipContent(
         </TooltipPrimitive.Positioner>
       </TooltipPrimitive.Portal>
     </ClientOnly>
-  );
+  )
 }
 
-export {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-};
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }

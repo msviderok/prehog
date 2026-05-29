@@ -1,68 +1,80 @@
 import { useQuery } from 'convex-solidjs'
-import { Headset, MessageSquareText } from 'lucide-solid'
-import { createEffect, createSignal, For } from 'solid-js'
+import { HeartXIcon, MessageSquareText, PhoneIcon, UsersIcon, XIcon } from 'lucide-solid'
+import { createSignal, For } from 'solid-js'
 import { api } from '../../convex/_generated/api'
 import { Chat } from './Chat'
 import { useGlobalState } from './GlobalStateContext'
 import { Avatar } from './ui/avatar'
 import { Button } from './ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
-import { Toggle } from './ui/toggle'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
+import { cn } from '@/lib/utils'
 
 export function ActionBar() {
+  const [open, setOpen] = createSignal(true)
+  const { data: allUsers } = useQuery(api.users.listAllUsers, {}, { initialData: [], keepPreviousData: true })
+
   return (
     <div class="fixed top-0 left-0 p-4 flex z-1 items-center gap-4 w-full justify-between">
       <div class="flex gap-1 items-center">
-        <ChatAction />
-        {/* <UserButton /> */}
+        <Popover
+          open={open()}
+          onOpenChange={(isOpen, e, reason) => {
+            if (reason !== 'trigger-press') return
+            setOpen(isOpen)
+          }}
+        >
+          <PopoverTrigger render={{ component: Button, size: 'icon' }}>
+            <UsersIcon />
+          </PopoverTrigger>
+
+          <PopoverContent class="flex gap-3 flex-col w-100" render={{ component: Card }}>
+            <CardHeader>
+              <CardTitle>Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <For each={allUsers()}>
+                {(user) => {
+                  return (
+                    <div class="flex gap-3 items-center">
+                      <Avatar user={user} />
+                      <span class="text-sm font-semibold">{user.fullname}</span>
+                      <div class="flex gap-2 items-center">
+                        <Chat userId={user._id} />
+                      </div>
+                    </div>
+                  )
+                }}
+              </For>
+            </CardContent>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   )
 }
 
-function ChatAction() {
-  const [open, setOpen] = createSignal(true)
-  const { rtc } = useGlobalState()
-  const { data: allUsers } = useQuery(api.users.listAllUsers, {}, { initialData: [], keepPreviousData: true })
-
+function RindAudioAction() {
+  const [open, setOpen] = createSignal(false)
   return (
-    <Collapsible open={open()} onOpenChange={setOpen}>
-      <CollapsibleTrigger>
-        <MessageSquareText />
-      </CollapsibleTrigger>
+    <Popover open={open()} onOpenChange={setOpen}>
+      <PopoverTrigger render={{ component: Button, size: 'icon' }}>
+        <PhoneIcon />
+      </PopoverTrigger>
 
-      <CollapsibleContent class="flex gap-3 flex-col w-100" render={{ component: Card }}>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
+      <PopoverContent render={(props) => <Card {...props} class={cn(props.class, 'flex gap-3 flex-col w-100 p-0!')} />}>
+        <CardHeader class="bg-red-500 p-1.5 items-center">
+          <CardTitle class="row-span-2">Audio call</CardTitle>
+
+          <CardAction>
+            <Button size="icon" onClick={() => setOpen(false)}>
+              <XIcon />
+            </Button>
+          </CardAction>
         </CardHeader>
-        <CardContent>
-          <For each={allUsers()}>
-            {(user) => {
-              console.log(123)
-              return (
-                <div class="flex gap-3 items-center">
-                  <Avatar user={user} />
-                  <span class="text-sm font-semibold">{user.fullname}</span>
-                  <div class="flex gap-2 items-center">
-                    <Chat userId={user._id} />
-                  </div>
-                </div>
-              )
-            }}
-          </For>
-        </CardContent>
-
-        {/* <CardFooter>
-              <Toggle>
-                <Headset />
-              </Toggle>
-              <Toggle>
-                <Video />
-              </Toggle>
-            </CardFooter> */}
-      </CollapsibleContent>
-    </Collapsible>
+        <CardContent></CardContent>
+      </PopoverContent>
+    </Popover>
   )
 }
 

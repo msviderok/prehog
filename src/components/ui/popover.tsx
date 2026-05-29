@@ -129,16 +129,18 @@ function PopoverContent(props: PopoverContentProps) {
 
 function PopoverArrow(props: ComponentProps<'div'>) {
   return (
-    <PopoverPrimitive.Arrow
-      data-slot="popover-arrow"
-      {...props}
-      class={cn(
-        'data-[side=bottom]:top-[calc(-9px+var(--arrow-offset))] data-[side=left]:right-[calc(-14px+var(--arrow-offset))] data-[side=left]:rotate-90 data-[side=right]:left-[calc(-14px+var(--arrow-offset))] data-[side=right]:-rotate-90 data-[side=top]:bottom-[calc(-9px+var(--arrow-offset))] data-[side=top]:rotate-180',
-        props.class,
-      )}
-    >
-      <ArrowSvg />
-    </PopoverPrimitive.Arrow>
+    <ClientOnly>
+      <PopoverPrimitive.Arrow
+        data-slot="popover-arrow"
+        {...props}
+        class={cn(
+          'data-[side=bottom]:top-[calc(-9px+var(--arrow-offset))] data-[side=left]:right-[calc(-14px+var(--arrow-offset))] data-[side=left]:rotate-90 data-[side=right]:left-[calc(-14px+var(--arrow-offset))] data-[side=right]:-rotate-90 data-[side=top]:bottom-[calc(-9px+var(--arrow-offset))] data-[side=top]:rotate-180',
+          props.class,
+        )}
+      >
+        <ArrowSvg />
+      </PopoverPrimitive.Arrow>
+    </ClientOnly>
   )
 }
 

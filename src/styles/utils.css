@@ -118,3 +118,11 @@
 @utility contrast-color-* {
   color: contrast-color(--value(--color-*, [*]));
 }
+
+@utility contrast-color-current {
+  color: contrast-color(currentColor);
+}
+
+@utility v-* {
+  --v-color: --value(--color-*, [*]);
+}

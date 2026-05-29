@@ -1,12 +1,12 @@
 import { env } from '@/env'
 import { ConvexClerkProvider } from '@/lib/integrations/convex-clerk'
+import { neobrutalism } from '@clerk/ui/themes'
 import { ErrorComponent, HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/solid-router'
 import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { neobrutalism } from '@clerk/ui/themes'
 
 export const Route = createRootRouteWithContext()({
   head: () => ({ links: [{ rel: 'stylesheet', href: styleCss }] }),

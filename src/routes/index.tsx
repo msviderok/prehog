@@ -1,3 +1,4 @@
+import { DndProvider } from '@/components/DndProvider'
 import { GlobalStateProvider } from '@/components/GlobalStateContext'
 import { MainContainer } from '@/components/MainContainer'
 import { MainScene } from '@/components/MainScene'
@@ -25,10 +26,12 @@ function Home() {
       </SignedOut>
       <SignedIn>
         <GlobalStateProvider>
-          <MainContainer>
-            <MainScene />
-            <Player />
-          </MainContainer>
+          <DndProvider>
+            <MainContainer>
+              <MainScene />
+              <Player />
+            </MainContainer>
+          </DndProvider>
         </GlobalStateProvider>
       </SignedIn>
       <ClerkLoading>

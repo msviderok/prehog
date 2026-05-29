@@ -35,6 +35,9 @@ const GlobalStateContext = createContext<{
   player: Store<GlobalState.Player>
   setPlayer: SetStoreFunction<GlobalState.Player>
 
+  floatingPanels: Store<GlobalState.FloatingPanels>
+  setFloatingPanels: SetStoreFunction<GlobalState.FloatingPanels>
+
   rtc: Store<GlobalState.RTC>
   setRtc: SetStoreFunction<GlobalState.RTC>
 }>()
@@ -102,6 +105,11 @@ export function GlobalStateProvider(props: ParentProps) {
     },
   })
 
+  const [floatingPanels, setFloatingPanels] = createStore<GlobalState.FloatingPanels>({
+    containerRef: undefined,
+    panels: {},
+  })
+
   const [rtc, setRtc] = createStore<GlobalState.RTC>({
     pc: new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }),
     ref: null,
@@ -113,8 +121,8 @@ export function GlobalStateProvider(props: ParentProps) {
   createEffect(() => localStorage.setItem(LSK_ME_POSITION, JSON.stringify({ x: player.x, y: player.y })))
   createEffect(() => {
     const root = document.documentElement
-    root.style.setProperty('--scale', `${sceneState.scale}`)
-    player.ref.style.setProperty('--running-mod', `${keyPressed.shift ? 2.5 : 1}`)
+    root?.style.setProperty('--scale', `${sceneState.scale}`)
+    player.ref?.style.setProperty('--running-mod', `${keyPressed.shift ? 2.5 : 1}`)
   })
 
   onMount(() => {
@@ -142,23 +150,9 @@ export function GlobalStateProvider(props: ParentProps) {
       // setSceneState('nodes', sceneState.nodes.length, { x, y })
     }
 
-    setOnline.mutate({ online: true })
-    function goOnline() {
-      void setOnline.mutate({ online: true })
-    }
-    function goOffline() {
-      void setOnline.mutate({ online: false })
-    }
-
     window.addEventListener('resize', onWindowResize)
-    // window.addEventListener('beforeunload', goOffline)
-    window.addEventListener('focusin', goOnline)
-    window.addEventListener('focusout', goOffline)
     document.addEventListener('click', onClick)
     onCleanup(() => {
-      // window.removeEventListener('beforeunload', goOffline)
-      window.removeEventListener('focusin', goOnline)
-      window.removeEventListener('focusout', goOffline)
       window.removeEventListener('resize', onWindowResize)
       document.removeEventListener('click', onClick)
     })
@@ -182,6 +176,9 @@ export function GlobalStateProvider(props: ParentProps) {
 
         player,
         setPlayer,
+
+        floatingPanels,
+        setFloatingPanels,
 
         rtc,
         setRtc,

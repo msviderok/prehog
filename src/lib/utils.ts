@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
-import { createMemo, createSignal, mergeProps, onMount, Show, type JSX } from 'solid-js'
+import { children, createMemo, createSignal, mergeProps, onMount, Show, type JSX } from 'solid-js'
 import { createComponent } from 'solid-js/web'
 import { twMerge } from 'tailwind-merge'
 
@@ -22,7 +22,6 @@ export function defaultProps<P, D extends Partial<P>, C extends { [K in Extract<
   props: P,
   defaults: D extends C ? D : C,
 ) {
-  // eslint-disable-next-line solid/reactivity
   return mergeProps(defaults, props) as PropsMergeWithDefault<P, D>
 }
 
@@ -63,5 +62,17 @@ export function createRectFromCoords({ x1, y1, x2, y2 }: { x1: number; y1: numbe
     toJSON() {
       return JSON.stringify(this)
     },
+  }
+}
+
+// https://github.com/solidjs/solid/issues/2478#issuecomment-2888503241
+export function childrenLazy(resolver: () => JSX.Element) {
+  const _s = Symbol()
+  let x: any = _s
+  return () => {
+    if (x === _s) {
+      x = children(resolver)
+    }
+    return x
   }
 }

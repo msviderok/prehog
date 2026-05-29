@@ -7,11 +7,12 @@ import { Button, buttonVariants } from './button'
 function Toggle(props: TogglePrimitive.Props & VariantProps<typeof buttonVariants>) {
   const mergedProps = mergeProps({ variant: 'default' as const, size: 'default' as const }, props)
   const [local, rest] = splitProps(mergedProps, ['class', 'variant', 'size'])
-  console.log(local.variant)
+  const renderProp = mergeProps({ component: Button }, rest.render)
   return (
     <TogglePrimitive
       data-slot="toggle"
-      render={{ component: Button }}
+      {...rest}
+      render={renderProp}
       class={cn(
         buttonVariants({
           variant: local.variant,
@@ -19,7 +20,6 @@ function Toggle(props: TogglePrimitive.Props & VariantProps<typeof buttonVariant
           class: local.class,
         }),
       )}
-      {...rest}
     />
   )
 }

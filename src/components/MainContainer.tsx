@@ -3,8 +3,8 @@ import { createGameLoop } from '@/lib/createGameLoop'
 import { createKeyboardListener } from '@/lib/createKeyboardListener'
 import { clamp, collisionDetected } from '@/lib/utils'
 import { createEffect, onMount, type ParentProps } from 'solid-js'
-import { VideoCall } from './VideoCall'
 import { ActionBar } from './ActionBar'
+import { ClientOnly } from '@tanstack/solid-router'
 
 const MOVEMENT_SPEED = 0.15
 const DT_MOD = 10

@@ -6,6 +6,7 @@ import { nitro } from 'nitro/vite'
 
 export default defineConfig({
   server: { port: 3000 },
-  resolve: { tsconfigPaths: true },
-  plugins: [nitro(), tailwindcss(), tanstackStart(), solidPlugin({ ssr: true })],
+  logLevel: 'error',
+  resolve: { tsconfigPaths: true, external: ['@dnd-kit/solid'] },
+  plugins: [nitro(), tailwindcss(), tanstackStart({}), solidPlugin({ ssr: true })],
 })
