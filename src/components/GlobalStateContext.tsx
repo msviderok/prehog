@@ -13,6 +13,7 @@ import {
 } from 'solid-js'
 import { createStore, type SetStoreFunction, type Store } from 'solid-js/store'
 import { api } from '../../convex/_generated/api'
+import { makePersisted } from '@solid-primitives/storage'
 
 const LSK_SAMPLING = 'sampling'
 const LSK_BATCHING = 'batching'
@@ -43,8 +44,6 @@ const GlobalStateContext = createContext<{
 }>()
 
 export function GlobalStateProvider(props: ParentProps) {
-  const setOnline = useMutation(api.users.setOnline)
-
   const [samplingInterval, setSamplingInterval] = createSignal(10)
   const [batchInterval, setBatchInterval] = createSignal(100)
 
@@ -105,10 +104,13 @@ export function GlobalStateProvider(props: ParentProps) {
     },
   })
 
-  const [floatingPanels, setFloatingPanels] = createStore<GlobalState.FloatingPanels>({
-    containerRef: undefined,
-    panels: {},
-  })
+  const [floatingPanels, setFloatingPanels] = makePersisted(
+    createStore<GlobalState.FloatingPanels>({
+      containerRef: undefined,
+      panels: {},
+    }),
+    { name: 'floating-panels' },
+  )
 
   const [rtc, setRtc] = createStore<GlobalState.RTC>({
     pc: new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }),

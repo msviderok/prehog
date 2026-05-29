@@ -1,9 +1,8 @@
 import { cn } from '@/lib/utils'
-import { useDraggable } from '@dnd-kit/solid'
 import { debounce, throttle } from '@solid-primitives/scheduled'
 import { useMutation, useQuery } from 'convex-solidjs'
 import type { FunctionReturnType } from 'convex/server'
-import { GripVerticalIcon, LoaderCircle, SendHorizontal } from 'lucide-solid'
+import { GripVerticalIcon, LoaderCircle, PhoneIcon, SendHorizontal, XIcon } from 'lucide-solid'
 import { createEffect, createMemo, createSignal, For, on, Show } from 'solid-js'
 import { produce } from 'solid-js/store'
 import { Portal } from 'solid-js/web'
@@ -16,82 +15,8 @@ import { Card, CardAction, CardContent, CardFooter, CardHeader } from './ui/card
 import { Textarea } from './ui/textarea'
 import { Toggle } from './ui/toggle'
 
-export function ChatCard(props: { id: string; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
-  const [text, setText] = createSignal('')
-  const { floatingPanels } = useGlobalState()
-  const { ref, handleRef } = useDraggable({ id: props.id })
-
-  const sendMessage = useMutation(api.chats.sendMessage)
-  const signalMeTyping = useMutation(api.chats.signalTyping)
-
-  const signalTypingStart = throttle(() => {
-    signalMeTyping.mutate({ isTyping: true, memberId: props.chat.myMember._id })
-  }, 500)
-  const signalTypingEnd = debounce(() => {
-    signalMeTyping.mutate({ isTyping: false, memberId: props.chat.myMember._id })
-  }, 1000)
-
-  const panelPosition = createMemo(() => floatingPanels.panels[props.id] ?? { x: 0, y: 0 })
-
-  return (
-    <Portal mount={floatingPanels.containerRef}>
-      <Card
-        ref={ref}
-        style={{ transform: `translate(${panelPosition().x}px, ${panelPosition().y}px)` }}
-        class={cn(
-          'w-80 shadow-[0_0_5px_3px] shadow-transparent py-0! focus-within:border-tint-primary/10 focus-within:shadow-shade-primary/30 fixed top-0 left-0 z-1000',
-        )}
-      >
-        <CardHeader ref={handleRef} class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
-          <div class="flex gap-2.5 items-center">
-            <Avatar user={props.chat.contact} />
-            <div class="flex flex-col gap-0">
-              <span>{props.chat.contact.fullname}</span>
-              <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
-                {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
-              </span>
-            </div>
-          </div>
-
-          <CardAction class="self-center">
-            <Button variant="plain" size="sm" class="v-transparent cursor-move">
-              <GripVerticalIcon />
-            </Button>
-          </CardAction>
-        </CardHeader>
-
-        <MessagesContainer chat={props.chat} />
-
-        <CardFooter class="p-0">
-          <Textarea
-            id={`textarea-${props.id}`}
-            value={text()}
-            onInput={(e) => setText(e.target.value)}
-            placeholder="Write a message..."
-            disabled={sendMessage.isLoading()}
-            onKeyDown={async (e) => {
-              signalTypingStart()
-              signalTypingEnd()
-
-              if (e.key === 'Enter') {
-                await sendMessage.mutateAsync({
-                  chatId: props.chat.chat._id,
-                  chatMemberId: props.chat.myMember._id,
-                  body: text(),
-                })
-                setText('')
-              }
-            }}
-          />
-        </CardFooter>
-      </Card>
-    </Portal>
-  )
-}
-
 export function Chat(props: { userId: Id<'users'> }) {
   const id = `chat-${props.userId}`
-  const [open, setOpen] = createSignal(false)
   const { floatingPanels, setFloatingPanels } = useGlobalState()
 
   const chat = useQuery(api.chats.byUserId, { userId: props.userId })
@@ -103,7 +28,6 @@ export function Chat(props: { userId: Id<'users'> }) {
       <Toggle
         size="icon"
         disabled={isLoadingChat()}
-        pressed={open()}
         onPressedChange={(pressed, e) => {
           if (pressed) {
             const rect = (e.target as HTMLButtonElement).getBoundingClientRect()
@@ -114,7 +38,6 @@ export function Chat(props: { userId: Id<'users'> }) {
               }),
             )
 
-            setOpen(true)
             void initChat.mutate({ contactId: props.userId })
           }
         }}
@@ -122,12 +45,75 @@ export function Chat(props: { userId: Id<'users'> }) {
         {isLoadingChat() ? <LoaderCircle /> : <SendHorizontal />}
       </Toggle>
 
-      <Show when={chat.data()}>{(chatData) => <ChatCard id={id} chat={chatData()} />}</Show>
+      <Show when={floatingPanels.panels[id] != null && chat.data()}>
+        {(chatData) => (
+          <ChatCard
+            id={id}
+            chat={chatData()}
+            onClose={() =>
+              setFloatingPanels(
+                'panels',
+                produce((state) => {
+                  delete state[id]
+                }),
+              )
+            }
+          />
+        )}
+      </Show>
     </>
   )
 }
 
-function MessagesContainer(props: { chat: FunctionReturnType<typeof api.chats.byUserId> }) {
+function ChatCard(props: { id: string; onClose: () => void; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
+  let cardRef: HTMLElement | undefined
+  const { floatingPanels } = useGlobalState()
+
+  createEffect(() => {
+    if (cardRef) {
+      cardRef.style.transform = `translate(${floatingPanels.panels[props.id].x ?? 0}px, ${floatingPanels.panels[props.id].y ?? 0}px)`
+    }
+  })
+
+  return (
+    <Portal mount={floatingPanels.containerRef}>
+      <Card id={props.id} floating ref={(el) => (cardRef = el)} class="w-80">
+        <CardHeader class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
+          <div class="flex gap-2.5 items-center">
+            <Avatar user={props.chat.contact} />
+            <div class="flex flex-col gap-0">
+              <span>{props.chat.contact.fullname}</span>
+              <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
+                {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center self-center gap-2">
+            <CardAction>
+              <Toggle variant="outline" size="sm" class="v-secondary">
+                <PhoneIcon />
+              </Toggle>
+            </CardAction>
+            <CardAction>
+              <Button variant="plain" size="sm" onClick={props.onClose}>
+                <XIcon />
+              </Button>
+            </CardAction>
+          </div>
+        </CardHeader>
+
+        <ChatMessages chat={props.chat} />
+
+        <CardFooter class="p-0">
+          <ChatTextarea id={props.id} chat={props.chat} />
+        </CardFooter>
+      </Card>
+    </Portal>
+  )
+}
+
+function ChatMessages(props: { chat: FunctionReturnType<typeof api.chats.byUserId> }) {
   let ref!: HTMLDivElement
   let mounted = false
   const { data: messages } = useQuery(
@@ -150,7 +136,7 @@ function MessagesContainer(props: { chat: FunctionReturnType<typeof api.chats.by
   )
 
   return (
-    <CardContent ref={ref} class="max-h-80 overflow-auto">
+    <CardContent ref={(el) => (ref = el)} class="max-h-80 overflow-auto">
       <div class="grid auto-rows-auto min-h-full gap-0.5 *:[overflow-anchor:none]">
         <For each={messages()}>
           {(message) => (
@@ -168,5 +154,42 @@ function MessagesContainer(props: { chat: FunctionReturnType<typeof api.chats.by
         <div class="[overflow-anchor:auto]! h-px" />
       </div>
     </CardContent>
+  )
+}
+
+function ChatTextarea(props: { id: string; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
+  const [text, setText] = createSignal('')
+  const sendMessage = useMutation(api.chats.sendMessage)
+  const signalMeTyping = useMutation(api.chats.signalTyping)
+
+  const signalTypingStart = throttle(() => {
+    signalMeTyping.mutate({ isTyping: true, memberId: props.chat.myMember._id })
+  }, 500)
+  const signalTypingEnd = debounce(() => {
+    signalMeTyping.mutate({ isTyping: false, memberId: props.chat.myMember._id })
+  }, 1000)
+
+  return (
+    <Textarea
+      id={`textarea-${props.id}`}
+      name="message"
+      value={text()}
+      onInput={(e) => setText(e.target.value)}
+      placeholder="Write a message..."
+      disabled={sendMessage.isLoading()}
+      onKeyDown={async (e) => {
+        signalTypingStart()
+        signalTypingEnd()
+
+        if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && text()) {
+          await sendMessage.mutateAsync({
+            chatId: props.chat.chat._id,
+            chatMemberId: props.chat.myMember._id,
+            body: text(),
+          })
+          setText('')
+        }
+      }}
+    />
   )
 }

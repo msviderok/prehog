@@ -1,7 +1,7 @@
-import { env } from "@/env";
-import { useAuth } from "clerk-solidjs-tanstack-start";
-import { ConvexProvider, setupConvex, useQuery } from "convex-solidjs";
-import type { ConvexClient } from "convex/browser";
+import { env } from '@/env'
+import { useAuth } from 'clerk-solidjs-tanstack-start'
+import { ConvexProvider, setupConvex, useQuery } from 'convex-solidjs'
+import type { ConvexClient } from 'convex/browser'
 import {
   createContext,
   createEffect,
@@ -11,172 +11,149 @@ import {
   useContext,
   type Accessor,
   type ParentProps,
-} from "solid-js";
-import { api } from "../../../convex/_generated/api";
+} from 'solid-js'
+import { api } from '../../../convex/_generated/api'
 
-const CONVEX_URL = env.VITE_CONVEX_URL;
-if (!CONVEX_URL) {
-  console.error("missing envar VITE_CONVEX_URL");
+if (!env.VITE_CONVEX_URL) {
+  console.error('Missing: VITE_CONVEX_URL')
 }
 
-type ConvexClerkAuthState = {
-  isAuthenticated: Accessor<boolean>;
-  isLoading: Accessor<boolean>;
-};
-
-const ConvexClerkAuthContext = createContext<ConvexClerkAuthState>();
+const ConvexClerkAuthContext = createContext<{
+  isAuthenticated: Accessor<boolean>
+  isLoading: Accessor<boolean>
+}>()
 
 type ConvexClientWithNestedAuth = ConvexClient & {
   client: {
-    clearAuth: () => void;
-    setAuth: ConvexClient["setAuth"];
-  };
-};
+    clearAuth: () => void
+    setAuth: ConvexClient['setAuth']
+  }
+}
 
 function decodeJwtPayload(token: string) {
-  const [, payload] = token.split(".");
+  const [, payload] = token.split('.')
 
   if (!payload) {
-    return null;
+    return null
   }
 
   try {
-    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
-      aud?: string | string[];
-      azp?: string;
-      exp?: number;
-      iss?: string;
-      sub?: string;
-    };
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as {
+      aud?: string | string[]
+      azp?: string
+      exp?: number
+      iss?: string
+      sub?: string
+    }
   } catch {
-    return null;
+    return null
   }
 }
 
 function hasConvexAudience(token: string) {
-  const payload = decodeJwtPayload(token);
-  const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : [];
-  return audiences.includes("convex");
+  const payload = decodeJwtPayload(token)
+  const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : []
+  return audiences.includes('convex')
 }
 
-function useConvexClerkAuth() {
-  const context = useContext(ConvexClerkAuthContext);
-
-  if (!context) {
-    throw new Error("useConvexClerkAuth must be used within ConvexClerkProvider");
-  }
-
-  return context;
-}
-
-export function useCurrentUser() {
-  const { isLoading, isAuthenticated } = useConvexClerkAuth();
-  const user = useQuery(api.users.current, {});
-
-  // Combine the authentication state with the user existence check
-  return {
-    data: user.data,
-    get isLoading() {
-      return isLoading() || (isAuthenticated() && user === null);
-    },
-    get isAuthenticated() {
-      return isAuthenticated() && user !== null;
-    },
-  };
+export function useConvexClerkAuth() {
+  const context = useContext(ConvexClerkAuthContext)
+  if (!context) throw new Error('useConvexClerkAuth must be used within ConvexClerkProvider')
+  return context
 }
 
 export function ConvexClerkProvider(props: ParentProps) {
-  const client = setupConvex(CONVEX_URL);
-  const auth = useAuth();
-  const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null);
-  const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false);
-  const isLoading = createMemo(() => !hasResolvedInitialAuth());
-  const isAuthenticated = createMemo(() => !!(auth.isSignedIn() && isConvexAuthenticated()));
+  const client = setupConvex(env.VITE_CONVEX_URL)
+  const auth = useAuth()
+  const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
+  const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false)
+  const isLoading = createMemo(() => !hasResolvedInitialAuth())
+  const isAuthenticated = createMemo(() => !!(auth.isSignedIn() && isConvexAuthenticated()))
   const authBindingKey = createMemo(() => {
     if (!auth.isLoaded()) {
-      return null;
+      return null
     }
 
     if (!auth.isSignedIn()) {
-      return "signed-out";
+      return 'signed-out'
     }
 
     return JSON.stringify({
       orgId: auth.orgId() ?? null,
       orgRole: auth.orgRole() ?? null,
-    });
-  });
+    })
+  })
 
-  const fetchAccessToken = async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
+  async function fetchAccessToken({ forceRefreshToken }: { forceRefreshToken: boolean }) {
     try {
-      const token = await auth.getToken({ template: "convex", skipCache: forceRefreshToken });
+      const token = await auth.getToken({ template: 'convex', skipCache: forceRefreshToken })
 
       if (token && !hasConvexAudience(token)) {
-        return null;
+        return null
       }
 
-      return token;
+      return token
     } catch {
-      return null;
+      return null
     }
-  };
+  }
 
-  let releaseAuthBinding: (() => void) | undefined;
-  let currentBindingKey: string | null = null;
+  let releaseAuthBinding: (() => void) | undefined
+  let currentBindingKey: string | null = null
 
   createEffect(() => {
-    if (typeof window === "undefined") {
-      return;
+    if (typeof window === 'undefined') {
+      return
     }
 
-    const authClient = (client as ConvexClientWithNestedAuth).client;
-    const bindingKey = authBindingKey();
-    const isLoaded = auth.isLoaded();
-    const isSignedIn = auth.isSignedIn() ?? false;
+    const authClient = (client as ConvexClientWithNestedAuth).client
+    const bindingKey = authBindingKey()
+    const isLoaded = auth.isLoaded()
+    const isSignedIn = auth.isSignedIn() ?? false
 
     if (!isLoaded) {
-      return;
+      return
     }
 
-    if (!isSignedIn || bindingKey === "signed-out") {
-      releaseAuthBinding?.();
-      releaseAuthBinding = undefined;
-      currentBindingKey = "signed-out";
-      authClient.clearAuth();
-      setIsConvexAuthenticated(false);
-      setHasResolvedInitialAuth(true);
-      return;
+    if (!isSignedIn || bindingKey === 'signed-out') {
+      releaseAuthBinding?.()
+      releaseAuthBinding = undefined
+      currentBindingKey = 'signed-out'
+      authClient.clearAuth()
+      setIsConvexAuthenticated(false)
+      setHasResolvedInitialAuth(true)
+      return
     }
 
     if (bindingKey === currentBindingKey) {
-      return;
+      return
     }
 
-    releaseAuthBinding?.();
-    currentBindingKey = bindingKey;
+    releaseAuthBinding?.()
+    currentBindingKey = bindingKey
 
-    let isCurrentBinding = true;
+    let isCurrentBinding = true
 
     authClient.setAuth(fetchAccessToken, (backendReportsIsAuthenticated) => {
       if (isCurrentBinding) {
-        setIsConvexAuthenticated(backendReportsIsAuthenticated);
-        setHasResolvedInitialAuth(true);
+        setIsConvexAuthenticated(backendReportsIsAuthenticated)
+        setHasResolvedInitialAuth(true)
       }
-    });
+    })
 
     releaseAuthBinding = () => {
-      isCurrentBinding = false;
-      authClient.clearAuth();
-    };
-  });
+      isCurrentBinding = false
+      authClient.clearAuth()
+    }
+  })
 
   onCleanup(() => {
-    releaseAuthBinding?.();
-  });
+    releaseAuthBinding?.()
+  })
 
   return (
     <ConvexClerkAuthContext.Provider value={{ isAuthenticated, isLoading }}>
       <ConvexProvider client={client}>{props.children}</ConvexProvider>
     </ConvexClerkAuthContext.Provider>
-  );
+  )
 }

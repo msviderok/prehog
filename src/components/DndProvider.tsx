@@ -4,7 +4,7 @@ import { DragDropProvider } from '@dnd-kit/solid'
 import { type ParentProps } from 'solid-js'
 import { produce } from 'solid-js/store'
 import { useGlobalState } from './GlobalStateContext'
-import { Feedback } from '@dnd-kit/dom'
+import { Feedback, PointerSensor } from '@dnd-kit/dom'
 
 export function DndProvider(props: ParentProps) {
   const { setFloatingPanels } = useGlobalState()
@@ -13,6 +13,13 @@ export function DndProvider(props: ParentProps) {
     <DragDropProvider
       modifiers={[SnapModifier.configure({ size: 1 }), RestrictToWindow]}
       plugins={(defaults) => [...defaults, Feedback.configure({ feedback: 'move' })]}
+      sensors={[
+        PointerSensor.configure({
+          preventActivation(e) {
+            return e.target instanceof Element && e.target.closest('[data-no-drag]') !== null
+          },
+        }),
+      ]}
       onDragEnd={(e) => {
         if (!e.operation.shape || !e.operation.source) return
         const { source, shape } = e.operation
