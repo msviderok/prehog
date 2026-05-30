@@ -1,9 +1,13 @@
 import { cn } from '@/lib/utils'
 import { useDraggable } from '@dnd-kit/solid'
 import { ClientOnly } from '@tanstack/solid-router'
+import { XIcon } from 'lucide-solid'
 import {
   createContext,
+  createEffect,
+  createMemo,
   mergeProps,
+  Show,
   splitProps,
   useContext,
   type Accessor,
@@ -12,21 +16,20 @@ import {
 } from 'solid-js'
 import { Dynamic, Portal, untrack } from 'solid-js/web'
 import { useGlobalState } from '../GlobalStateContext'
+import { Button } from './button'
 
 type UseDraggableOutput = ReturnType<typeof useDraggable>
 
-const CardContext = createContext<
-  | {
-      draggable: UseDraggableOutput | undefined
-      isOpen: Accessor<boolean>
-    }
-  | undefined
->()
+interface CardContextState {
+  draggable: UseDraggableOutput | undefined
+  isOpen: Accessor<boolean>
+}
+
+const CardContext = createContext<CardContextState | undefined>()
 
 function Card(
-  props: Omit<ComponentProps<'div'>, 'id'> & {
-    size?: 'default' | 'sm'
-  } & (
+  props: Omit<ComponentProps<'div'>, 'id'> &
+    (
       | {
           /**
            * @static **Not reactive**. When `true`, it will use the `useDraggable` hook from `@dnd-kit/solid` to make the card draggable.
@@ -43,38 +46,62 @@ function Card(
         }
     ),
 ) {
-  const mergedProps = mergeProps({ size: 'sm' as const, floating: false }, props)
-  const [local, rest] = splitProps(mergedProps, ['class', 'size', 'floating', 'ref', 'id'])
+  let ref!: HTMLDivElement
+  const mergedProps = mergeProps({ floating: false }, props)
+  const [local, rest] = splitProps(mergedProps, ['class', 'floating', 'ref', 'id'])
+  const { isFloatingPanelOpen, getFloatingPanel } = useGlobalState()
   const isFloating = untrack(() => props.floating)
-  const { isFloatingPanelOpen } = useGlobalState()
 
-  const context = {
-    draggable: isFloating
-      ? useDraggable({
-          get id() {
-            return local.id!
-          },
-        })
-      : undefined,
+  const context: CardContextState = {
+    draggable: undefined,
     isOpen: () => (local.id ? isFloatingPanelOpen(local.id) : false),
+  }
+
+  if (isFloating) {
+    context.draggable = useDraggable({
+      get id() {
+        return local.id!
+      },
+    })
+
+    createEffect(() => {
+      if (ref && local.id) {
+        const panel = getFloatingPanel(local.id)
+        if (!panel) return
+        ref.style.transform = `translate(${panel.x ?? 0}px, ${panel.y ?? 0}px)`
+      }
+    })
   }
 
   return (
     <ClientOnly>
       <CardContext.Provider value={context}>
-        <Dynamic component={(p: ParentProps) => (isFloating ? <Portal>{p.children}</Portal> : <>{p.children}</>)}>
+        <Dynamic
+          component={(p: ParentProps) =>
+            isFloating ? (
+              <Portal>
+                <Show when={isFloatingPanelOpen(local.id!)}>{p.children}</Show>
+              </Portal>
+            ) : (
+              <>{p.children}</>
+            )
+          }
+        >
           <div
             data-slot="card"
-            data-size={local.size}
             data-floating={local.floating}
             id={local.id}
+            onClick={(e) => {
+              e.stopPropagation()
+            }}
             class={cn(
-              'group/card flex flex-col gap-4 overflow-hidden border-2 border-input/30 rounded-base bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-base *:[img:last-child]:rounded-b-base',
+              'group/card flex flex-col overflow-hidden border-2 border-input/30 rounded-base bg-card text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-base *:[img:last-child]:rounded-b-base',
               local.floating &&
                 'shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-primary/10 focus-within:border-tint-primary/10 data-dnd-dragging:not-data-dnd-dropping:border-tint-primary/10 focus-within:shadow-shade-primary/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-primary/30 focus:shadow-shade-primary/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0',
               local.class,
             )}
             ref={(el) => {
+              ref = el
               if (typeof local.ref === 'function') {
                 local.ref(el)
               } else {
@@ -100,7 +127,7 @@ function CardHeader(props: ComponentProps<'div'>) {
       <div
         data-slot="card-header"
         class={cn(
-          'group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-base px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3 select-none',
+          'group/card-header @container/card-header grid auto-rows-min items-center gap-1 rounded-t-base px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] select-none border-input/10 border-b py-2',
           local.class,
         )}
         ref={(el) => {
@@ -123,11 +150,7 @@ function CardTitle(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
   return (
     <ClientOnly>
-      <div
-        data-slot="card-title"
-        class={cn('text-base leading-none font-medium group-data-[size=sm]/card:text-sm', local.class)}
-        {...rest}
-      />
+      <div data-slot="card-title" class={cn('leading-none font-medium text-sm', local.class)} {...rest} />
     </ClientOnly>
   )
 }
@@ -167,11 +190,21 @@ function CardAction(componentProps: ComponentProps<'div'>) {
   )
 }
 
+function CardCloseAction(componentProps: ComponentProps<'div'>) {
+  return (
+    <CardAction {...componentProps}>
+      <Button variant="plain" size="icon-xs" class="hover:[&_svg]:rotate-90 focus:[&_svg]:rotate-90">
+        <XIcon />
+      </Button>
+    </CardAction>
+  )
+}
+
 function CardContent(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
   return (
     <ClientOnly>
-      <div data-slot="card-content" class={cn('px-4 group-data-[size=sm]/card:px-3', local.class)} {...rest} />
+      <div data-slot="card-content" class={cn('px-3', local.class)} {...rest} />
     </ClientOnly>
   )
 }
@@ -182,14 +215,11 @@ function CardFooter(props: ComponentProps<'div'>) {
     <ClientOnly>
       <div
         data-slot="card-footer"
-        class={cn(
-          'flex items-center rounded-b-base border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3',
-          local.class,
-        )}
+        class={cn('flex items-center rounded-b-base border-t border-input/10 p-3', local.class)}
         {...rest}
       />
     </ClientOnly>
   )
 }
 
-export { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
+export { Card, CardAction, CardCloseAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }

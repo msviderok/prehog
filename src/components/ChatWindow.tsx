@@ -2,94 +2,52 @@ import { cn } from '@/lib/utils'
 import { debounce, throttle } from '@solid-primitives/scheduled'
 import { useMutation, useQuery } from 'convex-solidjs'
 import type { FunctionReturnType } from 'convex/server'
-import { LoaderCircle, SendHorizontal, XIcon } from 'lucide-solid'
-import { createEffect, createMemo, createSignal, For, on, Show } from 'solid-js'
+import { createEffect, createSignal, For, on, Show } from 'solid-js'
 import { api } from '../../convex/_generated/api'
-import type { Id } from '../../convex/_generated/dataModel'
 import { AudioCall } from './AudioCall'
 import { useGlobalState } from './GlobalStateContext'
 import { Avatar } from './ui/avatar'
-import { Button } from './ui/button'
-import { Card, CardAction, CardContent, CardFooter, CardHeader } from './ui/card'
+import { Card, CardAction, CardCloseAction, CardContent, CardFooter, CardHeader } from './ui/card'
 import { Textarea } from './ui/textarea'
-import { Toggle } from './ui/toggle'
 
-export function ChatWindow(props: { userId: Id<'users'> }) {
-  const id = `chat-${props.userId}`
-  const { floatingPanels, openFloatingPanel } = useGlobalState()
+type Chat = FunctionReturnType<typeof api.users.usersWithChat>[number]['chat']
 
-  const chat = useQuery(api.chats.byUserId, { userId: props.userId })
-  const initChat = useMutation(api.chats.initChat)
-  const isLoadingChat = createMemo(() => chat.isLoading() || initChat.isLoading())
+export function ChatWindow(props: { id: string; chat: Chat }) {
+  const { isFloatingPanelOpen, closeFloatingPanel } = useGlobalState()
 
   return (
-    <>
-      <Toggle
-        size="icon"
-        disabled={isLoadingChat()}
-        onPressedChange={(pressed, e) => {
-          if (pressed) {
-            const rect = (e.target as HTMLElement).getBoundingClientRect()
-            openFloatingPanel(id, { x: rect.left, y: rect.top })
-            void initChat.mutate({ contactId: props.userId })
-          }
-        }}
-      >
-        {isLoadingChat() ? <LoaderCircle /> : <SendHorizontal />}
-      </Toggle>
-
-      <Show when={floatingPanels.panels[id] != null && chat.data()}>
-        {(chatData) => <ChatCard id={id} chat={chatData()} />}
-      </Show>
-    </>
-  )
-}
-
-function ChatCard(props: { id: string; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
-  let cardRef: HTMLElement | undefined
-  const { floatingPanels, closeFloatingPanel } = useGlobalState()
-
-  createEffect(() => {
-    if (cardRef) {
-      cardRef.style.transform = `translate(${floatingPanels.panels[props.id].x ?? 0}px, ${floatingPanels.panels[props.id].y ?? 0}px)`
-    }
-  })
-
-  return (
-    <Card floating id={props.id} ref={(el) => (cardRef = el)} class="w-80">
-      <CardHeader class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
-        <div class="flex gap-2.5 items-center">
-          <Avatar user={props.chat.contact} />
-          <div class="flex flex-col gap-0">
-            <span>{props.chat.contact.fullname}</span>
-            <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
-              {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
-            </span>
+    <Show when={isFloatingPanelOpen(props.id)}>
+      <Card floating id={props.id} class="w-80">
+        <CardHeader class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
+          <div class="flex gap-2.5 items-center">
+            <Avatar user={props.chat.contact} />
+            <div class="flex flex-col gap-0">
+              <span>{props.chat.contact.fullname}</span>
+              <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
+                {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div class="flex items-center self-center gap-2">
-          <CardAction>
-            <AudioCall chat={props.chat} />
-          </CardAction>
-          <CardAction>
-            <Button variant="plain" size="sm" onClick={() => closeFloatingPanel(props.id)}>
-              <XIcon />
-            </Button>
-          </CardAction>
-        </div>
-      </CardHeader>
+          <div class="flex items-center self-center gap-2">
+            <CardAction>
+              <AudioCall chat={props.chat} />
+            </CardAction>
+            <CardCloseAction onClick={() => closeFloatingPanel(props.id)} />
+          </div>
+        </CardHeader>
 
-      <ChatMessages chat={props.chat} />
+        <ChatMessages chat={props.chat} />
 
-      <CardFooter class="p-0">
-        <ChatTextarea id={props.id} chat={props.chat} />
-      </CardFooter>
-    </Card>
+        <CardFooter class="p-0">
+          <ChatTextarea id={props.id} chat={props.chat} />
+        </CardFooter>
+      </Card>
+    </Show>
   )
 }
 
-function ChatMessages(props: { chat: FunctionReturnType<typeof api.chats.byUserId> }) {
+function ChatMessages(props: { chat: Chat }) {
   let ref!: HTMLDivElement
   let mounted = false
   const { data: messages } = useQuery(
@@ -133,7 +91,7 @@ function ChatMessages(props: { chat: FunctionReturnType<typeof api.chats.byUserI
   )
 }
 
-function ChatTextarea(props: { id: string; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
+function ChatTextarea(props: { id: string; chat: Chat }) {
   const [text, setText] = createSignal('')
   const sendMessage = useMutation(api.chats.sendMessage)
   const signalMeTyping = useMutation(api.chats.signalTyping)

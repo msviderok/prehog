@@ -15,7 +15,9 @@ function Avatar(props: { user: Doc<'users'> }) {
       <AvatarPrimitive.Root
         data-slot="avatar"
         data-size="sm"
-        class={cn('group/avatar relative flex size-7 shrink-0 rounded-full outline-2 outline-border items-center')}
+        class={cn(
+          'group/avatar -top-0.5 relative flex size-7 shrink-0 rounded-full outline-2 outline-border items-center select-none',
+        )}
       >
         <AvatarImage src={props.user.avatar} />
         <AvatarFallback>{getUserFallback()}</AvatarFallback>

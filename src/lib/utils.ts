@@ -87,3 +87,7 @@ export function callEventHandler<T, E extends Event>(
     handler[0](handler[1], event)
   }
 }
+
+export function getPanelId(id: string, type: 'chat' | 'rtc') {
+  return `${type}-${id}`
+}

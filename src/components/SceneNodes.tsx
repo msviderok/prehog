@@ -62,7 +62,6 @@ function NodePopover(props: GlobalState.SceneNode) {
         class={cn('absolute top-0 left-0', DEBUG && 'border-2 border-purple-500')}
         style={realTriggerBoxCoords()}
         ref={(el) => {
-          console.log('yes')
           setSceneState('nodes', props.idx, 'ref', el)
         }}
       />

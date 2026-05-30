@@ -4,28 +4,34 @@ import { PhoneIcon, XIcon } from 'lucide-solid'
 import { createSignal } from 'solid-js'
 import { api } from '../../convex/_generated/api'
 import { Toggle } from './ui/toggle'
-import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
+import { Card, CardAction, CardCloseAction, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
+import { getPanelId } from '@/lib/utils'
+import { useGlobalState } from './GlobalStateContext'
 
 export function AudioCall(props: { chat: FunctionReturnType<typeof api.chats.byUserId> }) {
-  const [open, setOpen] = createSignal(false)
+  const id = getPanelId(props.chat.chat._id, 'rtc')
   const initCall = useMutation(api.calls.initCall)
+  const { openFloatingPanel, closeFloatingPanel, isFloatingPanelOpen } = useGlobalState()
 
   return (
     <>
-      <Toggle variant="outline" size="sm" class="v-secondary" pressed={open()} onPressedChange={setOpen}>
+      <Toggle
+        variant="outline"
+        size="icon-xs"
+        class="v-secondary"
+        pressed={isFloatingPanelOpen(id)}
+        disabled={isFloatingPanelOpen(id)}
+        onClick={(e) => openFloatingPanel(id, e.target)}
+      >
         <PhoneIcon />
       </Toggle>
 
-      <Card floating id={`rtc-call-${props.chat.chat._id}`}>
+      <Card floating id={id}>
         <CardHeader class="bg-red-500 p-1.5 items-center">
           <CardTitle class="row-span-2">Audio call</CardTitle>
 
-          <CardAction>
-            <Button size="icon">
-              <XIcon />
-            </Button>
-          </CardAction>
+          <CardCloseAction onClick={() => closeFloatingPanel(id)} />
         </CardHeader>
         <CardContent>Content</CardContent>
         <CardFooter>Footer</CardFooter>

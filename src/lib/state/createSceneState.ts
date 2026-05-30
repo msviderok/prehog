@@ -12,17 +12,19 @@ export function createSceneState() {
     originalWidth: 0,
     originalHeight: 0,
     scale: 1,
-    nodes: SCENE_NODES.map((node, idx) => {
-      const newNode = { ...node }
-      ;(newNode as any).idx = idx
-      Object.defineProperty(newNode, 'realHitbox', {
-        configurable: true,
-        get() {
-          return this.ref.getBoundingClientRect()
+    nodes: SCENE_NODES.map((node, idx) =>
+      Object.assign(
+        {
+          idx,
+          open: false,
+          ref: null as unknown as HTMLElement,
+          get realHitbox() {
+            return this.ref.getBoundingClientRect()
+          },
         },
-      })
-      return newNode
-    }),
+        node,
+      ),
+    ),
     get rect() {
       return this.ref.getBoundingClientRect()
     },
@@ -81,8 +83,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'top', align: 'start' } as PopoverContentPositionerProps,
     text: 'yo, dawg',
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.15, y1: 0.75, x2: 0.25, y2: 1 }),
   },
   {
@@ -91,8 +91,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'left', align: 'end' } as PopoverContentPositionerProps,
     text: 'oi, mate',
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.2, y1: 0.75, x2: 0.28, y2: 1 }),
   },
   {
@@ -101,8 +99,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'right', align: 'center' } as PopoverContentPositionerProps,
     text: 'wazzup, fam',
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.44, y1: 0.75, x2: 0.53, y2: 1 }),
   },
   {
@@ -111,8 +107,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'top', align: 'end' } as PopoverContentPositionerProps,
     text: 'sup, bro',
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.48, y1: 0.75, x2: 0.58, y2: 1 }),
   },
   {
@@ -121,8 +115,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'top', align: 'start' } as PopoverContentPositionerProps,
     text: "what's up, man",
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.76, y1: 0.75, x2: 0.86, y2: 1 }),
   },
   {
@@ -131,8 +123,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'left', align: 'start' } as PopoverContentPositionerProps,
     text: 'hey, yo',
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.82, y1: 0.75, x2: 0.88, y2: 1 }),
   },
   {
@@ -141,8 +131,6 @@ const SCENE_NODES = [
     type: 'popover' as const,
     positioner: { side: 'bottom', align: 'end' } as PopoverContentPositionerProps,
     text: 'wassup, homie',
-    open: false,
-    ref: null as unknown as HTMLElement,
     hitbox: createRectFromCoords({ x1: 0.9, y1: 0.75, x2: 1, y2: 1 }),
   },
 ]

@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import { differenceInCalendarDays, formatDate, formatDistanceToNow, formatRelative, isToday } from 'date-fns'
 import { mutation, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
@@ -16,6 +17,25 @@ export const initChat = mutation({
     await ctx.db.insert('chat_members', { userId: user._id, chatId: newChatId, itTyping: false })
     await ctx.db.insert('chat_members', { userId: args.contactId, chatId: newChatId, itTyping: false })
     return { chatId: newChatId }
+  },
+})
+
+export const lastMessage = query({
+  args: {
+    chatId: v.id('chats'),
+  },
+  handler: async (ctx, args) => {
+    const lastMessage = await Chats.getLastMessage(ctx, args.chatId)
+    if (!lastMessage) return null
+
+    const sender = await Chats.getSenderByMemberId(ctx, lastMessage.chatMemberId)
+
+    const days = differenceInCalendarDays(new Date(), lastMessage._creationTime)
+    return {
+      createdAt: formatDate(lastMessage._creationTime, days === 0 ? 'HH:mm' : days < 7 ? 'EEE' : 'dd.MM.YYYY'),
+      body: lastMessage.body,
+      fromUserId: sender?.user?._id,
+    }
   },
 })
 

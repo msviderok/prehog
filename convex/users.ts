@@ -2,6 +2,7 @@ import { type UserJSON } from '@clerk/backend'
 import { v, Validator } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import * as Users from './model/users'
+import * as Chats from './model/chats'
 import { userEvent } from './schema'
 
 export const current = query({
@@ -25,6 +26,18 @@ export const updateMe = mutation({
       y: args.y,
     })
   },
+})
+
+export const usersWithChat = query(async (ctx) => {
+  const user = await Users.getCurrentUser(ctx)
+  const myChats = await Chats.getMyChats(ctx)
+  const list = await Promise.all(
+    myChats.map(async ({ chat: { _id: chatId }, contact }) => {
+      const chat = await Chats.getChatById(ctx, { myId: user._id, chatId })
+      return { chat, user: contact }
+    }),
+  )
+  return list
 })
 
 export const listAllUsers = query(async (ctx) => {

@@ -37,6 +37,7 @@
     "clsx": "catalog:",
     "convex": "catalog:",
     "convex-solidjs": "catalog:",
+    "date-fns": "^4.3.0",
     "lucide-solid": "catalog:",
     "nitro": "catalog:",
     "solid-js": "catalog:",

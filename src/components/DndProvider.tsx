@@ -23,6 +23,8 @@ export function DndProvider(props: ParentProps) {
       onDragEnd={(e) => {
         if (!e.operation.shape || !e.operation.source) return
         const { source, shape } = e.operation
+
+        console.log(source, shape)
         setFloatingPanels(
           'panels',
           produce((state) => {

@@ -28,9 +28,9 @@ export async function getChatById(ctx: QueryCtx | MutationCtx, args: { myId: Id<
   return {
     chat: chat!,
     myId: args.myId,
-    myMember: chatMemberMe,
+    myMember: chatMemberMe!,
     contact: contact!,
-    contactMember: chatMemberThem,
+    contactMember: chatMemberThem!,
   }
 }
 
@@ -54,4 +54,27 @@ export async function getMyChatMembership(ctx: QueryCtx | MutationCtx, chatId: I
 
   if (!myMembership) throw new Error('Wrong chat?')
   return myMembership
+}
+
+export async function getLastMessage(ctx: QueryCtx | MutationCtx, chatId: Id<'chats'>) {
+  return ctx.db
+    .query('chat_messages')
+    .withIndex('by_chat', (q) => q.eq('chatId', chatId))
+    .order('desc')
+    .first()
+}
+
+export async function getSenderByMemberId(ctx: QueryCtx | MutationCtx, memberId: Id<'chat_members'>) {
+  const member = await ctx.db
+    .query('chat_members')
+    .withIndex('by_id', (q) => q.eq('_id', memberId))
+    .first()
+  if (!member) return null
+
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_id', (q) => q.eq('_id', member.userId))
+    .first()
+
+  return { member, user }
 }
