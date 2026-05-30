@@ -6,17 +6,19 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from './ui/popo
 
 const DEBUG = false
 
-const NodeComponent: Record<Scene.Node['type'], (props: Scene.Node) => JSX.Element> = {
+const NodeComponent: Record<GlobalState.SceneNode['type'], (props: GlobalState.SceneNode) => JSX.Element> = {
   popover: NodePopover,
 }
 
 export function SceneNodes() {
-  const { nodes } = useGlobalState()
-  return <Index each={nodes}>{(node) => <Dynamic component={NodeComponent[node().type]} {...node()} />}</Index>
+  const { sceneState } = useGlobalState()
+  return (
+    <Index each={sceneState.nodes}>{(node) => <Dynamic component={NodeComponent[node().type]} {...node()} />}</Index>
+  )
 }
 
-function NodePopover(props: Scene.NodePopover) {
-  const { sceneState, setNodes } = useGlobalState()
+function NodePopover(props: GlobalState.SceneNode) {
+  const { sceneState, setSceneState } = useGlobalState()
   const realCoords = createMemo(() => ({
     x: props.x * sceneState.realSceneSize.width,
     y: props.y * sceneState.realSceneSize.height,
@@ -59,7 +61,10 @@ function NodePopover(props: Scene.NodePopover) {
       <span
         class={cn('absolute top-0 left-0', DEBUG && 'border-2 border-purple-500')}
         style={realTriggerBoxCoords()}
-        ref={(el) => setNodes(props.idx, 'ref', el)}
+        ref={(el) => {
+          console.log('yes')
+          setSceneState('nodes', props.idx, 'ref', el)
+        }}
       />
       <Popover open>
         <PopoverTrigger

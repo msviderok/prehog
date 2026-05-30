@@ -1,14 +1,12 @@
 import { useQuery } from 'convex-solidjs'
-import { HeartXIcon, MessageSquareText, PhoneIcon, UsersIcon, XIcon } from 'lucide-solid'
+import { UsersIcon } from 'lucide-solid'
 import { createSignal, For } from 'solid-js'
 import { api } from '../../convex/_generated/api'
-import { Chat } from './Chat'
-import { useGlobalState } from './GlobalStateContext'
+import { ChatWindow } from './ChatWindow'
 import { Avatar } from './ui/avatar'
 import { Button } from './ui/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
-import { cn } from '@/lib/utils'
 
 export function ActionBar() {
   const [open, setOpen] = createSignal(true)
@@ -24,7 +22,7 @@ export function ActionBar() {
             setOpen(isOpen)
           }}
         >
-          <PopoverTrigger render={{ component: Button, size: 'icon' }}>
+          <PopoverTrigger render={(props) => <Button {...props} size="icon" />}>
             <UsersIcon />
           </PopoverTrigger>
 
@@ -40,7 +38,7 @@ export function ActionBar() {
                       <Avatar user={user} />
                       <span class="text-sm font-semibold">{user.fullname}</span>
                       <div class="flex gap-2 items-center">
-                        <Chat userId={user._id} />
+                        <ChatWindow userId={user._id} />
                       </div>
                     </div>
                   )
@@ -52,50 +50,4 @@ export function ActionBar() {
       </div>
     </div>
   )
-}
-
-function RindAudioAction() {
-  const [open, setOpen] = createSignal(false)
-  return (
-    <Popover open={open()} onOpenChange={setOpen}>
-      <PopoverTrigger render={{ component: Button, size: 'icon' }}>
-        <PhoneIcon />
-      </PopoverTrigger>
-
-      <PopoverContent render={(props) => <Card {...props} class={cn(props.class, 'flex gap-3 flex-col w-100 p-0!')} />}>
-        <CardHeader class="bg-red-500 p-1.5 items-center">
-          <CardTitle class="row-span-2">Audio call</CardTitle>
-
-          <CardAction>
-            <Button size="icon" onClick={() => setOpen(false)}>
-              <XIcon />
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent></CardContent>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-async function initRTC(rtc: GlobalState.RTC) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    })
-    stream.getTracks().forEach((track) => rtc.pc.addTrack(track, stream))
-    // callUser.mutate({ calleeId: user._id, type: "video" });
-
-    // player.rtc.pc.ontrack = (e) => {
-    //   console.log(e.track.kind)
-    // }
-    // player.rtc.pc.onicecandidate = (e) => {
-    //   if (e.candidate) {
-    //     console.log(123)
-    //   }
-    // }
-
-    // setPlayer('rtc', )
-  } catch (e) {}
 }

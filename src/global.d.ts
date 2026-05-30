@@ -1,69 +1,22 @@
 import type { PopoverContentPositionerProps } from './components/ui/popover'
+import type { PlayerState } from './lib/state/createPlayerState'
+import type { FloatingPanelsState } from './lib/state/createFloatingPanelsState'
+import type { RtcState } from './lib/state/createRtcState'
+import type { SceneState, SceneNode as SceneStateNode } from './lib/state/createSceneState'
+import type { IntervalsState } from './lib/state/createIntervalState'
+import type { KeyPressedState } from './lib/state/createKeyPressedState'
 
 declare global {
   namespace GlobalState {
-    interface KeyPressed {
-      w: boolean
-      s: boolean
-      a: boolean
-      d: boolean
-      shift: boolean
-    }
+    type State = KeyPressedState & PlayerState & SceneState & FloatingPanelsState & RtcState & IntervalsState
 
-    interface Player {
-      ref: HTMLElement
-      rect: DOMRect
-      x: number
-      y: number
-      size: number
-      realPosition: {
-        x: number
-        y: number
-      }
-    }
-
-    interface RTC {
-      ref: HTMLVideoElement | null
-      stream: MediaStream | null
-      pc: RTCPeerConnection
-    }
-
-    interface FloatingPanels {
-      containerRef: HTMLElement | undefined
-      panels: Record<string, { x: number; y: number }>
-    }
-  }
-
-  namespace Scene {
-    interface CommonNodeProps {
-      ref: HTMLElement
-      idx: number
-      x: number
-      y: number
-      text: string
-      open: boolean
-    }
-
-    interface NodePopover extends CommonNodeProps {
-      type: 'popover'
-      hitbox: DOMRect
-      realHitbox: DOMRect
-      positioner: PopoverContentPositionerProps
-    }
-
-    type Node = NodePopover
-
-    type Nodes = Node[]
-
-    interface State {
-      ref: HTMLElement
-      rect: DOMRect
-      scale: number
-      originalWidth: number
-      originalHeight: number
-      worldUnit: { x: number; y: number }
-      realSceneSize: { width: number; height: number }
-    }
+    type KeyPressed = KeyPressedState['keyPressed']
+    type Player = PlayerState['player']
+    type Scene = SceneState['sceneState']
+    type SceneNode = SceneStateNode
+    type FloatingPanels = FloatingPanelsState['floatingPanels']
+    type RTC = RtcState['rtc']
+    type Intervals = Pick<IntervalsState, 'batchInterval' | 'samplingInterval'>
   }
 }
 

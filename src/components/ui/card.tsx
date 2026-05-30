@@ -1,12 +1,27 @@
 import { cn } from '@/lib/utils'
 import { useDraggable } from '@dnd-kit/solid'
 import { ClientOnly } from '@tanstack/solid-router'
-import { createContext, mergeProps, onMount, splitProps, useContext, type ComponentProps } from 'solid-js'
-import { untrack } from 'solid-js/web'
+import {
+  createContext,
+  mergeProps,
+  splitProps,
+  useContext,
+  type Accessor,
+  type ComponentProps,
+  type ParentProps,
+} from 'solid-js'
+import { Dynamic, Portal, untrack } from 'solid-js/web'
+import { useGlobalState } from '../GlobalStateContext'
 
 type UseDraggableOutput = ReturnType<typeof useDraggable>
 
-const CardContext = createContext<{ draggable: UseDraggableOutput | undefined }>({ draggable: undefined })
+const CardContext = createContext<
+  | {
+      draggable: UseDraggableOutput | undefined
+      isOpen: Accessor<boolean>
+    }
+  | undefined
+>()
 
 function Card(
   props: Omit<ComponentProps<'div'>, 'id'> & {
@@ -15,55 +30,63 @@ function Card(
       | {
           /**
            * @static **Not reactive**. When `true`, it will use the `useDraggable` hook from `@dnd-kit/solid` to make the card draggable.
-           *
            */
           floating: true
           id: string
         }
       | {
-          floating?: false
+          /**
+           * @static **Not reactive**. When `true`, it will use the `useDraggable` hook from `@dnd-kit/solid` to make the card draggable.
+           */
+          floating?: false | undefined
           id?: string | undefined
         }
     ),
 ) {
   const mergedProps = mergeProps({ size: 'sm' as const, floating: false }, props)
-  const [local, rest] = splitProps(mergedProps, ['class', 'size', 'floating', 'ref'])
+  const [local, rest] = splitProps(mergedProps, ['class', 'size', 'floating', 'ref', 'id'])
+  const isFloating = untrack(() => props.floating)
+  const { isFloatingPanelOpen } = useGlobalState()
 
   const context = {
-    draggable: untrack(() => props.floating)
+    draggable: isFloating
       ? useDraggable({
           get id() {
-            return props.id!
+            return local.id!
           },
         })
       : undefined,
+    isOpen: () => (local.id ? isFloatingPanelOpen(local.id) : false),
   }
 
   return (
     <ClientOnly>
       <CardContext.Provider value={context}>
-        <div
-          data-slot="card"
-          data-size={local.size}
-          data-floating={local.floating}
-          class={cn(
-            'group/card flex flex-col gap-4 overflow-hidden border-2 border-input/30 rounded-base bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-base *:[img:last-child]:rounded-b-base',
-            local.floating &&
-              'shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-primary/10 focus-within:border-tint-primary/10 data-dnd-dragging:not-data-dnd-dropping:border-tint-primary/10 focus-within:shadow-shade-primary/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-primary/30 focus:shadow-shade-primary/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0',
-            local.class,
-          )}
-          ref={(el) => {
-            if (typeof local.ref === 'function') {
-              local.ref(el)
-            } else {
-              local.ref = el
-            }
-            if (context.draggable != null) {
-              context.draggable.ref(el)
-            }
-          }}
-          {...rest}
-        />
+        <Dynamic component={(p: ParentProps) => (isFloating ? <Portal>{p.children}</Portal> : <>{p.children}</>)}>
+          <div
+            data-slot="card"
+            data-size={local.size}
+            data-floating={local.floating}
+            id={local.id}
+            class={cn(
+              'group/card flex flex-col gap-4 overflow-hidden border-2 border-input/30 rounded-base bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-base *:[img:last-child]:rounded-b-base',
+              local.floating &&
+                'shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-primary/10 focus-within:border-tint-primary/10 data-dnd-dragging:not-data-dnd-dropping:border-tint-primary/10 focus-within:shadow-shade-primary/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-primary/30 focus:shadow-shade-primary/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0',
+              local.class,
+            )}
+            ref={(el) => {
+              if (typeof local.ref === 'function') {
+                local.ref(el)
+              } else {
+                local.ref = el
+              }
+              if (context.draggable != null) {
+                context.draggable.ref(el)
+              }
+            }}
+            {...rest}
+          />
+        </Dynamic>
       </CardContext.Provider>
     </ClientOnly>
   )
@@ -86,7 +109,7 @@ function CardHeader(props: ComponentProps<'div'>) {
           } else {
             local.ref = el
           }
-          if (context.draggable != null) {
+          if (context?.draggable != null) {
             context.draggable.handleRef(el)
           }
         }}
@@ -118,31 +141,27 @@ function CardDescription(props: ComponentProps<'div'>) {
   )
 }
 
-function CardAction(props: ComponentProps<'div'>) {
+function CardAction(componentProps: ComponentProps<'div'>) {
   let ref!: HTMLDivElement
+  const props = mergeProps({ actionType: 'default' as const }, componentProps)
   const [local, rest] = splitProps(props, ['class', 'ref'])
   const context = useContext(CardContext)
-
-  onMount(() => {
-    if (context.draggable && ref.closest('[data-slot="card-header"]')) {
-      ref.dataset.noDrag = 'true'
-    }
-  })
 
   return (
     <ClientOnly>
       <div
         data-slot="card-action"
+        data-no-drag={!!context?.draggable && !!ref.closest('[data-slot="card-header"]')}
         class={cn('col-start-2 row-span-2 row-start-1 self-start justify-self-end', local.class)}
-        {...rest}
         ref={(el) => {
           if (typeof local.ref === 'function') {
             local.ref(el)
           } else {
-            ref = el
+            local.ref = el
           }
           ref = el
         }}
+        {...rest}
       />
     </ClientOnly>
   )

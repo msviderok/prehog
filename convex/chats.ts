@@ -3,15 +3,6 @@ import { mutation, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
 
-export const ringUser = mutation({
-  args: {
-    contactId: v.id('users'),
-    audio: v.boolean(),
-    video: v.boolean(),
-  },
-  handler: async (ctx, args) => {},
-})
-
 export const initChat = mutation({
   args: {
     contactId: v.id('users'),

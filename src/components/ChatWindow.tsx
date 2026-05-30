@@ -2,12 +2,11 @@ import { cn } from '@/lib/utils'
 import { debounce, throttle } from '@solid-primitives/scheduled'
 import { useMutation, useQuery } from 'convex-solidjs'
 import type { FunctionReturnType } from 'convex/server'
-import { GripVerticalIcon, LoaderCircle, PhoneIcon, SendHorizontal, XIcon } from 'lucide-solid'
+import { LoaderCircle, SendHorizontal, XIcon } from 'lucide-solid'
 import { createEffect, createMemo, createSignal, For, on, Show } from 'solid-js'
-import { produce } from 'solid-js/store'
-import { Portal } from 'solid-js/web'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
+import { AudioCall } from './AudioCall'
 import { useGlobalState } from './GlobalStateContext'
 import { Avatar } from './ui/avatar'
 import { Button } from './ui/button'
@@ -15,9 +14,9 @@ import { Card, CardAction, CardContent, CardFooter, CardHeader } from './ui/card
 import { Textarea } from './ui/textarea'
 import { Toggle } from './ui/toggle'
 
-export function Chat(props: { userId: Id<'users'> }) {
+export function ChatWindow(props: { userId: Id<'users'> }) {
   const id = `chat-${props.userId}`
-  const { floatingPanels, setFloatingPanels } = useGlobalState()
+  const { floatingPanels, openFloatingPanel } = useGlobalState()
 
   const chat = useQuery(api.chats.byUserId, { userId: props.userId })
   const initChat = useMutation(api.chats.initChat)
@@ -30,14 +29,8 @@ export function Chat(props: { userId: Id<'users'> }) {
         disabled={isLoadingChat()}
         onPressedChange={(pressed, e) => {
           if (pressed) {
-            const rect = (e.target as HTMLButtonElement).getBoundingClientRect()
-            setFloatingPanels(
-              'panels',
-              produce((state) => {
-                state[id] = { x: rect.left, y: rect.top }
-              }),
-            )
-
+            const rect = (e.target as HTMLElement).getBoundingClientRect()
+            openFloatingPanel(id, { x: rect.left, y: rect.top })
             void initChat.mutate({ contactId: props.userId })
           }
         }}
@@ -46,28 +39,15 @@ export function Chat(props: { userId: Id<'users'> }) {
       </Toggle>
 
       <Show when={floatingPanels.panels[id] != null && chat.data()}>
-        {(chatData) => (
-          <ChatCard
-            id={id}
-            chat={chatData()}
-            onClose={() =>
-              setFloatingPanels(
-                'panels',
-                produce((state) => {
-                  delete state[id]
-                }),
-              )
-            }
-          />
-        )}
+        {(chatData) => <ChatCard id={id} chat={chatData()} />}
       </Show>
     </>
   )
 }
 
-function ChatCard(props: { id: string; onClose: () => void; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
+function ChatCard(props: { id: string; chat: FunctionReturnType<typeof api.chats.byUserId> }) {
   let cardRef: HTMLElement | undefined
-  const { floatingPanels } = useGlobalState()
+  const { floatingPanels, closeFloatingPanel } = useGlobalState()
 
   createEffect(() => {
     if (cardRef) {
@@ -76,40 +56,36 @@ function ChatCard(props: { id: string; onClose: () => void; chat: FunctionReturn
   })
 
   return (
-    <Portal mount={floatingPanels.containerRef}>
-      <Card id={props.id} floating ref={(el) => (cardRef = el)} class="w-80">
-        <CardHeader class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
-          <div class="flex gap-2.5 items-center">
-            <Avatar user={props.chat.contact} />
-            <div class="flex flex-col gap-0">
-              <span>{props.chat.contact.fullname}</span>
-              <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
-                {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
-              </span>
-            </div>
+    <Card floating id={props.id} ref={(el) => (cardRef = el)} class="w-80">
+      <CardHeader class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
+        <div class="flex gap-2.5 items-center">
+          <Avatar user={props.chat.contact} />
+          <div class="flex flex-col gap-0">
+            <span>{props.chat.contact.fullname}</span>
+            <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
+              {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
+            </span>
           </div>
+        </div>
 
-          <div class="flex items-center self-center gap-2">
-            <CardAction>
-              <Toggle variant="outline" size="sm" class="v-secondary">
-                <PhoneIcon />
-              </Toggle>
-            </CardAction>
-            <CardAction>
-              <Button variant="plain" size="sm" onClick={props.onClose}>
-                <XIcon />
-              </Button>
-            </CardAction>
-          </div>
-        </CardHeader>
+        <div class="flex items-center self-center gap-2">
+          <CardAction>
+            <AudioCall chat={props.chat} />
+          </CardAction>
+          <CardAction>
+            <Button variant="plain" size="sm" onClick={() => closeFloatingPanel(props.id)}>
+              <XIcon />
+            </Button>
+          </CardAction>
+        </div>
+      </CardHeader>
 
-        <ChatMessages chat={props.chat} />
+      <ChatMessages chat={props.chat} />
 
-        <CardFooter class="p-0">
-          <ChatTextarea id={props.id} chat={props.chat} />
-        </CardFooter>
-      </Card>
-    </Portal>
+      <CardFooter class="p-0">
+        <ChatTextarea id={props.id} chat={props.chat} />
+      </CardFooter>
+    </Card>
   )
 }
 

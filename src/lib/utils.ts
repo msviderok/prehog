@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
-import { children, createMemo, createSignal, mergeProps, onMount, Show, type JSX } from 'solid-js'
-import { createComponent } from 'solid-js/web'
+import { children, mergeProps, type JSX } from 'solid-js'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -74,5 +73,17 @@ export function childrenLazy(resolver: () => JSX.Element) {
       x = children(resolver)
     }
     return x
+  }
+}
+
+export function callEventHandler<T, E extends Event>(
+  handler: JSX.EventHandlerUnion<T, E> | undefined,
+  event: E & { currentTarget: T; target: Element },
+) {
+  if (!handler) return
+  if (typeof handler === 'function') {
+    handler(event)
+  } else {
+    handler[0](handler[1], event)
   }
 }

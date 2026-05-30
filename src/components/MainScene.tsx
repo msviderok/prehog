@@ -32,9 +32,9 @@ export function MainScene(props: ParentProps<{}>) {
 }
 
 function XYNodes() {
-  const { nodes, sceneState } = useGlobalState()
+  const { sceneState } = useGlobalState()
   return (
-    <For each={nodes}>
+    <For each={sceneState.nodes}>
       {(i) => {
         const x = () => i.x * sceneState.realSceneSize.width
         const y = () => i.y * sceneState.realSceneSize.height

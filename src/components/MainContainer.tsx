@@ -1,18 +1,15 @@
 import { useGlobalState } from '@/components/GlobalStateContext'
 import { createGameLoop } from '@/lib/createGameLoop'
-import { createKeyboardListener } from '@/lib/createKeyboardListener'
+import { getPlayerRealPosition } from '@/lib/state/createPlayerState'
 import { clamp, collisionDetected } from '@/lib/utils'
 import { createEffect, onMount, type ParentProps } from 'solid-js'
 import { ActionBar } from './ActionBar'
-import { ClientOnly } from '@tanstack/solid-router'
 
 const MOVEMENT_SPEED = 0.15
 const DT_MOD = 10
 
 export function MainContainer(props: ParentProps<{}>) {
-  createKeyboardListener()
-  const { setPlayer, setNodes, player, keyPressed, nodes, sceneState, batchInterval, samplingInterval } =
-    useGlobalState()
+  const { setPlayer, player, keyPressed, sceneState, setSceneState, batchInterval, samplingInterval } = useGlobalState()
 
   let eventBatch: any[] = []
   let batchingStartTime = 0
@@ -44,8 +41,9 @@ export function MainContainer(props: ParentProps<{}>) {
        * of the viewport width at the start and end of the scene
        */
       const sceneRealWidth = sceneState.realSceneSize.width - window.innerWidth
+      const playerRealX = getPlayerRealPosition(player, sceneState).x
       // Viewport "camera" position
-      const cameraOffsetX = clamp(player.realPosition.x > s50 ? player.realPosition.x - s50 : 0, 0, sceneRealWidth)
+      const cameraOffsetX = clamp(playerRealX > s50 ? playerRealX - s50 : 0, 0, sceneRealWidth)
       const lastHalfScreenOffset = cameraOffsetX >= sceneRealWidth
 
       sceneState.ref.style.height = `${sceneState.realSceneSize.height}px`
@@ -55,7 +53,7 @@ export function MainContainer(props: ParentProps<{}>) {
       /** ––– PLAYER POSITION ––– */
       const playerTop = Math.floor(sceneState.worldUnit.y * player.y)
       const playerLeft = clamp(
-        Math.floor(player.realPosition.x - player.rect.width / 2 + (lastHalfScreenOffset ? -cameraOffsetX : 0)),
+        Math.floor(playerRealX - player.rect.width / 2 + (lastHalfScreenOffset ? -cameraOffsetX : 0)),
         Math.floor(0 + player.rect.width / 2),
         Math.floor(window.innerWidth * (lastHalfScreenOffset ? 1 : 0.5) - player.rect.width / 2),
       )
@@ -63,8 +61,8 @@ export function MainContainer(props: ParentProps<{}>) {
       player.ref.style.setProperty('--tx', `${playerLeft}px`)
       player.ref.style.setProperty('--ty', `${playerTop}px`)
 
-      for (const node of nodes) {
-        setNodes(node.idx, 'open', collisionDetected(player.rect, node.realHitbox))
+      for (const node of sceneState.nodes) {
+        setSceneState('nodes', node.idx, 'open', collisionDetected(player.rect, node.realHitbox))
       }
 
       // Keyboard input

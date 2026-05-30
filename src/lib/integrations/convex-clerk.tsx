@@ -1,6 +1,6 @@
 import { env } from '@/env'
 import { useAuth } from 'clerk-solidjs-tanstack-start'
-import { ConvexProvider, setupConvex, useQuery } from 'convex-solidjs'
+import { ConvexProvider, setupConvex } from 'convex-solidjs'
 import type { ConvexClient } from 'convex/browser'
 import {
   createContext,
@@ -12,7 +12,6 @@ import {
   type Accessor,
   type ParentProps,
 } from 'solid-js'
-import { api } from '../../../convex/_generated/api'
 
 if (!env.VITE_CONVEX_URL) {
   console.error('Missing: VITE_CONVEX_URL')
