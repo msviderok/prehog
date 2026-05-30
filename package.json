@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@clerk/ui": "catalog:",
-    "@convex-dev/presence": "catalog:",
     "@dnd-kit/abstract": "catalog:",
     "@dnd-kit/dom": "catalog:",
     "@dnd-kit/solid": "catalog:",

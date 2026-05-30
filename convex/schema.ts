@@ -17,15 +17,20 @@ export default defineSchema({
     eventBatches: v.array(userEvent),
     x: v.number(),
     y: v.number(),
-    isOnline: v.boolean(),
     fullname: v.string(),
     avatar: v.optional(v.string()),
   }).index('by_clerkId', ['externalId']),
+  online: defineTable({
+    userId: v.id('users'),
+    isOnline: v.boolean(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_isOnline', ['isOnline']),
   chats: defineTable({}),
   chat_members: defineTable({
     chatId: v.id('chats'),
     userId: v.id('users'),
-    itTyping: v.boolean(),
+    isTyping: v.boolean(),
   })
     .index('by_user', ['userId'])
     .index('by_chat', ['chatId'])
@@ -37,4 +42,10 @@ export default defineSchema({
   })
     .index('by_chat', ['chatId'])
     .index('by_chatMember', ['chatMemberId']),
+  typing: defineTable({
+    chatMemberId: v.id('chat_members'),
+    isTyping: v.boolean(),
+  })
+    .index('by_chatMember', ['chatMemberId'])
+    .index('by_isTyping', ['isTyping']),
 })

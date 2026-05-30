@@ -60,6 +60,8 @@
   --radius-base: 6px;
   --font-weight-base: 500;
   --font-weight-heading: 800;
+
+  --animate-typing: typing 1s steps(4) infinite;
 }
 
 @layer base {
@@ -84,5 +86,21 @@
   h5,
   h6 {
     @apply font-heading;
+  }
+}
+
+@keyframes typing {
+  0%,
+  100% {
+    content: 'Typing';
+  }
+  25% {
+    content: 'Typing.';
+  }
+  50% {
+    content: 'Typing..';
+  }
+  75% {
+    content: 'Typing...';
   }
 }

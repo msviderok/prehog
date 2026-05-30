@@ -78,3 +78,10 @@ export async function getSenderByMemberId(ctx: QueryCtx | MutationCtx, memberId:
 
   return { member, user }
 }
+
+export async function getIsTyping(ctx: QueryCtx, chatMemberId: Id<'chat_members'>) {
+  return (await ctx.db
+    .query('typing')
+    .withIndex('by_chatMember', (q) => q.eq('chatMemberId', chatMemberId))
+    .unique())!
+}

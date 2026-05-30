@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { differenceInCalendarDays, formatDate, formatDistanceToNow, formatRelative, isToday } from 'date-fns'
+import { differenceInCalendarDays, formatDate } from 'date-fns'
 import { mutation, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
@@ -14,8 +14,8 @@ export const initChat = mutation({
     if (chat) return { chatId: chat.chat._id }
 
     const newChatId = await ctx.db.insert('chats', {})
-    await ctx.db.insert('chat_members', { userId: user._id, chatId: newChatId, itTyping: false })
-    await ctx.db.insert('chat_members', { userId: args.contactId, chatId: newChatId, itTyping: false })
+    await ctx.db.insert('chat_members', { userId: user._id, chatId: newChatId, isTyping: false })
+    await ctx.db.insert('chat_members', { userId: args.contactId, chatId: newChatId, isTyping: false })
     return { chatId: newChatId }
   },
 })
@@ -81,12 +81,24 @@ export const byUserId = query({
   },
 })
 
-export const signalTyping = mutation({
+export const setIsTyping = mutation({
   args: {
-    memberId: v.id('chat_members'),
+    chatMemberId: v.id('chat_members'),
     isTyping: v.boolean(),
   },
   handler: async (ctx, args) => {
-    return ctx.db.patch('chat_members', args.memberId, { itTyping: args.isTyping })
+    const typing = await Chats.getIsTyping(ctx, args.chatMemberId)
+    if (typing.isTyping === args.isTyping) return
+    await ctx.db.patch('typing', typing._id, args)
+  },
+})
+
+export const isTyping = query({
+  args: {
+    chatMemberId: v.id('chat_members'),
+  },
+  handler: async (ctx, args) => {
+    const typing = await Chats.getIsTyping(ctx, args.chatMemberId)
+    return typing.isTyping
   },
 })

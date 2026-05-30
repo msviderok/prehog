@@ -66,15 +66,15 @@ export const upsertFromClerk = internalMutation({
   async handler(ctx, { data }) {
     const user = await Users.userByExternalId(ctx, data.id)
     if (user === null) {
-      await ctx.db.insert('users', {
+      const newUserId = await ctx.db.insert('users', {
         externalId: data.id,
         eventBatches: [],
         x: 0,
         y: 100,
-        isOnline: false,
         fullname: `${data.first_name} ${data.last_name}`,
         avatar: data.image_url,
       })
+      await ctx.db.insert('online', { userId: newUserId, isOnline: false })
     } else {
       await ctx.db.patch(user._id, {
         externalId: data.id,
@@ -98,12 +98,36 @@ export const deleteFromClerk = internalMutation({
   },
 })
 
-export const setOnline = mutation({
+export const setMyOnline = mutation({
   args: {
-    online: v.boolean(),
+    isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
-    return ctx.db.patch(user._id, { isOnline: args.online })
+    const presence = await Users.getOnline(ctx, user._id)
+    if (presence.isOnline === args.isOnline) return
+    await ctx.db.patch('online', presence._id, args)
+  },
+})
+
+export const setOnline = mutation({
+  args: {
+    userId: v.id('users'),
+    isOnline: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const presence = await Users.getOnline(ctx, args.userId)
+    if (presence.isOnline === args.isOnline) return
+    await ctx.db.patch('online', presence._id, args)
+  },
+})
+
+export const isOnline = query({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const presence = await Users.getOnline(ctx, args.userId)
+    return presence.isOnline
   },
 })

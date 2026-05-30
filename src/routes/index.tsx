@@ -7,6 +7,10 @@ import { useConvexClerkAuth } from '@/lib/integrations/convex-clerk'
 import { cn } from '@/lib/utils'
 import { createFileRoute } from '@tanstack/solid-router'
 import { ClerkLoading, SignedIn, SignedOut, SignIn } from 'clerk-solidjs-tanstack-start'
+import { useMutation } from 'convex-solidjs'
+import { createEffect, onCleanup, onMount } from 'solid-js'
+import { api } from '../../convex/_generated/api'
+import { env } from '@/env'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -14,6 +18,34 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   const { isAuthenticated } = useConvexClerkAuth()
+  const setMyOnline = useMutation(api.users.setMyOnline)
+
+  createEffect(() => {
+    if (isAuthenticated()) {
+      void setMyOnline.mutate({ isOnline: true })
+    }
+  })
+
+  onCleanup(() => {
+    void setMyOnline.mutate({ isOnline: false })
+  })
+
+  onMount(() => {
+    function onLeave() {
+      void setMyOnline.mutate({ isOnline: document.visibilityState === 'visible' })
+    }
+    function onBeforeUnload() {
+      void setMyOnline.mutate({ isOnline: false })
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    document.addEventListener('visibilitychange', onLeave)
+    onCleanup(() => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('visibilitychange', onLeave)
+    })
+  })
+
   return (
     <main
       class={cn(

@@ -1,13 +1,11 @@
+import { getPanelId } from '@/lib/utils'
 import { useMutation } from 'convex-solidjs'
 import type { FunctionReturnType } from 'convex/server'
-import { PhoneIcon, XIcon } from 'lucide-solid'
-import { createSignal } from 'solid-js'
+import { PhoneIcon } from 'lucide-solid'
 import { api } from '../../convex/_generated/api'
-import { Toggle } from './ui/toggle'
-import { Card, CardAction, CardCloseAction, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { getPanelId } from '@/lib/utils'
 import { useGlobalState } from './GlobalStateContext'
+import { Card, CardCloseAction, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
+import { Toggle } from './ui/toggle'
 
 export function AudioCall(props: { chat: FunctionReturnType<typeof api.chats.byUserId> }) {
   const id = getPanelId(props.chat.chat._id, 'rtc')

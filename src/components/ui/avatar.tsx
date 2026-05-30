@@ -1,45 +1,54 @@
 import { cn } from '@/lib/utils'
 import { Avatar as AvatarPrimitive } from '@msviderok/base-ui-solid/avatar'
 import { ClientOnly } from '@tanstack/solid-router'
-import { createMemo, splitProps, type ComponentProps } from 'solid-js'
+import { createContext, createMemo, splitProps, useContext, type ComponentProps } from 'solid-js'
 import type { Doc } from '../../../convex/_generated/dataModel'
 
-function Avatar(props: { user: Doc<'users'> }) {
-  const getUserFallback = createMemo(() => {
-    const [firstname, lastname] = props.user.fullname.split(' ')
-    return `${firstname[0]}${lastname[0]}`
-  })
+const AvatarContext = createContext<{ user: Doc<'users'> | undefined }>({ user: undefined })
 
+function Avatar(props: AvatarPrimitive.Root.Props & { user?: Doc<'users'> }) {
+  const [local, rest] = splitProps(props, ['class', 'user'])
   return (
     <ClientOnly>
-      <AvatarPrimitive.Root
-        data-slot="avatar"
-        data-size="sm"
-        class={cn(
-          'group/avatar -top-0.5 relative flex size-7 shrink-0 rounded-full outline-2 outline-border items-center select-none',
-        )}
-      >
-        <AvatarImage src={props.user.avatar} />
-        <AvatarFallback>{getUserFallback()}</AvatarFallback>
-        <AvatarBadge class={cn('opacity-0', props.user.isOnline && 'opacity-100 bg-green-600 border-green-800')} />
-      </AvatarPrimitive.Root>
+      <AvatarContext.Provider value={{ user: props.user }}>
+        <AvatarPrimitive.Root
+          data-slot="avatar"
+          data-size="sm"
+          class={cn(
+            'group/avatar -top-0.5 relative flex size-7 shrink-0 rounded-full outline-2 outline-border items-center select-none',
+            local.class,
+          )}
+          {...rest}
+        >
+          {props.children}
+        </AvatarPrimitive.Root>
+      </AvatarContext.Provider>
     </ClientOnly>
   )
 }
 
 function AvatarImage(props: AvatarPrimitive.Image.Props) {
-  const [local, rest] = splitProps(props, ['class'])
+  const [local, rest] = splitProps(props, ['class', 'src'])
+  const context = useContext(AvatarContext)
+
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
       class={cn('aspect-square size-full rounded-full object-cover', local.class)}
+      src={local.src ?? context?.user?.avatar}
       {...rest}
     />
   )
 }
 
 function AvatarFallback(props: AvatarPrimitive.Fallback.Props) {
-  const [local, rest] = splitProps(props, ['class'])
+  const [local, rest] = splitProps(props, ['class', 'children'])
+  const context = useContext(AvatarContext)
+  const getUserFallback = createMemo(() => {
+    if (!context.user?.fullname) return ''
+    const [firstname = '', lastname = ''] = context.user.fullname.split(' ')
+    return `${firstname[0]}${lastname[0]}`
+  })
 
   return (
     <AvatarPrimitive.Fallback
@@ -49,7 +58,9 @@ function AvatarFallback(props: AvatarPrimitive.Fallback.Props) {
         local.class,
       )}
       {...rest}
-    />
+    >
+      {props.children ?? getUserFallback()}
+    </AvatarPrimitive.Fallback>
   )
 }
 
@@ -65,6 +76,16 @@ function AvatarBadge(props: ComponentProps<'span'>) {
         'group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2',
         local.class,
       )}
+      {...rest}
+    />
+  )
+}
+
+function AvatarBadgeOnline(props: ComponentProps<'span'> & { isOnline: boolean }) {
+  const [local, rest] = splitProps(props, ['class', 'isOnline'])
+  return (
+    <AvatarBadge
+      class={cn('opacity-0', props.isOnline && 'opacity-100 bg-green-600 border-green-800', local.class)}
       {...rest}
     />
   )
@@ -98,4 +119,4 @@ function AvatarGroupCount(props: ComponentProps<'div'>) {
   )
 }
 
-export { Avatar }
+export { Avatar, AvatarBadgeOnline, AvatarGroup, AvatarGroupCount, AvatarBadge, AvatarImage, AvatarFallback }

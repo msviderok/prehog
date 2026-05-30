@@ -6,7 +6,7 @@ import { createEffect, createSignal, For, on, Show } from 'solid-js'
 import { api } from '../../convex/_generated/api'
 import { AudioCall } from './AudioCall'
 import { useGlobalState } from './GlobalStateContext'
-import { Avatar } from './ui/avatar'
+import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Card, CardAction, CardCloseAction, CardContent, CardFooter, CardHeader } from './ui/card'
 import { Textarea } from './ui/textarea'
 
@@ -14,17 +14,23 @@ type Chat = FunctionReturnType<typeof api.users.usersWithChat>[number]['chat']
 
 export function ChatWindow(props: { id: string; chat: Chat }) {
   const { isFloatingPanelOpen, closeFloatingPanel } = useGlobalState()
+  const { data: isTyping } = useQuery(api.chats.isTyping, { chatMemberId: props.chat.contactMember._id })
+  const { data: isOnline } = useQuery(api.users.isOnline, { userId: props.chat.contact._id })
 
   return (
     <Show when={isFloatingPanelOpen(props.id)}>
       <Card floating id={props.id} class="w-80">
         <CardHeader class="border-b-2 border-input/50 py-1.5 flex justify-between items-center">
           <div class="flex gap-2.5 items-center">
-            <Avatar user={props.chat.contact} />
+            <Avatar user={props.chat.contact}>
+              <AvatarImage />
+              <AvatarFallback />
+              <AvatarBadgeOnline isOnline={isOnline() ?? false} />
+            </Avatar>
             <div class="flex flex-col gap-0">
               <span>{props.chat.contact.fullname}</span>
-              <span class={cn('text-muted leading-tight text-xs', props.chat.contact.isOnline && 'text-blue-400')}>
-                {props.chat.contactMember.itTyping ? 'Typing...' : props.chat.contact.isOnline ? 'Online' : 'Offline'}
+              <span class={cn('text-muted leading-tight text-xs', isOnline() && 'text-blue-400')}>
+                {isTyping() ? 'Typing...' : isOnline() ? 'Online' : 'Offline'}
               </span>
             </div>
           </div>
@@ -39,7 +45,7 @@ export function ChatWindow(props: { id: string; chat: Chat }) {
 
         <ChatMessages chat={props.chat} />
 
-        <CardFooter class="p-0">
+        <CardFooter class="p-2">
           <ChatTextarea id={props.id} chat={props.chat} />
         </CardFooter>
       </Card>
@@ -70,7 +76,7 @@ function ChatMessages(props: { chat: Chat }) {
   )
 
   return (
-    <CardContent ref={(el) => (ref = el)} class="max-h-80 overflow-auto">
+    <CardContent ref={(el) => (ref = el)} class="max-h-80 overflow-auto py-2">
       <div class="grid auto-rows-auto min-h-full gap-0.5 *:[overflow-anchor:none]">
         <For each={messages()}>
           {(message) => (
@@ -94,13 +100,13 @@ function ChatMessages(props: { chat: Chat }) {
 function ChatTextarea(props: { id: string; chat: Chat }) {
   const [text, setText] = createSignal('')
   const sendMessage = useMutation(api.chats.sendMessage)
-  const signalMeTyping = useMutation(api.chats.signalTyping)
+  const setIsTyping = useMutation(api.chats.setIsTyping)
 
   const signalTypingStart = throttle(() => {
-    signalMeTyping.mutate({ isTyping: true, memberId: props.chat.myMember._id })
+    setIsTyping.mutate({ isTyping: true, chatMemberId: props.chat.myMember._id })
   }, 500)
   const signalTypingEnd = debounce(() => {
-    signalMeTyping.mutate({ isTyping: false, memberId: props.chat.myMember._id })
+    setIsTyping.mutate({ isTyping: false, chatMemberId: props.chat.myMember._id })
   }, 1000)
 
   return (
@@ -121,6 +127,7 @@ function ChatTextarea(props: { id: string; chat: Chat }) {
             chatMemberId: props.chat.myMember._id,
             body: text(),
           })
+          await setIsTyping.mutate({ isTyping: false, chatMemberId: props.chat.myMember._id })
           setText('')
         }
       }}
