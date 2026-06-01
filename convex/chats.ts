@@ -9,14 +9,13 @@ export const initChat = mutation({
     contactId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const user = await Users.getCurrentUser(ctx)
-    const chat = await Chats.findDirectChatWithUser(ctx, args.contactId)
-    if (chat) return { chatId: chat.chat._id }
-
-    const newChatId = await ctx.db.insert('chats', {})
-    await ctx.db.insert('chat_members', { userId: user._id, chatId: newChatId, isTyping: false })
-    await ctx.db.insert('chat_members', { userId: args.contactId, chatId: newChatId, isTyping: false })
-    return { chatId: newChatId }
+    // const user = await Users.getCurrentUser(ctx)
+    // const chat = await Chats.findDirectChatWithUser(ctx, args.contactId)
+    // if (chat) return { chatId: chat.chat._id }
+    // const newChatId = await ctx.db.insert('chats', {})
+    // await ctx.db.insert('chat_members', { userId: user._id, chatId: newChatId, isTyping: false })
+    // await ctx.db.insert('chat_members', { userId: args.contactId, chatId: newChatId, isTyping: false })
+    // return { chatId: newChatId }
   },
 })
 
@@ -26,27 +25,18 @@ export const lastMessage = query({
   },
   handler: async (ctx, args) => {
     const lastMessage = await Chats.getLastMessage(ctx, args.chatId)
-    if (!lastMessage) return null
-
-    const sender = await Chats.getSenderByMemberId(ctx, lastMessage.chatMemberId)
-
-    const days = differenceInCalendarDays(new Date(), lastMessage._creationTime)
-    return {
-      createdAt: formatDate(lastMessage._creationTime, days === 0 ? 'HH:mm' : days < 7 ? 'EEE' : 'dd.MM.YYYY'),
-      body: lastMessage.body,
-      fromUserId: sender?.user?._id,
-    }
+    return lastMessage
   },
 })
 
 export const sendMessage = mutation({
   args: {
     chatId: v.id('chats'),
-    chatMemberId: v.id('chat_members'),
     body: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert('chat_messages', args)
+    const user = await Users.getCurrentUser(ctx)
+    await ctx.db.insert('chat_messages', { ...args, userId: user._id })
   },
 })
 
@@ -67,38 +57,45 @@ export const byId = query({
     chatId: v.id('chats'),
   },
   handler: async (ctx, args) => {
-    const user = await Users.getCurrentUser(ctx)
-    return Chats.getChatById(ctx, { chatId: args.chatId, myId: user._id })
+    return ctx.db.get(args.chatId)
   },
 })
 
 export const byUserId = query({
-  args: {
-    userId: v.id('users'),
-  },
+  args: { userId: v.id('users') },
   handler: async (ctx, args) => {
-    return Chats.getChatByUserId(ctx, args.userId)
+    const user = await Users.getCurrentUser(ctx)
+    const chats = await Chats.getMyChats(ctx)
+    const membersGrouped = await Chats.getGroupedMembersBetweenMeAndUser(ctx, args.userId)
+    const directChat = chats.find((chat) => {
+      const group = membersGrouped.get(chat._id)?.map((p) => p.userId)
+      return group && group.length === 2 && group.includes(user._id) && group.includes(args.userId)
+    })
+    if (!directChat) throw new Error('No direct chat found')
+    return directChat
   },
 })
 
 export const setIsTyping = mutation({
   args: {
-    chatMemberId: v.id('chat_members'),
+    chatId: v.id('chats'),
     isTyping: v.boolean(),
   },
-  handler: async (ctx, args) => {
-    const typing = await Chats.getIsTyping(ctx, args.chatMemberId)
-    if (typing.isTyping === args.isTyping) return
-    await ctx.db.patch('typing', typing._id, args)
+  handler: async (ctx, { isTyping, ...args }) => {
+    const user = await Users.getCurrentUser(ctx)
+    const typing = await Chats.getIsTyping(ctx, { ...args, userId: user._id })
+    if (typing.isTyping === isTyping) return
+    await ctx.db.patch('typing', typing._id, { isTyping })
   },
 })
 
 export const isTyping = query({
   args: {
-    chatMemberId: v.id('chat_members'),
+    userId: v.id('users'),
+    chatId: v.id('chats'),
   },
   handler: async (ctx, args) => {
-    const typing = await Chats.getIsTyping(ctx, args.chatMemberId)
+    const typing = await Chats.getIsTyping(ctx, args)
     return typing.isTyping
   },
 })

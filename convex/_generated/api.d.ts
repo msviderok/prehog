@@ -9,9 +9,12 @@
  */
 
 import type * as calls from "../calls.js";
+import type * as chatMembers from "../chatMembers.js";
 import type * as chats from "../chats.js";
+import type * as floatingPanels from "../floatingPanels.js";
 import type * as http from "../http.js";
 import type * as model_chats from "../model/chats.js";
+import type * as model_floatingPanels from "../model/floatingPanels.js";
 import type * as model_users from "../model/users.js";
 import type * as users from "../users.js";
 
@@ -23,9 +26,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   calls: typeof calls;
+  chatMembers: typeof chatMembers;
   chats: typeof chats;
+  floatingPanels: typeof floatingPanels;
   http: typeof http;
   "model/chats": typeof model_chats;
+  "model/floatingPanels": typeof model_floatingPanels;
   "model/users": typeof model_users;
   users: typeof users;
 }>;

@@ -30,22 +30,36 @@ export default defineSchema({
   chat_members: defineTable({
     chatId: v.id('chats'),
     userId: v.id('users'),
-    isTyping: v.boolean(),
   })
     .index('by_user', ['userId'])
     .index('by_chat', ['chatId'])
     .index('by_chat_user', ['chatId', 'userId']),
   chat_messages: defineTable({
     chatId: v.id('chats'),
-    chatMemberId: v.id('chat_members'),
+    userId: v.id('users'),
     body: v.string(),
   })
+    .index('by_user', ['userId'])
     .index('by_chat', ['chatId'])
-    .index('by_chatMember', ['chatMemberId']),
+    .index('by_chat_user', ['chatId', 'userId']),
   typing: defineTable({
-    chatMemberId: v.id('chat_members'),
+    userId: v.id('users'),
+    chatId: v.id('chats'),
     isTyping: v.boolean(),
+  }).index('by_chat_user', ['chatId', 'userId']),
+  floating_panels: defineTable({
+    type: v.union(v.literal('chat'), v.literal('rtc')),
+    userId: v.id('users'),
+    chatId: v.id('chats'),
+    positionId: v.id('floating_panels_position'),
   })
-    .index('by_chatMember', ['chatMemberId'])
-    .index('by_isTyping', ['isTyping']),
+    .index('by_user', ['userId'])
+    .index('by_user_type', ['userId', 'type'])
+    .index('by_user_chat', ['userId', 'chatId'])
+    .index('by_user_chat_type', ['userId', 'chatId', 'type']),
+  floating_panels_position: defineTable({
+    x: v.number(),
+    y: v.number(),
+    zIndex: v.number(),
+  }).index('by_layer', ['zIndex']),
 })

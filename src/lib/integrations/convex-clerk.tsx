@@ -62,8 +62,8 @@ export function useConvexClerkAuth() {
 }
 
 export function ConvexClerkProvider(props: ParentProps) {
-  const client = setupConvex(env.VITE_CONVEX_URL)
   const auth = useAuth()
+  const client = setupConvex(env.VITE_CONVEX_URL, { unsavedChangesWarning: import.meta.env.PROD })
   const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
   const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false)
   const isLoading = createMemo(() => !hasResolvedInitialAuth())

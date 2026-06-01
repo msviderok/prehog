@@ -1,9 +1,9 @@
-import { For, onMount, type ParentProps } from 'solid-js'
-import { useGlobalState } from './GlobalStateContext'
+import { For, onMount, Show, type ParentProps } from 'solid-js'
+import { useGlobalState } from '../GlobalStateContext'
 import { SceneNodes } from './SceneNodes'
 
 export function MainScene(props: ParentProps<{}>) {
-  const { setSceneState, sceneState } = useGlobalState()
+  const { setSceneState, sceneState, debug } = useGlobalState()
 
   onMount(() => {
     const sceneRect = sceneState.ref.getBoundingClientRect()
@@ -24,7 +24,10 @@ export function MainScene(props: ParentProps<{}>) {
         'background-position': 'top left',
       }}
     >
-      {/* <XYNodes /> */}
+      <Show when={debug()}>
+        <XYNodes />
+      </Show>
+
       <SceneNodes />
       {props.children}
     </div>

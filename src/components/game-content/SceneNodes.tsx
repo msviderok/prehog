@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils'
 import { createMemo, Index, type JSX } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
-import { useGlobalState } from './GlobalStateContext'
-import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from './ui/popover'
+import { useGlobalState } from '../GlobalStateContext'
+import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 const DEBUG = false
 

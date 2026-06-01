@@ -2,8 +2,6 @@ import { type UserJSON } from '@clerk/backend'
 import { v, Validator } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import * as Users from './model/users'
-import * as Chats from './model/chats'
-import { userEvent } from './schema'
 
 export const current = query({
   handler: async (ctx) => {
@@ -12,32 +10,24 @@ export const current = query({
   },
 })
 
-export const updateMe = mutation({
-  args: {
-    x: v.number(),
-    y: v.number(),
-    actions: v.array(userEvent),
-  },
-  handler: async (ctx, args) => {
-    const user = await Users.getCurrentUser(ctx)
-    await ctx.db.patch('users', user._id, {
-      eventBatches: args.actions.splice(0, 100),
-      x: args.x,
-      y: args.y,
-    })
-  },
-})
-
 export const usersWithChat = query(async (ctx) => {
   const user = await Users.getCurrentUser(ctx)
-  const myChats = await Chats.getMyChats(ctx)
-  const list = await Promise.all(
-    myChats.map(async ({ chat: { _id: chatId }, contact }) => {
-      const chat = await Chats.getChatById(ctx, { myId: user._id, chatId })
-      return { chat, user: contact }
+  const myChatMemberIds = await ctx.db
+    .query('chat_members')
+    .withIndex('by_user', (q) => q.eq('userId', user._id))
+    .collect()
+
+  const myChatIds = myChatMemberIds.map(({ chatId }) => chatId)
+  const users = await Promise.all(
+    myChatIds.map(async (id) => {
+      const member = await ctx.db
+        .query('chat_members')
+        .filter((q) => q.and(q.eq(q.field('chatId'), id), q.neq(q.field('userId'), user._id)))
+        .unique()
+      return member ? ctx.db.get('users', member.userId) : null
     }),
   )
-  return list
+  return users.filter((u): u is NonNullable<typeof u> => !!u)
 })
 
 export const listAllUsers = query(async (ctx) => {
@@ -56,6 +46,26 @@ export const byId = query({
   },
   handler: async (ctx, args) => {
     return ctx.db.get('users', args.userId)
+  },
+})
+
+export const byChatId = query({
+  args: {
+    chatId: v.id('chats'),
+  },
+  handler: async (ctx, args) => {
+    const user = await Users.getCurrentUser(ctx)
+    const members = await ctx.db
+      .query('chat_members')
+      .withIndex('by_chat', (q) => q.eq('chatId', args.chatId))
+      .collect()
+
+    const contactMember = members.find((m) => m.userId !== user._id)
+    if (!contactMember) throw new Error('No contact member found')
+
+    const contactUser = await ctx.db.get('users', contactMember.userId)
+    if (!contactUser) throw new Error('Contact user not found')
+    return contactUser
   },
 })
 
@@ -129,5 +139,16 @@ export const isOnline = query({
   handler: async (ctx, args) => {
     const presence = await Users.getOnline(ctx, args.userId)
     return presence.isOnline
+  },
+})
+
+export const floatingPanels = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    return await ctx.db
+      .query('floating_panels')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect()
   },
 })

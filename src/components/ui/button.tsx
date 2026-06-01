@@ -4,7 +4,7 @@ import { mergeProps, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) text-shade-(--v-color)/30 border-shade-(--v-color)/30 font-base ring-offset-white transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-pressed:[--boxShadowY-dynamic:0px] data-pressed:bg-shade-(--v-color)/20 data-pressed:text-tint-(--v-color)/60 data-pressed:border-tint-(--v-color)/60 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] ease-out duration-150 [&_svg]:transition-transform [&_svg]:ease-out [&_svg]:duration-300 cursor-pointer will-change-transform',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) text-shade-(--v-color)/30 border-shade-(--v-color)/30 font-base ring-offset-white transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-pressed:[--boxShadowY-dynamic:0px] data-pressed:bg-shade-(--v-color)/20 data-pressed:text-tint-(--v-color)/60 data-pressed:border-tint-(--v-color)/60 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] ease-out duration-150 [&_svg]:transition-transform [&_svg]:ease-out [&_svg]:duration-300 cursor-pointer will-change-transform',
   {
     variants: {
       variant: {
@@ -15,8 +15,8 @@ const buttonVariants = cva(
           'active:scale-95 hover:border-shade-(--v-color)/30 hover:text-shade-(--v-color)/30 hover:bg-tint-(--v-color)/10 hover:scale-105 data-pressed:hover:scale-100 data-pressed:border-shade-(--v-color)/10',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-6 p-3 text-xs',
+        default: 'h-10 px-4 py-2 [&_svg]:size-6',
+        sm: 'h-6 p-3 text-xs [&_svg]:size-4',
         icon: 'size-8 [&_svg]:size-4.5',
         'icon-xs': 'size-6 [&_svg]:size-3.5',
       },

@@ -1,14 +1,15 @@
 import { SnapModifier } from '@dnd-kit/abstract/modifiers'
+import { Feedback, PointerSensor } from '@dnd-kit/dom'
 import { RestrictToWindow } from '@dnd-kit/dom/modifiers'
 import { DragDropProvider } from '@dnd-kit/solid'
-import { type ParentProps } from 'solid-js'
-import { produce } from 'solid-js/store'
-import { useGlobalState } from './GlobalStateContext'
-import { Feedback, PointerSensor } from '@dnd-kit/dom'
+import { For } from 'solid-js'
+import type { Id } from '../../../convex/_generated/dataModel'
+import { useGlobalState } from '../GlobalStateContext'
+import { ActionBar } from './ActionBar'
+import { FloatingPanel } from './FloatingPanel'
 
-export function DndProvider(props: ParentProps) {
-  const { setFloatingPanels } = useGlobalState()
-
+export function GameUI() {
+  const { floatingPanels, updatePanelPosition } = useGlobalState()
   return (
     <DragDropProvider
       modifiers={[SnapModifier.configure({ size: 1 }), RestrictToWindow]}
@@ -24,19 +25,11 @@ export function DndProvider(props: ParentProps) {
         if (!e.operation.shape || !e.operation.source) return
         const { source, shape } = e.operation
 
-        console.log(source, shape)
-        setFloatingPanels(
-          'panels',
-          produce((state) => {
-            state[source.id] = {
-              x: shape.current.boundingRectangle.left,
-              y: shape.current.boundingRectangle.top,
-            }
-          }),
-        )
+        updatePanelPosition(source.id as Id<'floating_panels_position'>, shape.current.boundingRectangle)
       }}
     >
-      <>{() => props.children}</>
+      <ActionBar />
+      <For each={floatingPanels.data()}>{(panel) => <FloatingPanel {...panel} />}</For>
     </DragDropProvider>
   )
 }

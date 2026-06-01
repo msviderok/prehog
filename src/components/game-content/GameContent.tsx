@@ -2,13 +2,14 @@ import { useGlobalState } from '@/components/GlobalStateContext'
 import { createGameLoop } from '@/lib/createGameLoop'
 import { getPlayerRealPosition } from '@/lib/state/createPlayerState'
 import { clamp, collisionDetected } from '@/lib/utils'
-import { createEffect, onMount, type ParentProps } from 'solid-js'
-import { ActionBar } from './ActionBar'
+import { createEffect, onMount } from 'solid-js'
+import { MainScene } from './MainScene'
+import { Player } from './Player'
 
 const MOVEMENT_SPEED = 0.15
 const DT_MOD = 10
 
-export function MainContainer(props: ParentProps<{}>) {
+export function GameContent() {
   const { setPlayer, player, keyPressed, sceneState, setSceneState, batchInterval, samplingInterval } = useGlobalState()
 
   let eventBatch: any[] = []
@@ -104,8 +105,10 @@ export function MainContainer(props: ParentProps<{}>) {
 
   return (
     <div class="overflow-hidden flex items-center w-full h-full">
-      <ActionBar />
-      <div class="w-min h-min relative border-y-8">{props.children}</div>
+      <div class="w-min h-min relative border-y-8">
+        <MainScene />
+        <Player />
+      </div>
     </div>
   )
 }

@@ -1,15 +1,41 @@
-import { Id } from '../_generated/dataModel'
+import { Doc, Id } from '../_generated/dataModel'
 import { MutationCtx, QueryCtx } from '../_generated/server'
 import * as Users from './users'
 
 export async function getMyChats(ctx: QueryCtx | MutationCtx) {
   const user = await Users.getCurrentUser(ctx)
-  const myChatMemberships = await ctx.db
-    .query('chat_members')
-    .withIndex('by_user', (q) => q.eq('userId', user._id))
-    .collect()
+  const myChatMembers = await getChatMembersByUserId(ctx, user._id)
+  const myChatIds = myChatMembers.map(({ chatId }) => chatId)
+  const myChats = await getChatsByChatIds(ctx, myChatIds)
+  return myChats
+}
 
-  return Promise.all(myChatMemberships.map(({ chatId, userId: myId }) => getChatById(ctx, { myId, chatId })))
+export async function getChatMembersByUserId(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
+  return ctx.db
+    .query('chat_members')
+    .withIndex('by_user', (q) => q.eq('userId', userId))
+    .collect()
+}
+
+export async function getChatMembersByChatIds(ctx: QueryCtx | MutationCtx, chatIds: Id<'chats'>[]) {
+  return (
+    await Promise.all(
+      chatIds.map((chatId) =>
+        ctx.db
+          .query('chat_members')
+          .withIndex('by_chat', (q) => q.eq('chatId', chatId))
+          .unique(),
+      ),
+    )
+  ).filter(Boolean)
+}
+
+export async function getChatsByChatIds(ctx: QueryCtx | MutationCtx, chatIds: Id<'chats'>[]) {
+  return (await Promise.all(chatIds.map((id) => ctx.db.get(id)))).filter(Boolean)
+}
+
+export async function getChatIdsByMemberIds(ctx: QueryCtx | MutationCtx, memberIds: Id<'chat_members'>[]) {
+  return (await Promise.all(memberIds.map((memberId) => ctx.db.get(memberId)))).filter(Boolean)
 }
 
 export async function getChatById(ctx: QueryCtx | MutationCtx, args: { myId: Id<'users'>; chatId: Id<'chats'> }) {
@@ -24,6 +50,14 @@ export async function getChatById(ctx: QueryCtx | MutationCtx, args: { myId: Id<
   const chatMemberMe = members[0].userId === args.myId ? members[0] : members[1]
   const chatMemberThem = members.indexOf(chatMemberMe) === 0 ? members[1] : members[0]
   const contact = await ctx.db.get('users', chatMemberThem.userId)
+  const floatingPanelChat = await ctx.db
+    .query('floating_panels')
+    .withIndex('by_user_chat_type', (q) => q.eq('userId', args.myId).eq('chatId', args.chatId).eq('type', 'chat'))
+    .unique()
+  const floatingPanelRtc = await ctx.db
+    .query('floating_panels')
+    .withIndex('by_user_chat_type', (q) => q.eq('userId', args.myId).eq('chatId', args.chatId).eq('type', 'rtc'))
+    .unique()
 
   return {
     chat: chat!,
@@ -31,18 +65,9 @@ export async function getChatById(ctx: QueryCtx | MutationCtx, args: { myId: Id<
     myMember: chatMemberMe!,
     contact: contact!,
     contactMember: chatMemberThem!,
+    floatingPanelChatId: floatingPanelChat?._id,
+    floatingPanelRtcId: floatingPanelRtc?._id,
   }
-}
-
-export async function getChatByUserId(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
-  const myChats = await getMyChats(ctx)
-  return myChats.find((chat) => chat.contact._id === userId)!
-}
-
-export async function findDirectChatWithUser(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
-  const chats = await getMyChats(ctx)
-  const chat = chats.find((chat) => chat.contactMember.userId === userId)
-  return chat
 }
 
 export async function getMyChatMembership(ctx: QueryCtx | MutationCtx, chatId: Id<'chats'>) {
@@ -79,9 +104,27 @@ export async function getSenderByMemberId(ctx: QueryCtx | MutationCtx, memberId:
   return { member, user }
 }
 
-export async function getIsTyping(ctx: QueryCtx, chatMemberId: Id<'chat_members'>) {
+export async function getIsTyping(ctx: QueryCtx, args: Pick<Doc<'chat_members'>, 'chatId' | 'userId'>) {
   return (await ctx.db
     .query('typing')
-    .withIndex('by_chatMember', (q) => q.eq('chatMemberId', chatMemberId))
+    .withIndex('by_chat_user', (q) => q.eq('chatId', args.chatId).eq('userId', args.userId))
     .unique())!
+}
+
+export async function getGroupedMembersBetweenMeAndUser(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
+  const user = await Users.getCurrentUser(ctx)
+  const members = await ctx.db
+    .query('chat_members')
+    .filter((p) => {
+      const isMyUser = p.eq(p.field('userId'), user._id)
+      const isContact = p.eq(p.field('userId'), userId)
+      return p.or(isMyUser, isContact)
+    })
+    .collect()
+  const membersGrouped = members.reduce((acc, member) => {
+    if (acc.has(member.chatId)) acc.get(member.chatId)!.push(member)
+    else acc.set(member.chatId, [member])
+    return acc
+  }, new Map<Id<'chats'>, Doc<'chat_members'>[]>())
+  return membersGrouped
 }

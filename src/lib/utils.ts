@@ -88,6 +88,6 @@ export function callEventHandler<T, E extends Event>(
   }
 }
 
-export function getPanelId(id: string, type: 'chat' | 'rtc') {
-  return `${type}-${id}`
+export function getLSKey(name: string) {
+  return `prehog:${name}`
 }

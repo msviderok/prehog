@@ -1,6 +1,7 @@
 import { createFloatingPanelsState } from '@/lib/state/createFloatingPanelsState'
 import { createIntervalsState } from '@/lib/state/createIntervalState'
 import { createKeyPressedState } from '@/lib/state/createKeyPressedState'
+import { createMiscState } from '@/lib/state/createMiscState'
 import { createPlayerState } from '@/lib/state/createPlayerState'
 import { createRtcState } from '@/lib/state/createRtcState'
 import { createSceneState } from '@/lib/state/createSceneState'
@@ -21,6 +22,8 @@ export function GlobalStateProvider(props: ParentProps) {
   const playerState = createPlayerState()
   const rtcState = createRtcState()
   const floatingPanelsState = createFloatingPanelsState()
+  const miscState = createMiscState()
+
   return (
     <GlobalStateContext.Provider
       value={{
@@ -30,6 +33,7 @@ export function GlobalStateProvider(props: ParentProps) {
         ...playerState,
         ...floatingPanelsState,
         ...rtcState,
+        ...miscState,
       }}
     >
       <GlobalStateEffects>{props.children}</GlobalStateEffects>
@@ -38,10 +42,14 @@ export function GlobalStateProvider(props: ParentProps) {
 }
 
 function GlobalStateEffects(props: ParentProps) {
-  const { player, keyPressed } = useGlobalState()
+  const { player, keyPressed, debug } = useGlobalState()
 
   createEffect(() => {
     player.ref?.style.setProperty('--running-mod', `${keyPressed.shift ? 2.5 : 1}`)
+  })
+
+  createEffect(() => {
+    document.body.classList.toggle('debug', debug())
   })
 
   return <>{props.children}</>

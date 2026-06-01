@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils'
 import { useQuery } from 'convex-solidjs'
 import { createEffect, createMemo } from 'solid-js'
-import { api } from '../../convex/_generated/api'
-import { useGlobalState } from './GlobalStateContext'
+import { api } from '../../../convex/_generated/api'
+import { useGlobalState } from '../GlobalStateContext'
 
 const DEBUG = false
 

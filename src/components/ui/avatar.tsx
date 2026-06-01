@@ -3,6 +3,8 @@ import { Avatar as AvatarPrimitive } from '@msviderok/base-ui-solid/avatar'
 import { ClientOnly } from '@tanstack/solid-router'
 import { createContext, createMemo, splitProps, useContext, type ComponentProps } from 'solid-js'
 import type { Doc } from '../../../convex/_generated/dataModel'
+import { useQuery } from 'convex-solidjs'
+import { api } from '../../../convex/_generated/api'
 
 const AvatarContext = createContext<{ user: Doc<'users'> | undefined }>({ user: undefined })
 
@@ -81,14 +83,15 @@ function AvatarBadge(props: ComponentProps<'span'>) {
   )
 }
 
-function AvatarBadgeOnline(props: ComponentProps<'span'> & { isOnline: boolean }) {
-  const [local, rest] = splitProps(props, ['class', 'isOnline'])
-  return (
-    <AvatarBadge
-      class={cn('opacity-0', props.isOnline && 'opacity-100 bg-green-600 border-green-800', local.class)}
-      {...rest}
-    />
+function AvatarBadgeOnline(props: ComponentProps<'span'>) {
+  const [local, rest] = splitProps(props, ['class'])
+  const context = useContext(AvatarContext)
+  const { data: isOnline } = useQuery(
+    api.users.isOnline,
+    () => ({ userId: context.user?._id as any }),
+    () => ({ enabled: context.user != null }),
   )
+  return <AvatarBadge class={cn('opacity-0', isOnline() && 'opacity-100 bg-blue-400', local.class)} {...rest} />
 }
 
 function AvatarGroup(props: ComponentProps<'div'>) {
