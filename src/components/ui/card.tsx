@@ -116,7 +116,7 @@ function CardContent(props: ComponentProps<'div'>) {
     <div
       data-slot="card-content"
       class={cn(
-        'px-3 group-data-[variant=rtc-panel]/card:py-4 group-data-[variant=rtc-panel]/card:relative group-data-[variant=rtc-panel]/card:flex group-data-[variant=rtc-panel]/card:flex-col group-data-[variant=rtc-panel]/card:items-center group-data-[variant=rtc-panel]/card:justify-center group-data-[variant=rtc-panel]/card:w-full group-data-[variant=rtc-panel]/card:gap-2',
+        'px-3 group-data-[variant=rtc-panel]/card:p-0 group-data-[variant=rtc-panel]/card:relative group-data-[variant=rtc-panel]/card:flex group-data-[variant=rtc-panel]/card:flex-col group-data-[variant=rtc-panel]/card:items-center group-data-[variant=rtc-panel]/card:justify-center group-data-[variant=rtc-panel]/card:size-full group-data-[variant=rtc-panel]/card:gap-2',
         local.class,
       )}
       {...rest}

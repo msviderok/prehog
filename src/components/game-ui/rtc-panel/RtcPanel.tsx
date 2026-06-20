@@ -1,121 +1,121 @@
 import { api } from '@/convex/api'
+import type { Id } from '@/convex/dataModel'
 import { createRtcState } from '@/lib/state/createRtcState'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { createEffect, createMemo, Match, on, Show, Switch } from 'solid-js'
-import { GuestPanel } from './GuestPanel'
-import { HostPanel } from './HostPanel'
+import { createEffect, createMemo, on, Show } from 'solid-js'
+import { RtcCard } from './RtcCard'
 import { RtcContext } from './useRtcContext'
 
 export function RtcPanel(_props: RtcPanel.Props) {
   const rtcState = createRtcState()
+
   const call = useQuery(api.activeCall.get, {})
   const myCallState = useQuery(api.activeCall.myCallState, {})
-  const hostUser = useQuery(api.activeCall.hostUser, {})
-  const guestUser = useQuery(api.activeCall.guestUser, {})
-  const pendingRtcMessages = useQuery(api.activeCall.pendingRtcMessages, {})
+  const participantUser = useQuery(api.activeCall.findParticipantUser, {})
+
+  const offerRtcMessage = useQuery(api.activeCall.offerRtcMessage, {})
+  const answerRtcMessage = useQuery(api.activeCall.answerRtcMessage, {})
+  const iceCandidateRtcMessages = useQuery(api.activeCall.iceCandidateRtcMessages, {})
 
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
   const deleteRtcMessage = useMutation(api.activeCall.deleteRtcMessage)
+  const deleteRtcMessages = useMutation(api.activeCall.deleteRtcMessages)
 
-  const isLoaded = createMemo(() => {
-    return (
-      !!(call.isLoading() === false && call.data()) &&
-      !!(myCallState.isLoading() === false && myCallState.data()) &&
-      !!(hostUser.isLoading() === false && hostUser.data()) &&
-      !!(guestUser.isLoading() === false && guestUser.data())
-    )
-  })
+  const isLoaded = createMemo(() =>
+    call.data() && myCallState.data() && participantUser.data()
+      ? { call: call.data()!, state: myCallState.data()!, user: participantUser.data()! }
+      : false,
+  )
 
+  /* Mute/unmute audio */
   createEffect(on(() => myCallState.data()?.audio ?? false, rtcState.toggleAudio))
+  /* Start/stop video */
   createEffect(on(() => myCallState.data()?.video ?? false, rtcState.toggleVideo))
 
+  /**
+   * Create and send offer:
+   *    - if the call just got accepted
+   *        (status === 'in-progress' && prevStatus === 'awaiting-response')
+   *    - if the page was refreshed while the call was in progress
+   *        (status === 'in-progress' && prevStatus === undefined)
+   */
   createEffect(
-    on(pendingRtcMessages.data, async (messages) => {
-      for (const message of messages ?? []) {
-        if (message.type === 'ice-candidate') {
-          if (rtcState.myRTC.peer.remoteDescription) {
-            await rtcState.myRTC.peer.addIceCandidate(message.data)
-          } else {
-            rtcState.myRTC.pendingCandidates.push(message.data)
-          }
+    on([() => call.data()?.status, () => myCallState.data()?.role], async ([status, role], prev) => {
+      if (role == null || role !== 'host') return
 
-          await deleteRtcMessage.mutate({ id: message._id })
-          continue
-        }
+      const [prevStatus] = prev ?? []
+      if (status === 'in-progress' && (prevStatus === undefined || prevStatus === 'awaiting-response')) {
+        rtcState.myRTC.peer.addTransceiver('audio', { direction: 'sendrecv' })
+        rtcState.myRTC.peer.addTransceiver('video', { direction: 'sendrecv' })
+        await rtcState.attachBothAudioVideo()
 
-        if (message.type === 'offer') {
-          await rtcState.myRTC.peer.setRemoteDescription(message.data)
-          await rtcState.addPendingCandidates()
-
-          const answer = await rtcState.createAnswer()
-          await rtcState.myRTC.peer.setLocalDescription(answer)
-
-          await sendRtcMessage.mutate({ message: { type: 'answer', data: answer } })
-          continue
-        }
-
-        if (message.type === 'answer') {
-          await rtcState.myRTC.peer.setRemoteDescription(message.data)
-          await rtcState.addPendingCandidates()
-          continue
-        }
+        const offer = await rtcState.createOffer()
+        sendRtcMessage.mutate({ message: { type: 'offer', data: offer } })
+        return
       }
     }),
   )
 
+  /* Receive offer and create answer */
   createEffect(
-    on(
-      () => call.data()?.status,
-      async (status, prevStatus) => {
-        /**
-         * If the call just got accepted:
-         *   status === 'in-progress' && prevStatus === 'awaiting-response'
-         *
-         * If the page was refreshed while the call was in progress:
-         *   status === 'in-progress' && prevStatus === undefined
-         */
-        if (status === 'in-progress' && (prevStatus === undefined || prevStatus === 'awaiting-response')) {
-          rtcState.myRTC.peer.addTransceiver('audio', { direction: 'sendrecv' })
-          rtcState.myRTC.peer.addTransceiver('video', { direction: 'sendrecv' })
-          const offer = await rtcState.createOffer()
-          sendRtcMessage.mutate({ message: { type: 'offer', data: offer } })
-          return
+    on(offerRtcMessage.data, async (offer) => {
+      if (offer == null) return
+
+      await rtcState.myRTC.peer.setRemoteDescription(offer.data)
+      await rtcState.addPendingCandidates()
+      await rtcState.attachBothAudioVideo()
+      const answer = await rtcState.createAnswer()
+      await sendRtcMessage.mutate({ message: { type: 'answer', data: answer } })
+    }),
+  )
+
+  /* Receive answer */
+  createEffect(
+    on(answerRtcMessage.data, async (answer) => {
+      if (answer == null) return
+
+      await rtcState.myRTC.peer.setRemoteDescription(answer.data)
+      await rtcState.addPendingCandidates()
+      await deleteRtcMessage.mutate({ id: answer._id })
+    }),
+  )
+
+  /* Process all the incoming ice-candidates */
+  const processedEntries = new Set<Id<'call_rtc_messages'>>()
+  createEffect(
+    on(iceCandidateRtcMessages.data, async (candidates) => {
+      if (!candidates) return
+
+      const deleteIds = []
+      for (const candidate of candidates) {
+        /* Ignore the candidate if we've already processed it, otherwise add it to the set. */
+        if (processedEntries.has(candidate._id)) continue
+        processedEntries.add(candidate._id)
+
+        if (candidate.type === 'ice-candidate') {
+          if (rtcState.myRTC.peer.remoteDescription) {
+            await rtcState.myRTC.peer.addIceCandidate(candidate.data)
+          } else {
+            rtcState.myRTC.pendingCandidates.push(candidate.data)
+          }
+
+          deleteIds.push(candidate._id)
+          continue
         }
-      },
-    ),
+      }
+
+      if (deleteIds.length) {
+        await deleteRtcMessages.mutate({ ids: deleteIds })
+      }
+    }),
   )
 
   return (
     <RtcContext.Provider value={rtcState}>
-      <Show when={isLoaded()}>
-        <Switch>
-          <Match when={myCallState.data()!.role === 'host'}>
-            <HostPanel state={myCallState.data()!} call={call.data()!} user={guestUser.data()!} />
-          </Match>
-          <Match when={myCallState.data()!.role === 'participant'}>
-            <GuestPanel state={myCallState.data()!} call={call.data()!} user={hostUser.data()!} />
-          </Match>
-        </Switch>
-      </Show>
+      <Show when={isLoaded()}>{(cardProps) => <RtcCard {...cardProps()} />}</Show>
     </RtcContext.Provider>
   )
 }
-
-// <div>
-//   <video ref={local.ref} autoplay playsinline />
-//   <video ref={remote.ref} autoplay playsinline />
-// </div>
-//
-//  // local.peer.ontrack = (event) => {
-//   if (remote.ref) {
-//     remote.ref.srcObject = event.streams[0]
-//   }
-// }
-
-// local.peer.onicecandidate = (event) => {
-//   if (event.candidate) {
-//   }
-// }
 
 export namespace RtcPanel {
   export type Props = PanelTypeRTC

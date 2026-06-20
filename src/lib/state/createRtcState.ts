@@ -1,18 +1,9 @@
+import { api } from '@/convex/api'
 import { makePersisted } from '@solid-primitives/storage'
-import {
-  createEffect,
-  createResource,
-  createSignal,
-  on,
-  onCleanup,
-  onMount,
-  type Accessor,
-  type Setter,
-} from 'solid-js'
+import { useMutation } from 'convex-solidjs'
+import { createResource, createSignal, onCleanup, onMount, type Accessor, type Setter } from 'solid-js'
 import { createStore, produce, type SetStoreFunction, type Store } from 'solid-js/store'
 import { getLSKey } from '../utils'
-import { useMutation } from 'convex-solidjs'
-import { api } from '@/convex/api'
 
 type Kind = 'audio' | 'video'
 
@@ -94,17 +85,50 @@ export function createRtcState() {
   const [devices, { refetch: refetchListDevices }] = createResource(listDevices)
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 
-  async function requestAudioPermissions() {
-    const audioStream = await navigator.mediaDevices.getUserMedia({
-      audio: myRTC.selectedDevices.audioinput ? { deviceId: { exact: myRTC.selectedDevices.audioinput } } : true,
+  function getMediaConstraints(kind: Kind): MediaTrackConstraints | boolean {
+    const deviceKind: MediaDeviceKind = kind === 'audio' ? 'audioinput' : 'videoinput'
+    const storedDevice = myRTC.selectedDevices[deviceKind]
+    return storedDevice ? { deviceId: { exact: storedDevice } } : true
+  }
+
+  async function requestNewStream(kind: 'audio' | 'video' | 'both') {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: kind === 'video' || kind === 'both' ? getMediaConstraints('video') : false,
+      audio: kind === 'audio' || kind === 'both' ? getMediaConstraints('audio') : false,
     })
+    return stream
+  }
+
+  async function requestNewTrack<
+    T extends 'audio' | 'video' | 'both',
+    R = T extends 'both' ? { audio: MediaStreamTrack; video: MediaStreamTrack } : MediaStreamTrack,
+  >(kind: T): Promise<R> {
+    const stream = await requestNewStream(kind)
+    const [audioTrack] = stream.getAudioTracks()
+    const [videoTrack] = stream.getVideoTracks()
+
+    if (kind === 'audio') {
+      if (audioTrack) return audioTrack as R
+      throw new Error('No audio track returned')
+    }
+
+    if (kind === 'video') {
+      if (videoTrack) return videoTrack as R
+      throw new Error('No video track returned')
+    }
+
+    if (!audioTrack) throw new Error('No audio track returned')
+    if (!videoTrack) throw new Error('No video track returned')
+    return { audio: audioTrack, video: videoTrack } as R
+  }
+
+  async function requestAudioPermissions() {
+    const audioStream = await requestNewStream('audio')
     audioStream.getAudioTracks().forEach((track) => track.stop())
   }
 
   async function requestVideoPermissions() {
-    const videoStream = await navigator.mediaDevices.getUserMedia({
-      video: myRTC.selectedDevices.videoinput ? { deviceId: { exact: myRTC.selectedDevices.videoinput } } : true,
-    })
+    const videoStream = await requestNewStream('video')
     videoStream.getVideoTracks().forEach((track) => track.stop())
   }
 
@@ -124,15 +148,8 @@ export function createRtcState() {
 
   async function setInputDevice(kind: Exclude<MediaDeviceInfo['kind'], 'audiooutput'>, deviceId: string) {
     const isAudio = kind === 'audioinput'
-    const isVideo = kind === 'videoinput'
     const trackKind: Kind = isAudio ? 'audio' : 'video'
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: isVideo ? { deviceId: { exact: deviceId } } : false,
-      audio: isAudio ? { deviceId: { exact: deviceId } } : false,
-    })
-
-    const [newTrack] = isAudio ? stream.getAudioTracks() : stream.getVideoTracks()
-    if (!newTrack) throw new Error(`No ${kind} track returned`)
+    const newTrack = await requestNewTrack(trackKind)
 
     const [oldTrack] = isAudio ? myRTC.stream.getAudioTracks() : myRTC.stream.getVideoTracks()
 
@@ -172,14 +189,7 @@ export function createRtcState() {
 
     if (enabled === false) return
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { deviceId: { exact: myRTC.selectedDevices.audioinput } },
-      video: false,
-    })
-
-    const [track] = stream.getAudioTracks()
-    if (!track) throw new Error('No audio track returned')
-
+    const track = await requestNewTrack('audio')
     myRTC.stream.addTrack(track)
     myRTC.tracks.audio = track
   }
@@ -192,14 +202,7 @@ export function createRtcState() {
 
     if (enabled === false) return
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: myRTC.selectedDevices.videoinput }, facingMode: {} },
-      audio: false,
-    })
-
-    const [track] = stream.getVideoTracks()
-    if (!track) throw new Error('No video track returned')
-
+    const track = await requestNewTrack('video')
     myRTC.stream.addTrack(track)
     myRTC.tracks.video = track
   }
@@ -223,7 +226,39 @@ export function createRtcState() {
     myRTC.pendingCandidates.length = 0
   }
 
+  async function attachMyMic() {
+    const track = await requestNewTrack('audio')
+    myRTC.peer
+      .getTransceivers()
+      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'audio')
+      ?.sender.replaceTrack(track)
+  }
+
+  async function attachMyVideo() {
+    const track = await requestNewTrack('video')
+    myRTC.peer
+      .getTransceivers()
+      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'video')
+      ?.sender.replaceTrack(track)
+  }
+
+  async function attachBothAudioVideo() {
+    const { audio, video } = await requestNewTrack('both')
+    const audioTransceiver = myRTC.peer
+      .getTransceivers()
+      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'audio')
+    console.log(audioTransceiver, audio)
+    const videoTransceiver = myRTC.peer
+      .getTransceivers()
+      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'video')
+
+    audioTransceiver?.sender.replaceTrack(audio)
+    videoTransceiver?.sender.replaceTrack(video)
+  }
+
   onMount(() => {
+    console.log(myRTC.peer)
+
     myRTC.peer.ontrack = (e) => {
       console.log('on track', e.streams)
       const remoteRef = removeVideoRef()
@@ -233,10 +268,8 @@ export function createRtcState() {
     }
 
     myRTC.peer.onicecandidate = (event) => {
-      console.log('onicecandidate')
       const candidate = event.candidate?.toJSON()
       if (candidate) {
-        console.log('Sending my candidate', candidate)
         sendRtcMessage.mutate({ message: { type: 'ice-candidate', data: candidate } })
       }
     }
@@ -277,5 +310,9 @@ export function createRtcState() {
     addPendingCandidates,
     removeVideoRef,
     setRemoteVideoRef,
+    requestNewStream,
+    attachMyMic,
+    attachMyVideo,
+    attachBothAudioVideo,
   }
 }

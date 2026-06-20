@@ -1,10 +1,15 @@
 import { v, Validator } from 'convex/values'
 import { formatDurationFull } from '../src/lib/duration'
+import { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import * as Calls from './model/calls'
 import * as Chats from './model/chats'
-import * as Users from './model/users'
 import * as FloatingPanels from './model/floatingPanels'
+import * as Users from './model/users'
+
+type CallRtcMessageOffer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
+type CallRtcMessageAnswer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
+type CallRtcMessageIceCandidate = Extract<Doc<'call_rtc_messages'>, { type: 'ice-candidate' }>
 
 export const get = query({
   args: {},
@@ -140,23 +145,16 @@ export const toggleVideo = mutation({
   },
 })
 
-export const hostUser = query({
+export const findParticipantUser = query({
   args: {},
   handler: async (ctx) => {
     const call = await Calls.findMyCurrentCall(ctx)
     if (!call) return null
-    const user = await ctx.db.get(call.call.fromUserId)
+    const user = await ctx.db.get(
+      'users',
+      call.myParticipant.role === 'host' ? call.call.toUserId : call.call.fromUserId,
+    )
     return user
-  },
-})
-
-export const guestUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const call = await Calls.findMyCurrentCall(ctx)
-    if (!call) return null
-    const user = await ctx.db.get(call.call.toUserId)
-    return user ?? null
   },
 })
 
@@ -182,78 +180,77 @@ export const sendRtcMessage = mutation({
     ),
   },
   handler: async (ctx, { message: args }) => {
-    console.log('sendRtcMessage', args)
-    const user = await Users.getCurrentUser(ctx)
+    console.log('sendRtcMessage', args.type)
     const call = await Calls.getMyCurrentCall(ctx)
+    const toUserId = await Calls.getRtcMessageReceiver(ctx, args.type)
 
     if (args.type === 'offer') {
       /**
        * If an offer is sent – cleanup all the potential existing messages for this call.
        *
        * Off the top of my head, one scenario when this can happen is if for some reason
-       * any of the users reloaded the page and some message in the offer/answer/candidate
-       * chain got removed before being processed. In that case we need to re-initiate
-       * the whole handshake process all over again so we need to cleanup existing messages.
+       * any user reloaded the page and some message in the offer/answer/candidate chain
+       * got removed before being processed. In that case we need to re-initiate the whole
+       * handshake process all over again so we need to cleanup existing messages.
        */
-      const existingMessages = await ctx.db
-        .query('call_rtc_messages')
-        .withIndex('by_call', (q) => q.eq('callId', call.call._id))
-        .collect()
-      await Promise.all(existingMessages.map((message) => ctx.db.delete('call_rtc_messages', message._id)))
+      await Calls.deleteCallRtcMessages(ctx, call.call._id)
     } else if (args.type === 'answer') {
       /**
        * Answer can be sent by the invitee only if the offer was received so at this point
-       * that can be presumed. We should not expect anything other than the offer to be present
-       * for this call. If those conditions are met – we can safely delete the offer from the db.
+       * that can be presumed and we can safely delete the offer from the db.
        */
-      const existingOffer = await ctx.db
-        .query('call_rtc_messages')
-        .withIndex('by_call', (q) => q.eq('callId', call.call._id))
-        .unique()
-
-      if (existingOffer?.type !== 'offer') {
-        throw new Error(
-          `Expected only "offer" for this call to be present in the database, but got "${existingOffer?.type}" instead.
-           Answer can only be sent after an offer is received.`,
-        )
-      }
-
-      await ctx.db.delete('call_rtc_messages', existingOffer._id)
-    } else if (args.type === 'ice-candidate') {
-      /**
-       * Receiving candidates requests means both offer and answer were received successfully so we can
-       * safely remove the answer from the db, considering it should be the only message for this call
-       * at this point.
-       */
-      const existingAnswer = await ctx.db
-        .query('call_rtc_messages')
-        .withIndex('by_call', (q) => q.eq('callId', call.call._id))
-        .unique()
-
-      if (existingAnswer?.type !== 'answer') {
-        throw new Error(
-          `Expected only "answer" for this call to be present in the database, but got "${existingAnswer?.type}" instead.
-           ICECandidate can only be sent after an answer is received.`,
-        )
-      }
+      await Calls.deleteRtcOfferIfExists(ctx, call.call._id)
     }
 
-    await ctx.db.insert('call_rtc_messages', { callId: call.call._id, toUserId: user._id, ...args })
+    await ctx.db.insert('call_rtc_messages', { callId: call.call._id, toUserId, ...args })
   },
 })
 
-export const pendingRtcMessages = query({
+export const offerRtcMessage = query({
   args: {},
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
     const call = await Calls.findMyCurrentCall(ctx)
-    if (!call) return []
-
-    const messages = await ctx.db
+    if (!call) return null
+    const offer = await ctx.db
       .query('call_rtc_messages')
-      .withIndex('by_toUser_call', (q) => q.eq('toUserId', user._id).eq('callId', call.call._id))
+      .withIndex('by_toUser_call_type', (q) =>
+        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'offer'),
+      )
+      .unique()
+    return offer as CallRtcMessageOffer
+  },
+})
+
+export const answerRtcMessage = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const call = await Calls.findMyCurrentCall(ctx)
+    if (!call) return null
+    const answer = await ctx.db
+      .query('call_rtc_messages')
+      .withIndex('by_toUser_call_type', (q) =>
+        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'answer'),
+      )
+      .unique()
+    return answer as CallRtcMessageAnswer
+  },
+})
+
+export const iceCandidateRtcMessages = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const call = await Calls.findMyCurrentCall(ctx)
+    if (!call) return null
+    const candidates = await ctx.db
+      .query('call_rtc_messages')
+      .withIndex('by_toUser_call_type', (q) =>
+        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'ice-candidate'),
+      )
       .collect()
-    return messages
+    return candidates as CallRtcMessageIceCandidate[]
   },
 })
 
@@ -263,5 +260,16 @@ export const deleteRtcMessage = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.delete('call_rtc_messages', args.id)
+  },
+})
+
+export const deleteRtcMessages = mutation({
+  args: {
+    ids: v.array(v.id('call_rtc_messages')),
+  },
+  handler: async (ctx, args) => {
+    for (const id of args.ids) {
+      await ctx.db.delete('call_rtc_messages', id)
+    }
   },
 })

@@ -133,6 +133,7 @@ export default defineSchema({
     ),
   )
     .index('by_call', ['callId'])
+    .index('by_call_type', ['callId', 'type'])
     .index('by_toUser_call', ['toUserId', 'callId'])
     .index('by_toUser_call_type', ['toUserId', 'callId', 'type']),
 })

@@ -1,4 +1,4 @@
-import { Id } from '../_generated/dataModel'
+import { Doc, Id } from '../_generated/dataModel'
 import { type MutationCtx, type QueryCtx } from '../_generated/server'
 import * as Users from './users'
 import * as FloatingPanels from './floatingPanels'
@@ -40,10 +40,7 @@ export async function getActiveParticipantByUser(ctx: QueryCtx | MutationCtx, us
   return participant
 }
 
-export async function deleteCall(ctx: MutationCtx, callId: Id<'calls'>) {
-  const call = await ctx.db.get(callId)
-  if (!call) return
-
+export async function deleteCallParticipants(ctx: MutationCtx, callId: Id<'calls'>) {
   const participants = await ctx.db
     .query('call_participants')
     .withIndex('by_call', (q) => q.eq('callId', callId))
@@ -51,8 +48,25 @@ export async function deleteCall(ctx: MutationCtx, callId: Id<'calls'>) {
   for (const participant of participants) {
     await ctx.db.delete('call_participants', participant._id)
   }
+}
 
-  await ctx.db.delete(callId)
+export async function deleteCallRtcMessages(ctx: MutationCtx, callId: Id<'calls'>) {
+  const rtcMessages = await ctx.db
+    .query('call_rtc_messages')
+    .withIndex('by_call', (q) => q.eq('callId', callId))
+    .collect()
+  for (const message of rtcMessages) {
+    await ctx.db.delete('call_rtc_messages', message._id)
+  }
+}
+
+export async function deleteCall(ctx: MutationCtx, callId: Id<'calls'>) {
+  const call = await ctx.db.get(callId)
+  if (call) {
+    await deleteCallParticipants(ctx, callId)
+    await deleteCallRtcMessages(ctx, callId)
+    await ctx.db.delete(callId)
+  }
 }
 
 export async function createNewCallWithCleanup(
@@ -95,4 +109,23 @@ export async function createNewCall(
     callId: newCallId,
     userId: args.fromUserId,
   })
+}
+
+export async function getRtcMessageReceiver(ctx: QueryCtx | MutationCtx, type: Doc<'call_rtc_messages'>['type']) {
+  const user = await Users.getCurrentUser(ctx)
+  const call = await getMyCurrentCall(ctx)
+
+  if (type === 'offer') return call.call.toUserId
+  if (type === 'answer') return call.call.fromUserId
+  return call.call.fromUserId === user._id ? call.call.toUserId : call.call.fromUserId
+}
+
+export async function deleteRtcOfferIfExists(ctx: MutationCtx, callId: Id<'calls'>) {
+  const existingOffer = await ctx.db
+    .query('call_rtc_messages')
+    .withIndex('by_call_type', (q) => q.eq('callId', callId).eq('type', 'offer'))
+    .unique()
+  if (existingOffer) {
+    await ctx.db.delete('call_rtc_messages', existingOffer._id)
+  }
 }

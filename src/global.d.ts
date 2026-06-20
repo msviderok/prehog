@@ -24,6 +24,14 @@ declare global {
   type MessageSystemCall = Extract<Doc<'chat_messages'>, { body: { type: 'call' } }>
   type MessageBodySystemCallEnded = Extract<Doc<'chat_messages'>['body'], { type: 'call'; status: 'ended' }>
   type MessageBodySystemCallDeclined = Extract<Doc<'chat_messages'>['body'], { type: 'call'; status: 'declined' }>
+
+  type CallRtcMessageOffer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
+  type CallRtcMessageAnswer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
+  type CallRtcMessageIceCandidate = Extract<Doc<'call_rtc_messages'>, { type: 'ice-candidate' }>
+
+  type KebabToPascal<S extends string> = S extends `${infer Head}-${infer Tail}`
+    ? `${Capitalize<Head>}${KebabToPascal<Tail>}`
+    : Capitalize<S>
 }
 
 export {}

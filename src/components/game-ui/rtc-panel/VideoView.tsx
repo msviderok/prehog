@@ -7,6 +7,7 @@ export function VideoView(props: { type: 'my-view' | 'them-view' }) {
       <video
         autoplay
         playsinline
+        muted={props.type === 'my-view'}
         class="border h-full w-full object-cover"
         ref={(el) => {
           if (props.type === 'my-view') {
