@@ -1,16 +1,31 @@
 import { v } from 'convex/values'
-import { mutation } from './_generated/server'
+import { mutation, query } from './_generated/server'
+import * as Calls from './model/calls'
 import * as Users from './model/users'
-import * as Chats from './model/chats'
+
+export const byId = query({
+  args: {
+    callId: v.id('calls'),
+  },
+  handler: async (ctx, args) => {
+    const call = await ctx.db.get(args.callId)
+    return call
+  },
+})
 
 export const initCall = mutation({
   args: {
-    chatId: v.id('chats'),
-    audio: v.boolean(),
-    video: v.boolean(),
+    x: v.number(),
+    y: v.number(),
+    userId: v.id('users'),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
-    const chat = await Chats.getChatById(ctx, { myId: user._id, chatId: args.chatId })
+    await Calls.createNewCallWithCleanup(ctx, {
+      x: args.x,
+      y: args.y,
+      fromUserId: user._id,
+      toUserId: args.userId,
+    })
   },
 })

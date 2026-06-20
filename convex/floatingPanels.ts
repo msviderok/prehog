@@ -5,37 +5,17 @@ import * as FloatingPanels from './model/floatingPanels'
 
 export const create = mutation({
   args: {
-    type: v.union(v.literal('chat'), v.literal('rtc')),
-    chatId: v.id('chats'),
     x: v.number(),
     y: v.number(),
+    data: v.union(
+      v.object({ type: v.literal('chat'), chatId: v.id('chats') }),
+      v.object({ type: v.literal('rtc'), callId: v.id('calls') }),
+    ),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, { x, y, data: args }) => {
     const user = await Users.getCurrentUser(ctx)
-    const existingPanel = await ctx.db
-      .query('floating_panels')
-      .withIndex('by_user_chat_type', (q) => q.eq('userId', user._id).eq('chatId', args.chatId).eq('type', args.type))
-      .unique()
-
-    if (existingPanel) {
-      await ctx.db.delete('floating_panels', existingPanel._id)
-      await ctx.db.delete('floating_panels_position', existingPanel.positionId)
-    }
-
-    const zIndex = await FloatingPanels.getNextHighestLayer(ctx)
-    const positionId = await ctx.db.insert('floating_panels_position', {
-      zIndex,
-      x: args.x,
-      y: args.y,
-    })
-    const floatingPanelId = await ctx.db.insert('floating_panels', {
-      type: args.type,
-      chatId: args.chatId,
-      userId: user._id,
-      positionId,
-    })
-
-    return ctx.db.get('floating_panels', floatingPanelId)
+    const panel = await FloatingPanels.createNewPanel(ctx, { x, y, ...args, userId: user._id })
+    return panel
   },
 })
 
@@ -44,25 +24,19 @@ export const remove = mutation({
     floatingPanelId: v.id('floating_panels'),
   },
   handler: async (ctx, args) => {
-    const panel = await ctx.db.get(args.floatingPanelId)
-    if (!panel) return
-    await ctx.db.delete(panel.positionId)
-    await ctx.db.delete(panel._id)
+    await FloatingPanels.deletePanelById(ctx, args.floatingPanelId)
   },
 })
 
-export const byChatAndType = query({
+export const byType = query({
   args: {
-    chatId: v.id('chats'),
-    type: v.union(v.literal('chat'), v.literal('rtc')),
+    params: v.union(
+      v.object({ type: v.literal('chat'), chatId: v.id('chats') }),
+      v.object({ type: v.literal('rtc'), callId: v.id('calls') }),
+    ),
   },
   handler: async (ctx, args) => {
-    const user = await Users.getCurrentUser(ctx)
-    const panel = await ctx.db
-      .query('floating_panels')
-      .withIndex('by_user_chat_type', (q) => q.eq('userId', user._id).eq('chatId', args.chatId).eq('type', args.type))
-      .unique()
-
+    const panel = await FloatingPanels.getMyFloatingPanel(ctx, args.params)
     return panel
   },
 })

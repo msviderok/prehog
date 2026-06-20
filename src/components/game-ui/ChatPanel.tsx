@@ -1,40 +1,62 @@
-import { cn } from '@/lib/utils'
+import { api } from '@/convex/api'
+import type { Doc } from '@/convex/dataModel'
+import { cn, getNewPanelPosition } from '@/lib/utils'
 import { debounce, throttle } from '@solid-primitives/scheduled'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { PhoneIcon } from 'lucide-solid'
-import { createEffect, createSignal, createUniqueId, For, on, Show } from 'solid-js'
-import { api } from '../../../convex/_generated/api'
-import type { Doc, Id } from '../../../convex/_generated/dataModel'
-import { useFloatingContext } from './FloatingPanel'
-import { useGlobalState } from '../GlobalStateContext'
+import { PhoneIcon, PhoneMissedIcon } from 'lucide-solid'
+import { createEffect, createMemo, createSignal, createUniqueId, For, Match, on, Show, Switch } from 'solid-js'
 import { Card, CardAction, CardCloseAction, CardContent, CardFooter, CardHeader } from '../ui/card'
 import { Textarea } from '../ui/textarea'
 import { Toggle } from '../ui/toggle'
+import { useFloatingContext } from './FloatingContext'
 import { UserCard } from './UserCard'
+import { useCurrentUser } from '@/lib/integrations/convex-clerk'
 
 export function ChatPanel(props: ChatPanel.Props) {
   const { data: chat } = useQuery(api.chats.byId, { chatId: props.chatId })
-  return <Show when={chat()}>{(chatResolved) => <ChatPanelContent {...chatResolved()} />}</Show>
+  const { data: user } = useQuery(
+    api.users.byChatId,
+    () => ({ chatId: chat()?._id as any }),
+    () => ({ enabled: chat()?._id != null }),
+  )
+  const isLoaded = createMemo(() => !!(chat() && user()))
+  return (
+    <Show when={isLoaded()}>
+      <ChatPanelContent chat={chat()!} user={user()!} />
+    </Show>
+  )
 }
 
-function ChatPanelContent(props: Doc<'chats'>) {
+function ChatPanelContent(props: { chat: Doc<'chats'>; user: Doc<'users'> }) {
   const floatingContext = useFloatingContext(true)
-  const { data: user } = useQuery(api.users.byChatId, { chatId: props._id })
-  const { openFloatingPanel, isFloatingPanelOpen } = useGlobalState()
+  const currentUser = useCurrentUser()
+  const currentCall = useQuery(api.activeCall.get, {})
+  const initCall = useMutation(api.calls.initCall)
+
+  const isOnCallWithUser = createMemo(() => {
+    const call = currentCall.data()
+    const me = currentUser()
+    if (!call) return false
+
+    const meCallingUser = call.fromUserId === me._id && call.toUserId === props.user._id
+    const userCallingMe = call.fromUserId === props.user._id && call.toUserId === me._id
+    return meCallingUser || userCallingMe
+  })
+
   return (
-    <Card class="w-[calc(100vw-1rem)] max-w-100">
-      <CardHeader class="border-b-2 border-input/50 py-0 flex justify-between items-center pl-1">
-        <Show when={user()}>{(u) => <UserCard variant="chat" user={u()} />}</Show>
-        <div class="flex items-center self-center gap-2">
+    <Card variant="chat-panel">
+      <CardHeader>
+        <UserCard variant="chat" user={props.user} />
+        <div class="flex items-center gap-2">
           <CardAction>
             <Toggle
               variant="outline"
               size="icon-xs"
               class="v-secondary"
-              pressed={isFloatingPanelOpen({ chatId: props._id, type: 'rtc' })}
-              disabled={isFloatingPanelOpen({ chatId: props._id, type: 'rtc' })}
+              pressed={isOnCallWithUser()}
+              disabled={isOnCallWithUser()}
               onClick={({ target }) => {
-                openFloatingPanel({ type: 'rtc', target, chatId: props._id })
+                initCall.mutate({ ...getNewPanelPosition(target), userId: props.user._id })
               }}
             >
               <PhoneIcon />
@@ -44,10 +66,10 @@ function ChatPanelContent(props: Doc<'chats'>) {
         </div>
       </CardHeader>
 
-      <ChatMessages {...props} />
+      <ChatMessages {...props.chat} />
 
-      <CardFooter class="p-2">
-        <ChatTextarea {...props} />
+      <CardFooter>
+        <ChatTextarea {...props.chat} />
       </CardFooter>
     </Card>
   )
@@ -56,7 +78,6 @@ function ChatPanelContent(props: Doc<'chats'>) {
 function ChatMessages(props: Doc<'chats'>) {
   let ref!: HTMLDivElement
   let mounted = false
-  const { data: currentUser } = useQuery(api.users.current, {})
   const { data: messages } = useQuery(api.chats.messages, { chatId: props._id })
 
   createEffect(
@@ -79,23 +100,54 @@ function ChatMessages(props: Doc<'chats'>) {
       )}
     >
       <div class="grid auto-rows-auto min-h-full gap-0.5 *:[overflow-anchor:none]">
-        <For each={messages()}>
-          {(message) => (
-            <div
-              class={cn(
-                'w-max p-1.5 px-2.5 rounded-xl text-white animate-in',
-                message.userId === currentUser()?._id
-                  ? 'bg-blue-500 justify-self-end'
-                  : 'bg-indigo-500 justify-self-start',
-              )}
-            >
-              <span>{message.body}</span>
-            </div>
-          )}
-        </For>
+        <For each={messages()}>{(message) => <Message message={message} />}</For>
         <div class="[overflow-anchor:auto]! h-px" />
       </div>
     </CardContent>
+  )
+}
+
+function Message(props: { message: Doc<'chat_messages'> }) {
+  const currentUser = useCurrentUser()
+  return (
+    <div
+      class={cn(
+        'max-w-[80%] p-1.5 px-3 rounded-base text-white animate-in wrap-break-word [word-break:break-word]',
+        props.message.userId === currentUser()?._id
+          ? 'bg-blue-500 justify-self-end'
+          : 'bg-slate-700 justify-self-start',
+      )}
+    >
+      <Switch fallback={<span>{(props.message as MessageDM).body}</span>}>
+        <Match when={props.message.type === 'system' && props.message}>
+          {(msg) => (
+            <Switch>
+              <Match when={msg().body.status === 'ended' && (msg().body as MessageBodySystemCallEnded)}>
+                {(sysMsg) => (
+                  <p>
+                    <span class="flex gap-2 items-center">
+                      <PhoneIcon class="size-3.5" /> Call ended
+                    </span>
+                    <span class="flex justify-end text-xs text-tint-muted/20 tracking-tighter">
+                      {sysMsg().duration}
+                    </span>
+                  </p>
+                )}
+              </Match>
+              <Match when={msg().body.status === 'declined' && (msg().body as MessageBodySystemCallDeclined)}>
+                {(sysMsg) => (
+                  <p>
+                    <span class="flex gap-2 items-center">
+                      <PhoneMissedIcon class="size-3.5" /> Call declined
+                    </span>
+                  </p>
+                )}
+              </Match>
+            </Switch>
+          )}
+        </Match>
+      </Switch>
+    </div>
   )
 }
 
@@ -129,7 +181,5 @@ function ChatTextarea(props: Doc<'chats'>) {
 }
 
 export namespace ChatPanel {
-  export interface Props {
-    chatId: Id<'chats'>
-  }
+  export type Props = PanelTypeChat
 }

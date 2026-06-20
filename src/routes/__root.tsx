@@ -1,16 +1,15 @@
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { env } from '@/env'
 import { ConvexClerkProvider } from '@/lib/integrations/convex-clerk'
 import { neobrutalism } from '@clerk/ui/themes'
-import { ErrorComponent, HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/solid-router'
+import { createRootRouteWithContext, ErrorComponent, HeadContent, Outlet, Scripts } from '@tanstack/solid-router'
 import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
-import { TooltipProvider } from '@/components/ui/tooltip'
 
 export const Route = createRootRouteWithContext()({
   head: () => ({ links: [{ rel: 'stylesheet', href: styleCss }] }),
-  errorComponent: ErrorComponent,
   shellComponent() {
     return (
       <html class="dark">
@@ -65,10 +64,16 @@ export const Route = createRootRouteWithContext()({
               </ClerkProvider>
             </TooltipProvider>
           </Suspense>
-
           <Scripts />
         </body>
       </html>
     )
+  },
+  errorComponent(props) {
+    console.error(props.error)
+    return <ErrorComponent {...props} />
+  },
+  notFoundComponent() {
+    return <p>Not Found!</p>
   },
 })

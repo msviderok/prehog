@@ -2,42 +2,58 @@ import { cn, defaultProps } from '@/lib/utils'
 import { useQuery } from 'convex-solidjs'
 import { differenceInCalendarDays, formatDate } from 'date-fns'
 import { createMemo, Match, Show, splitProps, Switch, type ComponentProps } from 'solid-js'
-import { api } from '../../../convex/_generated/api'
-import type { Doc } from '../../../convex/_generated/dataModel'
+import { api } from '@/convex/api'
+import type { Doc } from '@/convex/dataModel'
 import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { Skeleton } from '../ui/skeleton'
+import { useCurrentUser } from '@/lib/integrations/convex-clerk'
 
 interface VariantProps {
   variant?: 'default' | 'chat'
 }
 
-export function UserCard(componentProps: ComponentProps<'div'> & VariantProps & { user: Doc<'users'> }) {
+export function UserCard(
+  componentProps: ComponentProps<'div'> & VariantProps & { user: Doc<'users'>; isLoading?: boolean },
+) {
   const props = defaultProps(componentProps, { variant: 'default' })
-  const [local, rest] = splitProps(props, ['class', 'user', 'variant'])
-  const { data: chat } = useQuery(api.chats.byUserId, { userId: local.user._id })
+  const [local, rest] = splitProps(props, ['class', 'user', 'variant', 'isLoading'])
+  const { data: chat } = useQuery(api.chats.findByUserId, { userId: local.user._id })
   return (
     <div
       class={cn(
-        'flex gap-2 items-center p-2 overflow-hidden',
+        'flex gap-2 items-center p-2 overflow-hidden relative border-b border-muted/30',
         local.variant === 'default' &&
           'hover:bg-tint-card/10 data-pressed:bg-blue-200/10 cursor-pointer transition-colors duration-50 ease-out',
         local.class,
       )}
       {...rest}
     >
-      <Avatar user={local.user}>
+      <Avatar user={local.user} isLoading={local.isLoading}>
         <AvatarImage />
         <AvatarFallback />
         <AvatarBadgeOnline />
       </Avatar>
-      <Show when={chat()}>
-        {(chatResolved) => <UsernameAndLastActivity variant={local.variant} user={local.user} chat={chatResolved()} />}
+
+      <div class="font-light grid grid-cols-2 grid-rows-2 items-center w-full">
+        <span class={cn(!chat() && 'row-span-full text-sm')}>{props.user.fullname}</span>
+        <Show when={chat()}>
+          {(chatResolved) => <LastActivity variant={local.variant} user={local.user} chat={chatResolved()} />}
+        </Show>
+      </div>
+
+      <Show when={local.variant === 'default' && local.isLoading}>
+        <Skeleton
+          variant="overlay"
+          class="w-full h-full absolute top-0 left-0 z-10"
+          style={{ 'animation-delay': '500ms' }}
+        />
       </Show>
     </div>
   )
 }
 
-function UsernameAndLastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'> } & VariantProps) {
-  const { data: currentUser } = useQuery(api.users.current, {})
+function LastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'> } & VariantProps) {
+  const currentUser = useCurrentUser()
   const { data: lastMessage } = useQuery(api.chats.lastMessage, { chatId: props.chat._id })
   const { data: isTyping } = useQuery(api.chats.isTyping, { chatId: props.chat._id, userId: props.user._id })
   const { data: isOnline } = useQuery(
@@ -50,10 +66,6 @@ function UsernameAndLastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'>
     () => ({ userId: lastMessage()?.userId as any }),
     () => ({ enabled: lastMessage() != null }),
   )
-
-  function Username() {
-    return <span>{props.user.fullname}</span>
-  }
 
   function Timestamp() {
     const timestamp = createMemo(() => {
@@ -70,9 +82,7 @@ function UsernameAndLastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'>
   }
 
   function IsTyping() {
-    return (
-      <span class="font-bold flex w-full h-full text-blue-400 overflow-hidden after:top-0 after:left-0 after:absolute relative duration-3000 after:animate-typing after:w-full after:h-full" />
-    )
+    return <span class="font-bold h-full text-blue-400 typing">Typing</span>
   }
 
   function NoMessages() {
@@ -91,8 +101,7 @@ function UsernameAndLastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'>
   }
 
   return (
-    <div class="font-light grid grid-cols-2 grid-rows-2 items-center w-full">
-      <Username />
+    <>
       {props.variant === 'default' && <Timestamp />}
 
       <div class="flex items-center gap-1 text-xs overflow-hidden col-span-2 select-none h-full">
@@ -107,6 +116,6 @@ function UsernameAndLastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'>
           </Match>
         </Switch>
       </div>
-    </div>
+    </>
   )
 }

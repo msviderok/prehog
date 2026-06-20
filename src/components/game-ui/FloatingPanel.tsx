@@ -1,41 +1,37 @@
-import type { Draggable } from '@dnd-kit/dom'
+import { api } from '@/convex/api'
+import type { Doc } from '@/convex/dataModel'
 import { useDraggable } from '@dnd-kit/solid'
-import { useQuery } from 'convex-solidjs'
-import { createContext, useContext, type Setter } from 'solid-js'
+import { useMutation, useQuery } from 'convex-solidjs'
+import { createMemo, splitProps, type Component, type JSX } from 'solid-js'
 import { Dynamic, Portal } from 'solid-js/web'
-import { api } from '../../../convex/_generated/api'
-import type { Doc } from '../../../convex/_generated/dataModel'
 import { ChatPanel } from './ChatPanel'
-import { useGlobalState } from '../GlobalStateContext'
-import { RtcPanel } from './RtcPanel'
+import { FloatingContext } from './FloatingContext'
+import { RtcPanel } from './rtc-panel/RtcPanel'
 
-interface FloatingContextValue {
-  floatingPanel: Doc<'floating_panels'>
-  draggable: Draggable
-  handleRef: Setter<Element | undefined>
-  closePanel(): void
-}
-
-const FLOATING_COMPONENTS = { chat: ChatPanel, rtc: RtcPanel } as const
-const FloatingContext = createContext<FloatingContextValue>()
-
-export function useFloatingContext(): FloatingContextValue | undefined
-export function useFloatingContext(required: true): FloatingContextValue
-export function useFloatingContext(required = false) {
-  const context = useContext(FloatingContext)
-  if (required && context === undefined) throw new Error('useFloatingContext must be used within a FloatingPanel')
-  if (required) return context!
-  return context
+const FLOATING_COMPONENTS: Record<Doc<'floating_panels'>['type'], Component<any>> = {
+  chat: ChatPanel,
+  rtc: RtcPanel,
 }
 
 export function FloatingPanel(props: Doc<'floating_panels'>) {
-  const { closeFloatingPanel } = useGlobalState()
+  const [, rest] = splitProps(props, ['type'])
+  const deletePanel = useMutation(api.floatingPanels.remove)
   const { draggable, ref, handleRef } = useDraggable({
     get id() {
       return props.positionId
     },
   })
+
   const { data: position } = useQuery(api.floatingPanels.position, { id: props.positionId }, { keepPreviousData: true })
+
+  const style = createMemo<JSX.CSSProperties>(() => {
+    const p = position()
+    if (!p) return {}
+    return {
+      transform: `translate(${p.x ?? 0}px, ${p.y ?? 0}px)`,
+      'z-index': `${p.zIndex ?? 0}`,
+    }
+  })
 
   return (
     <Portal>
@@ -45,20 +41,18 @@ export function FloatingPanel(props: Doc<'floating_panels'>) {
           handleRef,
           floatingPanel: props,
           closePanel() {
-            closeFloatingPanel(props._id)
+            deletePanel.mutate({ floatingPanelId: props._id })
           },
         }}
       >
         <div
           id={props.positionId}
           ref={ref}
-          class="shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-primary/10 focus-within:border-tint-primary/10 rounded-base  data-dnd-dragging:not-data-dnd-dropping:border-tint-primary/10 focus-within:shadow-shade-primary/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-primary/30 focus:shadow-shade-primary/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0"
-          style={{
-            transform: `translate(${position()?.x ?? 0}px, ${position()?.y ?? 0}px)`,
-            'z-index': `${position()?.zIndex ?? 0}`,
-          }}
+          data-interactive="true"
+          class="shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-accent/10 focus-within:border-tint-accent/10 rounded-base  data-dnd-dragging:not-data-dnd-dropping:border-tint-accent/10 focus-within:shadow-shade-accent/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-accent/30 focus:shadow-shade-accent/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0"
+          style={style()}
         >
-          <Dynamic component={FLOATING_COMPONENTS[props.type]} chatId={props.chatId} />
+          <Dynamic component={FLOATING_COMPONENTS[props.type]} {...(rest as any)} />
         </div>
       </FloatingContext.Provider>
     </Portal>

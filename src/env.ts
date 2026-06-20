@@ -22,6 +22,7 @@ export const env = createEnv({
     VITE_APP_TITLE: v.optional(v.pipe(v.string(), v.minLength(1))),
     VITE_CONVEX_URL: v.pipe(v.string(), v.url()),
     VITE_CLERK_PUBLISHABLE_KEY: v.pipe(v.string(), v.minLength(1)),
+    VITE_OFFLINE: v.optional(v.pipe(v.string(), v.toBoolean())),
   },
 
   /**

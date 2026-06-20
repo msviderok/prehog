@@ -30,7 +30,7 @@ export function GameContent() {
   })
 
   createGameLoop({
-    autostart: true,
+    autostart: false,
     fn: (timestamp) => {
       dt = (timestamp - lastTimestamp) / DT_MOD
       lastTimestamp = timestamp
@@ -104,11 +104,9 @@ export function GameContent() {
   })
 
   return (
-    <div class="overflow-hidden flex items-center w-full h-full">
-      <div class="w-min h-min relative border-y-8">
-        <MainScene />
-        <Player />
-      </div>
+    <div class="w-min h-min relative">
+      <MainScene />
+      <Player />
     </div>
   )
 }

@@ -22,7 +22,8 @@
     "noUncheckedSideEffectImports": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/convex/*": ["./convex/_generated/*"]
     }
   }
 }

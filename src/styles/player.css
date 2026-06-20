@@ -41,10 +41,10 @@
 }
 
 @utility player-idle {
-  background-image: url('../sprites/main/idle.png');
+  background-image: url('../assets/sprites/main/idle.png');
   animation: player-idle 10000ms steps(86) infinite;
 }
 @utility player-walk {
-  background-image: url('../sprites/main/walk.png');
+  background-image: url('../assets/sprites/main/walk.png');
   animation: player-walk calc(900ms / var(--running-mod, 1)) steps(11) infinite;
 }

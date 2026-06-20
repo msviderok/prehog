@@ -5,6 +5,8 @@
 @import '@clerk/ui/themes/shadcn.css';
 @import './utils.css';
 @import './player.css';
+@import './animations.css';
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: oklch(0.207 0.01 285.49);
@@ -13,7 +15,9 @@
   --primary-foreground: oklch(0.207 0.01 285.49);
   --secondary: oklch(0.793 0.12 185.6);
   --secondary-foreground: oklch(0.207 0.01 285.49);
-  --accent: oklch(0.918 0.143 96.79);
+  --tertiary: oklch(0.6 0.16 260);
+  --tertiary-foreground: oklch(0.207 0.01 285.49);
+  --accent: oklch(0.918 0.243 96.79);
   --accent-foreground: oklch(0.207 0.01 285.49);
   --muted: oklch(0.505 0.018 285.27);
   --muted-foreground: oklch(0.736 0.013 106.71);
@@ -38,6 +42,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-muted: var(--muted);
@@ -60,8 +66,6 @@
   --radius-base: 6px;
   --font-weight-base: 500;
   --font-weight-heading: 800;
-
-  --animate-typing: typing 1s steps(4) infinite;
 }
 
 @layer base {
@@ -89,18 +93,18 @@
   }
 }
 
-@keyframes typing {
-  0%,
-  100% {
-    content: 'Typing';
+@utility typing {
+  width: calc(min-content + 1rem);
+  position: relative;
+  &:after {
+    @apply overflow-hidden align-bottom absolute top-0 left-full w-0;
+    animation: ellipsis steps(5, end) 900ms infinite;
+    content: '\2026'; /* ascii code for the ellipsis character */
   }
-  25% {
-    content: 'Typing.';
-  }
-  50% {
-    content: 'Typing..';
-  }
-  75% {
-    content: 'Typing...';
+}
+
+@keyframes ellipsis {
+  to {
+    width: 1rem;
   }
 }

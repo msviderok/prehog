@@ -43,6 +43,5 @@ export function createKeyPressedState() {
 }
 
 function isInteractiveElement() {
-  const slot = (document.activeElement as HTMLElement).dataset.slot ?? ''
-  return ['textarea'].includes(slot)
+  return document.activeElement?.closest('[data-interactive="true"]') != null
 }

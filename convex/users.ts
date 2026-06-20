@@ -2,6 +2,8 @@ import { type UserJSON } from '@clerk/backend'
 import { v, Validator } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import * as Users from './model/users'
+import * as Chats from './model/chats'
+import { Id } from './_generated/dataModel'
 
 export const current = query({
   handler: async (ctx) => {
@@ -27,7 +29,39 @@ export const usersWithChat = query(async (ctx) => {
       return member ? ctx.db.get('users', member.userId) : null
     }),
   )
+
   return users.filter((u): u is NonNullable<typeof u> => !!u)
+})
+
+export const unconnectedUsers = query(async (ctx) => {
+  const user = await Users.getCurrentUser(ctx)
+  const allUsers = await ctx.db
+    .query('users')
+    .filter((q) => q.neq(q.field('_id'), user._id))
+    .collect()
+  const myChats = await Chats.getMyChats(ctx)
+
+  const participantsOfMyChats = await Promise.all(
+    myChats.map((chat) =>
+      ctx.db
+        .query('chat_members')
+        .withIndex('by_chat', (q) => q.eq('chatId', chat._id))
+        .collect(),
+    ),
+  )
+
+  const connectedUserIds = participantsOfMyChats.reduce((acc, participants) => {
+    for (const p of participants) {
+      // ignore me
+      if (p.userId === user._id) continue
+      // include users my user has chats with
+      if (acc.includes(p.userId) === false) acc.push(p.userId)
+    }
+    return acc
+  }, [] as Id<'users'>[])
+
+  const usersWithNoChats = allUsers.filter((u) => connectedUserIds.includes(u._id) === false)
+  return usersWithNoChats
 })
 
 export const listAllUsers = query(async (ctx) => {
@@ -113,10 +147,12 @@ export const setMyOnline = mutation({
     isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await Users.getCurrentUser(ctx)
-    const presence = await Users.getOnline(ctx, user._id)
-    if (presence.isOnline === args.isOnline) return
-    await ctx.db.patch('online', presence._id, args)
+    try {
+      const user = await Users.getCurrentUser(ctx)
+      const presence = await Users.getOnline(ctx, user._id)
+      if (presence.isOnline === args.isOnline) return
+      await ctx.db.patch('online', presence._id, args)
+    } catch (e) {}
   },
 })
 
@@ -145,10 +181,13 @@ export const isOnline = query({
 export const floatingPanels = query({
   args: {},
   handler: async (ctx) => {
-    const user = await Users.getCurrentUser(ctx)
-    return await ctx.db
-      .query('floating_panels')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
-      .collect()
+    try {
+      const user = await Users.getCurrentUser(ctx)
+      const panels = await ctx.db
+        .query('floating_panels')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .collect()
+      return panels
+    } catch (e) {}
   },
 })

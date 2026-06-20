@@ -38,38 +38,6 @@ export async function getChatIdsByMemberIds(ctx: QueryCtx | MutationCtx, memberI
   return (await Promise.all(memberIds.map((memberId) => ctx.db.get(memberId)))).filter(Boolean)
 }
 
-export async function getChatById(ctx: QueryCtx | MutationCtx, args: { myId: Id<'users'>; chatId: Id<'chats'> }) {
-  const chat = await ctx.db.get('chats', args.chatId)
-  if (!chat) throw new Error('Chat not found')
-
-  const members = await ctx.db
-    .query('chat_members')
-    .withIndex('by_chat', (q) => q.eq('chatId', args.chatId))
-    .collect()
-
-  const chatMemberMe = members[0].userId === args.myId ? members[0] : members[1]
-  const chatMemberThem = members.indexOf(chatMemberMe) === 0 ? members[1] : members[0]
-  const contact = await ctx.db.get('users', chatMemberThem.userId)
-  const floatingPanelChat = await ctx.db
-    .query('floating_panels')
-    .withIndex('by_user_chat_type', (q) => q.eq('userId', args.myId).eq('chatId', args.chatId).eq('type', 'chat'))
-    .unique()
-  const floatingPanelRtc = await ctx.db
-    .query('floating_panels')
-    .withIndex('by_user_chat_type', (q) => q.eq('userId', args.myId).eq('chatId', args.chatId).eq('type', 'rtc'))
-    .unique()
-
-  return {
-    chat: chat!,
-    myId: args.myId,
-    myMember: chatMemberMe!,
-    contact: contact!,
-    contactMember: chatMemberThem!,
-    floatingPanelChatId: floatingPanelChat?._id,
-    floatingPanelRtcId: floatingPanelRtc?._id,
-  }
-}
-
 export async function getMyChatMembership(ctx: QueryCtx | MutationCtx, chatId: Id<'chats'>) {
   const user = await Users.getCurrentUser(ctx)
   const myMembership = await ctx.db
@@ -127,4 +95,15 @@ export async function getGroupedMembersBetweenMeAndUser(ctx: QueryCtx | Mutation
     return acc
   }, new Map<Id<'chats'>, Doc<'chat_members'>[]>())
   return membersGrouped
+}
+
+export async function getDirectChatWithUser(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
+  const user = await Users.getCurrentUser(ctx)
+  const chats = await getMyChats(ctx)
+  const membersGrouped = await getGroupedMembersBetweenMeAndUser(ctx, userId)
+  const directChat = chats.find((chat) => {
+    const group = membersGrouped.get(chat._id)?.map((p) => p.userId)
+    return group && group.length === 2 && group.includes(user._id) && group.includes(userId)
+  })
+  return directChat
 }

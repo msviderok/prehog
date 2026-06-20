@@ -10,3 +10,8 @@ dist-ssr
 .output
 .vinxi
 __unconfig*
+.temp
+*.pem
+*.key
+*.crt
+.cert/

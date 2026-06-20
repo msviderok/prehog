@@ -56,6 +56,7 @@
     "no-useless-backreference": "error",
     "no-useless-catch": "error",
     "no-useless-escape": "error",
+    "no-unassigned-vars": "off",
     "no-var": "error",
     "no-with": "error",
     "no-unused-expressions": "off",

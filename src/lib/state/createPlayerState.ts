@@ -9,14 +9,16 @@ export function createPlayerState() {
   const [player, setPlayer] = createStore({
     ref: null as unknown as HTMLElement,
     x: 0,
-    y: 0,
+    y: 85,
     size: 300,
     get rect() {
       return this.ref.getBoundingClientRect()
     },
   })
 
-  createEffect(() => localStorage.setItem(LSK_ME_POSITION, JSON.stringify({ x: player.x, y: player.y })))
+  createEffect(() => {
+    localStorage.setItem(LSK_ME_POSITION, JSON.stringify({ x: player.x, y: player.y }))
+  })
 
   return { player, setPlayer }
 }

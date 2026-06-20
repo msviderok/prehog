@@ -1,9 +1,8 @@
-import { createFloatingPanelsState } from '@/lib/state/createFloatingPanelsState'
+import { useOnlineStatus } from '@/lib/hooks/useOnlineStatus'
 import { createIntervalsState } from '@/lib/state/createIntervalState'
 import { createKeyPressedState } from '@/lib/state/createKeyPressedState'
 import { createMiscState } from '@/lib/state/createMiscState'
 import { createPlayerState } from '@/lib/state/createPlayerState'
-import { createRtcState } from '@/lib/state/createRtcState'
 import { createSceneState } from '@/lib/state/createSceneState'
 import { createContext, createEffect, useContext, type ParentProps } from 'solid-js'
 
@@ -20,8 +19,6 @@ export function GlobalStateProvider(props: ParentProps) {
   const intervalsState = createIntervalsState()
   const sceneState = createSceneState()
   const playerState = createPlayerState()
-  const rtcState = createRtcState()
-  const floatingPanelsState = createFloatingPanelsState()
   const miscState = createMiscState()
 
   return (
@@ -31,8 +28,6 @@ export function GlobalStateProvider(props: ParentProps) {
         ...intervalsState,
         ...sceneState,
         ...playerState,
-        ...floatingPanelsState,
-        ...rtcState,
         ...miscState,
       }}
     >
@@ -43,6 +38,8 @@ export function GlobalStateProvider(props: ParentProps) {
 
 function GlobalStateEffects(props: ParentProps) {
   const { player, keyPressed, debug } = useGlobalState()
+
+  useOnlineStatus()
 
   createEffect(() => {
     player.ref?.style.setProperty('--running-mod', `${keyPressed.shift ? 2.5 : 1}`)

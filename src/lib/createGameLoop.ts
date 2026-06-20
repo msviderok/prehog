@@ -11,6 +11,10 @@ export function createGameLoop(options: { autostart?: boolean; fn: (timestamp: n
   if (props.autostart) {
     onMount(() => start())
     onCleanup(() => stop())
+  } else {
+    onMount(() => {
+      requestAnimationFrame(gameLoop)
+    })
   }
 
   function gameLoop(timestamp: number) {

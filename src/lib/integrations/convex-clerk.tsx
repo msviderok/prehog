@@ -1,6 +1,7 @@
+import { api } from '@/convex/api'
 import { env } from '@/env'
 import { useAuth } from 'clerk-solidjs-tanstack-start'
-import { ConvexProvider, setupConvex } from 'convex-solidjs'
+import { ConvexProvider, setupConvex, useQuery } from 'convex-solidjs'
 import type { ConvexClient } from 'convex/browser'
 import {
   createContext,
@@ -61,9 +62,18 @@ export function useConvexClerkAuth() {
   return context
 }
 
+export function useCurrentUser() {
+  const auth = useConvexClerkAuth()
+  const { data: currentUser } = useQuery(api.users.current, {}, () => ({
+    enabled: auth.isAuthenticated(),
+    keepPreviousData: true,
+  }))
+  return createMemo(() => currentUser()!)
+}
+
 export function ConvexClerkProvider(props: ParentProps) {
   const auth = useAuth()
-  const client = setupConvex(env.VITE_CONVEX_URL, { unsavedChangesWarning: import.meta.env.PROD })
+  const client = setupConvex(env.VITE_CONVEX_URL, { unsavedChangesWarning: import.meta.env.PROD, expectAuth: true })
   const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
   const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false)
   const isLoading = createMemo(() => !hasResolvedInitialAuth())
@@ -105,7 +115,7 @@ export function ConvexClerkProvider(props: ParentProps) {
       return
     }
 
-    const authClient = (client as ConvexClientWithNestedAuth).client
+    const authClient = (client as unknown as ConvexClientWithNestedAuth).client
     const bindingKey = authBindingKey()
     const isLoaded = auth.isLoaded()
     const isSignedIn = auth.isSignedIn() ?? false

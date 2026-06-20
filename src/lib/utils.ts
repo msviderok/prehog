@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { children, mergeProps, type JSX } from 'solid-js'
 import { twMerge } from 'tailwind-merge'
+import { GAME_CONTENT_HEIGHT_RATIO } from './constants'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -31,7 +32,7 @@ export function defaultProps<P, D extends Partial<P>, C extends { [K in Extract<
  */
 export function scaleToFit(contentHeight: number, containerHeight?: number) {
   if (containerHeight === undefined) {
-    containerHeight = typeof window !== 'undefined' ? window.innerHeight : 0
+    containerHeight = typeof window !== 'undefined' ? getGameContentHeight() : 0
   }
   return containerHeight < contentHeight ? containerHeight / contentHeight : 1
 }
@@ -90,4 +91,17 @@ export function callEventHandler<T, E extends Event>(
 
 export function getLSKey(name: string) {
   return `prehog:${name}`
+}
+
+const RTC_PANEL_WIDTH = 400
+const RTC_PANEL_HEIGHT = 320
+export function getNewPanelPosition(target: Element | EventTarget | null) {
+  if (target == null) return { x: 0, y: 0 }
+  const x = Math.round(window.innerWidth / 2 - RTC_PANEL_WIDTH / 2)
+  const y = Math.round(window.innerHeight / 2 - RTC_PANEL_HEIGHT / 2)
+  return { x, y }
+}
+
+export function getGameContentHeight() {
+  return window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
 }

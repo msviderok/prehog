@@ -1,7 +1,8 @@
-import { createStore } from 'solid-js/store'
-import { createRectFromCoords } from '../utils'
-import { createEffect, onCleanup, onMount } from 'solid-js'
 import type { PopoverContentPositionerProps } from '@/components/ui/popover'
+import { createEffect, onCleanup, onMount } from 'solid-js'
+import { createStore } from 'solid-js/store'
+import { createRectFromCoords, getGameContentHeight } from '../utils'
+import { GAME_CONTENT_HEIGHT_RATIO } from '../constants'
 
 export type SceneState = ReturnType<typeof createSceneState>
 export type SceneNode = SceneState['sceneState']['nodes'][number]
@@ -37,7 +38,7 @@ export function createSceneState() {
     get realSceneSize() {
       return {
         width: this.originalWidth * this.scale,
-        height: Math.min(window.innerHeight, this.originalHeight),
+        height: Math.min(getGameContentHeight(), this.originalHeight),
       }
     },
   })
@@ -59,7 +60,7 @@ export function createSceneState() {
   })
 
   function onWindowResize() {
-    setSceneState('scale', Math.min(window.innerHeight / sceneState.originalHeight, 1))
+    setSceneState('scale', Math.min(getGameContentHeight() / sceneState.originalHeight, 1))
   }
 
   onMount(() => {
