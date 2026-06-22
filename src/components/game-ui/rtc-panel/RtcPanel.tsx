@@ -2,83 +2,139 @@ import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
 import { createRtcState } from '@/lib/state/createRtcState'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { createEffect, createMemo, on, Show } from 'solid-js'
+import { createEffect, on, Show } from 'solid-js'
 import { RtcCard } from './RtcCard'
-import { RtcContext } from './useRtcContext'
+import { RtcContext, useRtcContext } from './useRtcContext'
 
 export function RtcPanel(_props: RtcPanel.Props) {
   const rtcState = createRtcState()
+  const { data: callStatus } = useQuery(api.activeCall.status, {})
+  const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
+  const { data: myParticipant } = useQuery(api.activeCall.findMyParticipant, {})
+  const { data: theirParticipant } = useQuery(api.activeCall.findTheirParticipant, {})
 
-  const call = useQuery(api.activeCall.get, {})
-  const myCallState = useQuery(api.activeCall.myCallState, {})
-  const participantUser = useQuery(api.activeCall.findParticipantUser, {})
+  createEffect(() => {
+    console.log({
+      callStatus: callStatus(),
+      theirUser: theirUser(),
+      myParticipant: myParticipant(),
+      bool: callStatus() && theirUser() && myParticipant(),
+    })
+  })
 
-  const offerRtcMessage = useQuery(api.activeCall.offerRtcMessage, {})
-  const answerRtcMessage = useQuery(api.activeCall.answerRtcMessage, {})
-  const iceCandidateRtcMessages = useQuery(api.activeCall.iceCandidateRtcMessages, {})
+  return (
+    <RtcContext.Provider value={rtcState}>
+      <Show when={callStatus() && theirUser() && myParticipant()}>
+        <RtcCard
+          callStatus={callStatus()!}
+          theirUser={theirUser()!}
+          myParticipant={myParticipant()!}
+          theirParticipant={theirParticipant()}
+        />
+      </Show>
+      <RtcEffectsListener />
+    </RtcContext.Provider>
+  )
+}
 
-  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
-  const deleteRtcMessage = useMutation(api.activeCall.deleteRtcMessage)
-  const deleteRtcMessages = useMutation(api.activeCall.deleteRtcMessages)
+function RtcEffectsListener() {
+  useHandleMediaToggle()
+  useHandleSendOffer()
+  useHandleReceiveOfferAndSendAnswer()
+  useHandleReceiveAnswer()
+  useHandleIceCandidates()
+  return null
+}
 
-  const isLoaded = createMemo(() =>
-    call.data() && myCallState.data() && participantUser.data()
-      ? { call: call.data()!, state: myCallState.data()!, user: participantUser.data()! }
-      : false,
+function useHandleMediaToggle() {
+  const { toggleAudio, toggleVideo } = useRtcContext()
+  const { data: audio } = useQuery(api.activeCall.myAudio, {}, { initialData: false, keepPreviousData: true })
+  const { data: video } = useQuery(api.activeCall.myVideo, {}, { initialData: false, keepPreviousData: true })
+  const { data: isCallEstablished } = useQuery(
+    api.activeCall.isCallEstablished,
+    {},
+    { initialData: false, keepPreviousData: true },
   )
 
   /* Mute/unmute audio */
-  createEffect(on(() => myCallState.data()?.audio ?? false, rtcState.toggleAudio))
+  createEffect(
+    on([() => audio()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
+      if (callEstablished === false) return
+      toggleAudio(enabled)
+    }),
+  )
+
   /* Start/stop video */
-  createEffect(on(() => myCallState.data()?.video ?? false, rtcState.toggleVideo))
-
-  /**
-   * Create and send offer:
-   *    - if the call just got accepted
-   *        (status === 'in-progress' && prevStatus === 'awaiting-response')
-   *    - if the page was refreshed while the call was in progress
-   *        (status === 'in-progress' && prevStatus === undefined)
-   */
   createEffect(
-    on([() => call.data()?.status, () => myCallState.data()?.role], async ([status, role], prev) => {
-      if (role == null || role !== 'host') return
+    on([() => video()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
+      if (callEstablished === false) return
+      toggleVideo(enabled)
+    }),
+  )
+}
 
-      const [prevStatus] = prev ?? []
-      if (status === 'in-progress' && (prevStatus === undefined || prevStatus === 'awaiting-response')) {
-        rtcState.myRTC.peer.addTransceiver('audio', { direction: 'sendrecv' })
-        rtcState.myRTC.peer.addTransceiver('video', { direction: 'sendrecv' })
-        await rtcState.attachBothAudioVideo()
+function useHandleSendOffer() {
+  const { createOffer } = useRtcContext()
+  const canSendOffer = useQuery(api.activeCall.canSendOfferRtcMessage, {})
+  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 
-        const offer = await rtcState.createOffer()
+  createEffect(
+    on(
+      () => canSendOffer.data() ?? false,
+      async (sendOfferAllowed) => {
+        if (sendOfferAllowed === false) return
+        const offer = await createOffer()
         sendRtcMessage.mutate({ message: { type: 'offer', data: offer } })
-        return
-      }
-    }),
+      },
+    ),
   )
+}
 
-  /* Receive offer and create answer */
+function useHandleReceiveOfferAndSendAnswer() {
+  const { createAnswer } = useRtcContext()
+  const canSendAnswer = useQuery(api.activeCall.canSendAnswerRtcMessage, {})
+  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
+  const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
+
+  /* Receive offer, claim it and then create and send the answer */
   createEffect(
-    on(offerRtcMessage.data, async (offer) => {
-      if (offer == null) return
-
-      await rtcState.myRTC.peer.setRemoteDescription(offer.data)
-      await rtcState.addPendingCandidates()
-      await rtcState.attachBothAudioVideo()
-      const answer = await rtcState.createAnswer()
-      await sendRtcMessage.mutate({ message: { type: 'answer', data: answer } })
-    }),
+    on(
+      () => canSendAnswer.data() ?? false,
+      async (offer) => {
+        if (!offer) return
+        const answer = await createAnswer(offer.data)
+        await claimRtcMessage.mutate({ ids: offer._id })
+        await sendRtcMessage.mutate({ message: { type: 'answer', data: answer } })
+      },
+    ),
   )
+}
 
-  /* Receive answer */
+function useHandleReceiveAnswer() {
+  const { myRTC, addPendingCandidates } = useRtcContext()
+  const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
+  const canClaimAnswer = useQuery(api.activeCall.canClaimAnswer, {})
+
+  /* Receive answer and claim it */
   createEffect(
-    on(answerRtcMessage.data, async (answer) => {
-      if (answer == null) return
+    on(
+      () => canClaimAnswer.data() ?? false,
+      async (answer) => {
+        if (!answer) return
 
-      await rtcState.myRTC.peer.setRemoteDescription(answer.data)
-      await rtcState.addPendingCandidates()
-      await deleteRtcMessage.mutate({ id: answer._id })
-    }),
+        await myRTC.peer.setRemoteDescription(answer.data)
+        await addPendingCandidates()
+        await claimRtcMessage.mutate({ ids: answer._id })
+      },
+    ),
   )
+}
+
+function useHandleIceCandidates() {
+  const { myRTC, addPendingCandidates } = useRtcContext()
+  const isCallEstablished = useQuery(api.activeCall.isCallEstablished, {})
+  const iceCandidateRtcMessages = useQuery(api.activeCall.iceCandidateRtcMessages, {})
+  const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
 
   /* Process all the incoming ice-candidates */
   const processedEntries = new Set<Id<'call_rtc_messages'>>()
@@ -86,34 +142,38 @@ export function RtcPanel(_props: RtcPanel.Props) {
     on(iceCandidateRtcMessages.data, async (candidates) => {
       if (!candidates) return
 
-      const deleteIds = []
+      const processedIds = []
       for (const candidate of candidates) {
         /* Ignore the candidate if we've already processed it, otherwise add it to the set. */
         if (processedEntries.has(candidate._id)) continue
         processedEntries.add(candidate._id)
 
         if (candidate.type === 'ice-candidate') {
-          if (rtcState.myRTC.peer.remoteDescription) {
-            await rtcState.myRTC.peer.addIceCandidate(candidate.data)
+          if (myRTC.peer.remoteDescription) {
+            await myRTC.peer.addIceCandidate(candidate.data)
           } else {
-            rtcState.myRTC.pendingCandidates.push(candidate.data)
+            myRTC.pendingCandidates.push(candidate.data)
           }
 
-          deleteIds.push(candidate._id)
+          processedIds.push(candidate._id)
           continue
         }
       }
 
-      if (deleteIds.length) {
-        await deleteRtcMessages.mutate({ ids: deleteIds })
+      if (processedIds.length) {
+        await claimRtcMessage.mutate({ ids: processedIds })
       }
     }),
   )
 
-  return (
-    <RtcContext.Provider value={rtcState}>
-      <Show when={isLoaded()}>{(cardProps) => <RtcCard {...cardProps()} />}</Show>
-    </RtcContext.Provider>
+  /* Once the call is established we can process pending ICE candidates if there are any */
+  createEffect(
+    on(
+      () => isCallEstablished.data() ?? false,
+      (callEstablished) => {
+        if (callEstablished) addPendingCandidates()
+      },
+    ),
   )
 }
 

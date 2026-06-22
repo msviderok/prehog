@@ -1,25 +1,10 @@
 import { api } from '@/convex/api'
 import { makePersisted } from '@solid-primitives/storage'
 import { useMutation } from 'convex-solidjs'
-import { createResource, createSignal, onCleanup, onMount, type Accessor, type Setter } from 'solid-js'
-import { createStore, produce, type SetStoreFunction, type Store } from 'solid-js/store'
+import { createResource, createSignal, onCleanup, onMount } from 'solid-js'
+import { createStore, produce } from 'solid-js/store'
 import { getLSKey } from '../utils'
-
-type Kind = 'audio' | 'video'
-
-type SingleRtcState = {
-  ref: Accessor<HTMLVideoElement | undefined>
-  setRef: Setter<HTMLVideoElement | undefined>
-  peer: RTCPeerConnection
-  stream: MediaStream
-  tracks: {
-    audio: MediaStreamTrack | undefined
-    video: MediaStreamTrack | undefined
-  }
-  selectedDevices: Store<Record<MediaDeviceInfo['kind'], string | undefined>>
-  setSelectedDevices: SetStoreFunction<Record<MediaDeviceInfo['kind'], string | undefined>>
-  pendingCandidates: RTCIceCandidateInit[]
-}
+import { HAVE_AUDIO_OUTPUT_SELECTOR } from '../constants'
 
 async function listDevices() {
   const devices = await navigator.mediaDevices.enumerateDevices()
@@ -41,19 +26,29 @@ async function listDevices() {
     .filter((d) => d.deviceId !== 'default')
     .reduce(
       (acc, device) => {
-        acc[device.kind].push({ device, default: defaultDevices.has(device.deviceId) })
+        if (defaultDevices.has(device.deviceId)) {
+          acc[device.kind].unshift(device)
+        } else {
+          acc[device.kind].push(device)
+        }
         return acc
       },
       {
         audioinput: [],
         audiooutput: [],
         videoinput: [],
-      } as Record<MediaDeviceInfo['kind'], Array<{ device: MediaDeviceInfo; default: boolean }>>,
+      } as Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>,
     )
 }
 
-function createInitState(): SingleRtcState {
-  const [ref, setRef] = createSignal<HTMLVideoElement | undefined>(undefined)
+export type RtcState = ReturnType<typeof createRtcState>
+export function createRtcState() {
+  const themStream = new MediaStream()
+  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
+
+  const [myVideoRef, setMyVideoRef] = createSignal<HTMLVideoElement>()
+  const [remoteVideoRef, setRemoteVideoRefInternal] = createSignal<HTMLVideoElement>()
+  const [devices, devicesAction] = createResource(listDevices)
   const [selectedDevices, setSelectedDevices] = makePersisted(
     createStore<Record<MediaDeviceInfo['kind'], string | undefined>>({
       audioinput: undefined,
@@ -63,42 +58,35 @@ function createInitState(): SingleRtcState {
     { name: getLSKey('selected-media-devices') },
   )
 
-  return {
-    ref,
-    setRef,
+  const myRTC = {
+    ref: myVideoRef,
+    setRef: setMyVideoRef,
     peer: new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }),
     stream: new MediaStream(),
-    selectedDevices,
-    setSelectedDevices,
-    pendingCandidates: [],
-    tracks: {
-      audio: undefined as MediaStreamTrack | undefined,
-      video: undefined as MediaStreamTrack | undefined,
-    },
+    pendingCandidates: [] as RTCIceCandidateInit[],
   }
-}
-
-export type RtcState = ReturnType<typeof createRtcState>
-export function createRtcState() {
-  const myRTC = createInitState()
-  const [removeVideoRef, setRemoteVideoRef] = createSignal<HTMLVideoElement | undefined>(undefined)
-  const [devices, { refetch: refetchListDevices }] = createResource(listDevices)
-  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 
   function getMediaConstraints(kind: Kind): MediaTrackConstraints | boolean {
     const deviceKind: MediaDeviceKind = kind === 'audio' ? 'audioinput' : 'videoinput'
-    const storedDevice = myRTC.selectedDevices[deviceKind]
+    const storedDevice = devices()?.[deviceKind].find((d) => d.deviceId === selectedDevices[deviceKind])?.deviceId
     return storedDevice ? { deviceId: { exact: storedDevice } } : true
   }
 
+  /** @throws */
   async function requestNewStream(kind: 'audio' | 'video' | 'both') {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: kind === 'video' || kind === 'both' ? getMediaConstraints('video') : false,
-      audio: kind === 'audio' || kind === 'both' ? getMediaConstraints('audio') : false,
-    })
-    return stream
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: kind === 'video' || kind === 'both' ? getMediaConstraints('video') : false,
+        audio: kind === 'audio' || kind === 'both' ? getMediaConstraints('audio') : false,
+      })
+      return stream
+    } catch (error) {
+      console.warn('Failed to request new stream', { error })
+      throw error
+    }
   }
 
+  /** @throws */
   async function requestNewTrack<
     T extends 'audio' | 'video' | 'both',
     R = T extends 'both' ? { audio: MediaStreamTrack; video: MediaStreamTrack } : MediaStreamTrack,
@@ -123,42 +111,63 @@ export function createRtcState() {
   }
 
   async function requestAudioPermissions() {
-    const audioStream = await requestNewStream('audio')
-    audioStream.getAudioTracks().forEach((track) => track.stop())
+    try {
+      const audioStream = await requestNewStream('audio')
+      audioStream.getAudioTracks().forEach((track) => track.stop())
+    } catch (error) {
+      console.warn('Failed to request audio permissions', { error })
+    }
   }
 
   async function requestVideoPermissions() {
-    const videoStream = await requestNewStream('video')
-    videoStream.getVideoTracks().forEach((track) => track.stop())
+    try {
+      const videoStream = await requestNewStream('video')
+      videoStream.getVideoTracks().forEach((track) => track.stop())
+    } catch (error) {
+      console.warn('Failed to request video permissions', { error })
+    }
   }
 
   async function refetchDevices(kind: Kind) {
-    if (kind === 'audio') await requestAudioPermissions()
-    else await requestVideoPermissions()
+    try {
+      if (kind === 'audio') await requestAudioPermissions()
+      else await requestVideoPermissions()
 
-    await refetchListDevices()
-    myRTC.setSelectedDevices(
-      produce((state) => {
-        state.audioinput ??= devices()?.audioinput[0]?.device.deviceId
-        state.audiooutput ??= devices()?.audiooutput[0]?.device.deviceId
-        state.videoinput ??= devices()?.videoinput[0]?.device.deviceId
-      }),
-    )
+      await devicesAction.refetch()
+      setSelectedDevices(
+        produce((state) => {
+          state.audioinput ??= devices()?.audioinput[0]?.deviceId
+          state.audiooutput ??= devices()?.audiooutput[0]?.deviceId
+          state.videoinput ??= devices()?.videoinput[0]?.deviceId
+        }),
+      )
+    } catch (error) {
+      console.warn('Failed to refetch devices', { error })
+    }
   }
 
+  function getTransceiver(kind: Kind) {
+    const transceiver = myRTC.peer
+      .getTransceivers()
+      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === kind)
+    return transceiver
+  }
+
+  /** @throws */
   async function setInputDevice(kind: Exclude<MediaDeviceInfo['kind'], 'audiooutput'>, deviceId: string) {
     const isAudio = kind === 'audioinput'
     const trackKind: Kind = isAudio ? 'audio' : 'video'
-    const newTrack = await requestNewTrack(trackKind)
 
+    /* Ignore if the device is already selected */
+    if (deviceId === selectedDevices[kind]) return
+
+    const newTrack = await requestNewTrack(trackKind)
     const [oldTrack] = isAudio ? myRTC.stream.getAudioTracks() : myRTC.stream.getVideoTracks()
 
-    const sender = myRTC.peer.getSenders().find((sender) => sender.track?.kind === trackKind)
-    if (sender) {
-      await sender.replaceTrack(newTrack)
-      // newTrack.stop()
-      // throw new Error(`No ${kind} sender found`)
-    }
+    const transceiver = getTransceiver(trackKind)
+    if (!transceiver) throw new Error(`No transceiver found for ${trackKind}`)
+
+    await transceiver.sender.replaceTrack(newTrack)
 
     if (oldTrack) {
       myRTC.stream.removeTrack(oldTrack)
@@ -166,105 +175,165 @@ export function createRtcState() {
     }
 
     myRTC.stream.addTrack(newTrack)
-    myRTC.tracks[trackKind] = newTrack
-    myRTC.setSelectedDevices(kind, deviceId)
+    setSelectedDevices(kind, deviceId)
   }
 
+  /** @throws */
   async function setOutputDevice(deviceId: string) {
-    // myRTC.ref()?.setSinkId(deviceId)
-    // themRTC.ref()?.setSinkId(deviceId)
-    myRTC.setSelectedDevices('audiooutput', deviceId)
+    /* Ignore if browser does not support audio output selection */
+    if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
+    /* Ignore if the device is already selected */
+    if (deviceId === selectedDevices['audiooutput']) return
+
+    await remoteVideoRef()?.setSinkId(deviceId)
+    setSelectedDevices('audiooutput', deviceId)
   }
 
   async function setDevice(kind: MediaDeviceInfo['kind'], deviceId: string) {
-    if (kind === 'audiooutput') return setOutputDevice(deviceId)
-    return setInputDevice(kind, deviceId)
+    try {
+      if (kind === 'audiooutput') {
+        await setOutputDevice(deviceId)
+      } else {
+        await setInputDevice(kind, deviceId)
+      }
+    } catch (error) {
+      console.warn(`Failed to set device ${deviceId} for kind ${kind}`, { kind, deviceId, error })
+    }
   }
 
   async function toggleAudio(enabled: boolean) {
-    if (myRTC.tracks.audio) {
-      myRTC.tracks.audio.enabled = enabled
-      return
+    try {
+      const transceiver = getTransceiver('audio')
+      if (!transceiver) {
+        throw new Error(`Audio toggle should not be called before the offer/answer is created and set on both sides`)
+      }
+
+      const existingTrack = transceiver.sender.track
+      if (existingTrack) {
+        existingTrack.enabled = enabled
+        return
+      }
+
+      if (!enabled) return
+
+      const track = await requestNewTrack('audio')
+      await transceiver.sender.replaceTrack(track)
+      track.enabled = enabled
+
+      /**
+       * Contrary to the video toggle, we don't need to add our audio to our local stream
+       * as we won't need to hear ourselves.
+       */
+    } catch (error) {
+      console.warn(`Failed to toggle audio`, { error })
     }
-
-    if (enabled === false) return
-
-    const track = await requestNewTrack('audio')
-    myRTC.stream.addTrack(track)
-    myRTC.tracks.audio = track
   }
 
   async function toggleVideo(enabled: boolean) {
-    if (myRTC.tracks.video) {
-      myRTC.tracks.video.enabled = enabled
-      return
+    try {
+      const transceiver = getTransceiver('video')
+      if (!transceiver) {
+        throw new Error(`Video toggle should not be called before the offer/answer is created and set on both sides`)
+      }
+
+      const existingTrack = transceiver.sender.track
+
+      if (enabled) {
+        /**
+         * If for some reason there already exists a video track – we should not add a new one.
+         * Otherwise, adding a new track could still leak the old one. This should not be possible though.
+         */
+        if (existingTrack) {
+          existingTrack.enabled = true
+          return
+        }
+
+        /* Enabling the video should always create a new video track */
+        const track = await requestNewTrack('video')
+        await transceiver.sender.replaceTrack(track)
+        /* We need to add video track to our local stream so we can see our own video */
+        myRTC.stream.addTrack(track)
+        track.enabled = true
+        return
+      }
+
+      /**
+       * Disabling the video should always release the video device.
+       * This is the main difference between audio and video toggles.
+       */
+      await transceiver.sender.replaceTrack(null)
+
+      if (existingTrack) {
+        existingTrack.enabled = false
+        myRTC.stream.removeTrack(existingTrack)
+        existingTrack.stop()
+      }
+    } catch (error) {
+      console.warn(`Failed to toggle video`, { error })
     }
-
-    if (enabled === false) return
-
-    const track = await requestNewTrack('video')
-    myRTC.stream.addTrack(track)
-    myRTC.tracks.video = track
   }
 
+  /** @throws */
   async function createOffer() {
+    myRTC.peer.addTransceiver('audio', { direction: 'sendrecv' })
+    myRTC.peer.addTransceiver('video', { direction: 'sendrecv' })
+
     const offer = await myRTC.peer.createOffer()
     await myRTC.peer.setLocalDescription(offer)
     return offer
   }
 
-  async function createAnswer() {
+  /** @throws */
+  async function createAnswer(offer: RTCSessionDescriptionInit) {
+    await myRTC.peer.setRemoteDescription(offer)
+
+    const audioTransceiver = getTransceiver('audio')
+    const videoTransceiver = getTransceiver('video')
+    if (!audioTransceiver) throw new Error('No audio transceiver found')
+    if (!videoTransceiver) throw new Error('No video transceiver found')
+
+    audioTransceiver.direction = 'sendrecv'
+    videoTransceiver.direction = 'sendrecv'
+
     const answer = await myRTC.peer.createAnswer()
     await myRTC.peer.setLocalDescription(answer)
     return answer
   }
 
   async function addPendingCandidates() {
-    for (const candidate of myRTC.pendingCandidates) {
-      await myRTC.peer.addIceCandidate(candidate)
+    try {
+      for (const candidate of myRTC.pendingCandidates) {
+        await myRTC.peer.addIceCandidate(candidate)
+      }
+      myRTC.pendingCandidates.length = 0
+    } catch (error) {
+      console.warn('Failed to add pending candidates', { error })
     }
-    myRTC.pendingCandidates.length = 0
   }
 
-  async function attachMyMic() {
-    const track = await requestNewTrack('audio')
-    myRTC.peer
-      .getTransceivers()
-      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'audio')
-      ?.sender.replaceTrack(track)
+  /** @throws */
+  async function attachAudioOutput(remoteRef: HTMLVideoElement) {
+    /* Ignore if browser does not support audio output selection */
+    if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
+
+    const outputs = devices()?.audiooutput ?? []
+    const device = selectedDevices.audiooutput
+      ? (outputs.find((i) => i.deviceId === selectedDevices.audiooutput) ?? outputs[0])
+      : outputs[0]
+
+    if (!device) throw new Error('No audio output device found')
+    await remoteRef.setSinkId(device.deviceId)
   }
 
-  async function attachMyVideo() {
-    const track = await requestNewTrack('video')
-    myRTC.peer
-      .getTransceivers()
-      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'video')
-      ?.sender.replaceTrack(track)
-  }
-
-  async function attachBothAudioVideo() {
-    const { audio, video } = await requestNewTrack('both')
-    const audioTransceiver = myRTC.peer
-      .getTransceivers()
-      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'audio')
-    console.log(audioTransceiver, audio)
-    const videoTransceiver = myRTC.peer
-      .getTransceivers()
-      .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === 'video')
-
-    audioTransceiver?.sender.replaceTrack(audio)
-    videoTransceiver?.sender.replaceTrack(video)
+  async function setRemoteVideoRef(ref: HTMLVideoElement) {
+    ref.srcObject = themStream
+    setRemoteVideoRefInternal(ref)
+    attachAudioOutput(ref)
   }
 
   onMount(() => {
-    console.log(myRTC.peer)
-
     myRTC.peer.ontrack = (e) => {
-      console.log('on track', e.streams)
-      const remoteRef = removeVideoRef()
-      if (remoteRef) {
-        // remoteRef.srcObject = e.streams[0]
-      }
+      themStream.addTrack(e.track)
     }
 
     myRTC.peer.onicecandidate = (event) => {
@@ -276,21 +345,30 @@ export function createRtcState() {
   })
 
   onCleanup(() => {
+    for (const sender of myRTC.peer.getSenders()) {
+      sender.track?.stop()
+    }
+
     for (const track of myRTC.stream.getTracks()) {
       track.stop()
       myRTC.stream.removeTrack(track)
     }
 
-    for (const sender of myRTC.peer.getSenders()) {
-      if (sender.track) {
-        myRTC.peer.removeTrack(sender)
-      }
+    for (const track of themStream.getTracks()) {
+      track.stop()
+      themStream.removeTrack(track)
     }
 
-    const ref = myRTC.ref()
-    if (ref) {
-      ref.pause()
-      ref.srcObject = null
+    const myRef = myVideoRef()
+    if (myRef) {
+      myRef.pause()
+      myRef.srcObject = null
+    }
+
+    const themRef = remoteVideoRef()
+    if (themRef) {
+      themRef.pause()
+      themRef.srcObject = null
     }
 
     myRTC.peer.close()
@@ -308,11 +386,9 @@ export function createRtcState() {
     createOffer,
     createAnswer,
     addPendingCandidates,
-    removeVideoRef,
+    remoteVideoRef,
     setRemoteVideoRef,
     requestNewStream,
-    attachMyMic,
-    attachMyVideo,
-    attachBothAudioVideo,
+    selectedDevices,
   }
 }

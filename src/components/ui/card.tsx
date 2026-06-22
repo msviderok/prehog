@@ -11,7 +11,7 @@ const cardVariants = cva(
     variants: {
       variant: {
         default: 'flex flex-col',
-        'rtc-panel': 'w-100 h-80 grid grid-rows-[auto_1fr_auto]',
+        'rtc-panel': 'w-100 h-min grid grid-rows-[auto_1fr_auto]',
         'chat-panel': 'w-[calc(100vw-1rem)] max-w-100',
       },
     },
@@ -116,7 +116,7 @@ function CardContent(props: ComponentProps<'div'>) {
     <div
       data-slot="card-content"
       class={cn(
-        'px-3 group-data-[variant=rtc-panel]/card:p-0 group-data-[variant=rtc-panel]/card:relative group-data-[variant=rtc-panel]/card:flex group-data-[variant=rtc-panel]/card:flex-col group-data-[variant=rtc-panel]/card:items-center group-data-[variant=rtc-panel]/card:justify-center group-data-[variant=rtc-panel]/card:size-full group-data-[variant=rtc-panel]/card:gap-2',
+        'px-3 group-data-[variant=rtc-panel]/card:p-0 group-data-[variant=rtc-panel]/card:relative group-data-[variant=rtc-panel]/card:flex group-data-[variant=rtc-panel]/card:flex-col group-data-[variant=rtc-panel]/card:items-center group-data-[variant=rtc-panel]/card:justify-center group-data-[variant=rtc-panel]/card:size-full group-data-[variant=rtc-panel]/card:gap-2 group-data-[variant=rtc-panel]/card:aspect-video',
         local.class,
       )}
       {...rest}

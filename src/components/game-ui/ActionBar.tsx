@@ -31,7 +31,11 @@ export function ActionBar() {
       >
         <CardHeader class="flex items-center justify-between gap-2">
           <div class="grid grid-cols-[auto_1fr] grid-rows-2 gap-x-3 group cursor-pointer">
-            <Avatar class="row-span-full self-center outline-accent outline-2" onClick={() => setOpen((v) => !v)}>
+            <Avatar
+              class="row-span-full self-center outline-accent outline-2 md:size-7"
+              role="button"
+              onPointerDown={() => setOpen((v) => !v)}
+            >
               <AvatarImage src={user.user()?.imageUrl} />
               <AvatarFallback fullName={user.user()?.fullName} />
             </Avatar>

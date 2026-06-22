@@ -121,12 +121,14 @@ export default defineSchema({
       v.object({
         callId: v.id('calls'),
         toUserId: v.id('users'),
+        claimed: v.boolean(),
         type: v.union(v.literal('offer'), v.literal('answer')),
         data: v.record(v.string(), v.any()) as Validator<RTCSessionDescriptionInit>,
       }),
       v.object({
         callId: v.id('calls'),
         toUserId: v.id('users'),
+        claimed: v.boolean(),
         type: v.literal('ice-candidate'),
         data: v.record(v.string(), v.any()) as Validator<RTCIceCandidateInit>,
       }),

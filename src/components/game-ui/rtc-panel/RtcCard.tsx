@@ -1,10 +1,11 @@
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import { api } from '@/convex/api'
-import type { Doc } from '@/convex/dataModel'
 import { useCallDuration } from '@/lib/hooks/useCallDuration'
+import { useCurrentUser } from '@/lib/integrations/convex-clerk'
 import { SOUNDS } from '@/lib/sounds'
 import { cn } from '@/lib/utils'
-import { useMutation } from 'convex-solidjs'
+import { useMutation, useQuery } from 'convex-solidjs'
+import type { FunctionReturnType } from 'convex/server'
 import {
   MicIcon,
   MicOffIcon,
@@ -15,7 +16,17 @@ import {
   VideoOffIcon,
   XIcon,
 } from 'lucide-solid'
-import { createContext, createEffect, Match, on, onCleanup, Show, Switch, useContext, type Component } from 'solid-js'
+import {
+  createContext,
+  createEffect,
+  createMemo,
+  Match,
+  onCleanup,
+  Show,
+  Switch,
+  useContext,
+  type ParentProps,
+} from 'solid-js'
 import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import { Button } from '../../ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../ui/card'
@@ -23,13 +34,13 @@ import { Separator } from '../../ui/separator'
 import { Toggle } from '../../ui/toggle'
 import { AudioButton } from './AudioButton'
 import { VideoButton } from './VideoButton'
-import { VideoView } from './VideoView'
-import { Dynamic } from 'solid-js/web'
+import { useRtcContext } from './useRtcContext'
 
 interface Props {
-  user: Doc<'users'>
-  state: Doc<'call_participants'>
-  call: Doc<'calls'>
+  callStatus: FunctionReturnType<typeof api.activeCall.status>
+  theirUser: NonNullable<FunctionReturnType<typeof api.activeCall.findTheirUser>>
+  myParticipant: NonNullable<FunctionReturnType<typeof api.activeCall.findMyParticipant>>
+  theirParticipant: FunctionReturnType<typeof api.activeCall.findTheirParticipant> | undefined
 }
 
 const RtcCardContext = createContext<Props>()
@@ -40,53 +51,93 @@ function useRtcCardContext() {
   return context
 }
 
-function useHostEffects(props: Props) {
-  if (props.state.role !== 'host') return
-  createEffect(() => {
-    if (props.call.status === 'in-progress' && SOUNDS.dial.playing() === false) {
-      SOUNDS.dial.play()
-      onCleanup(() => SOUNDS.dial.stop())
-    }
-  })
-}
-
-function useParticipantEffects(props: Props) {
-  if (props.state.role !== 'participant') return
-  createEffect(() => {
-    if (props.call.status === 'awaiting-response' && SOUNDS.call.playing() === false) {
-      SOUNDS.call.play()
-      onCleanup(() => SOUNDS.call.stop())
-    }
-  })
-}
-
 export function RtcCard(props: Props) {
-  useHostEffects(props)
-  useParticipantEffects(props)
-
   const duration = useCallDuration(props)
-  const isHost = props.state.role === 'host'
+
+  createEffect(() => {
+    console.log({ ...props })
+  })
+
+  createEffect(() => {
+    if (props.myParticipant.role === 'host') {
+      if (props.callStatus === 'in-progress' && SOUNDS.dial.playing() === false) {
+        SOUNDS.dial.play()
+        onCleanup(() => SOUNDS.dial.stop())
+      }
+      return
+    }
+
+    if (props.myParticipant.role === 'participant') {
+      if (props.callStatus === 'awaiting-response' && SOUNDS.call.playing() === false) {
+        SOUNDS.call.play()
+        onCleanup(() => SOUNDS.call.stop())
+      }
+      return
+    }
+  })
 
   return (
     <RtcCardContext.Provider value={props}>
       <Card variant="rtc-panel">
         <CardHeader>
           <AvatarBadgeOnline isOnline inline />
-          <CardTitle>{props.user.fullname}</CardTitle>
-
-          <Show when={props.call.status === 'in-progress'}>
+          <CardTitle>{props.theirUser.fullname}</CardTitle>
+          <Show when={props.callStatus === 'in-progress'}>
             <Separator orientation="vertical" />
             <span class="text-muted font-light tracking-widest">{duration()}</span>
           </Show>
         </CardHeader>
 
         <CardContent>
-          <Dynamic component={isHost ? HostContent[props.call.status] : GuestContent[props.call.status]} />
+          <Show
+            when={props.callStatus === 'in-progress'}
+            fallback={
+              <NoVideoView
+                type="them-view"
+                callType={
+                  props.callStatus === 'preparing'
+                    ? undefined
+                    : props.myParticipant.role === 'host'
+                      ? 'outgoing'
+                      : 'incoming'
+                }
+              />
+            }
+          >
+            <VideoView type="them-view" />
+
+            <div class="absolute bottom-3 right-3 w-30">
+              <VideoView type="my-view" />
+            </div>
+          </Show>
         </CardContent>
 
         <CardFooter>
           <ButtonGroup>
-            <Dynamic component={isHost ? HostActions[props.call.status] : GuestActions[props.call.status]} />
+            <Switch>
+              <Match when={props.myParticipant.role === 'host' && props.callStatus === 'preparing'}>
+                <Actions.StartAudioCall />
+                <Actions.StartVideoCall />
+                <Actions.CancelCall />
+              </Match>
+
+              <Match when={props.myParticipant.role === 'host' && props.callStatus === 'awaiting-response'}>
+                <Actions.AudioToggle />
+                <Actions.VideoToggle />
+                <Actions.EndCall />
+              </Match>
+
+              <Match when={props.myParticipant.role === 'participant' && props.callStatus === 'awaiting-response'}>
+                <Actions.AcceptCall />
+                <Actions.DeclineCall />
+              </Match>
+
+              <Match when={props.callStatus === 'in-progress'}>
+                <Actions.AudioToggle />
+                <Actions.VideoToggle />
+                <Actions.EndCall />
+              </Match>
+            </Switch>
           </ButtonGroup>
         </CardFooter>
       </Card>
@@ -94,137 +145,102 @@ export function RtcCard(props: Props) {
   )
 }
 
-function InProgressView() {
-  const ctx = useRtcCardContext()
+function VideoView(props: { type: 'my-view' | 'them-view' }) {
+  const { myRTC, setRemoteVideoRef } = useRtcContext()
+
+  const isMyView = props.type === 'my-view'
+  const { data: myAudio } = useQuery(api.activeCall.myAudio, {}, { keepPreviousData: true, enabled: isMyView })
+  const { data: myVideo } = useQuery(api.activeCall.myVideo, {}, { keepPreviousData: true, enabled: isMyView })
+  const { data: theirAudio } = useQuery(api.activeCall.theirAudio, {}, { keepPreviousData: true, enabled: !isMyView })
+  const { data: theirVideo } = useQuery(api.activeCall.theirVideo, {}, { keepPreviousData: true, enabled: !isMyView })
+
+  const audio = createMemo(() => (props.type === 'my-view' ? (myAudio() ?? false) : (theirAudio() ?? false)))
+  const video = createMemo(() => (props.type === 'my-view' ? (myVideo() ?? false) : (theirVideo() ?? false)))
+
   return (
-    <>
-      <Avatar variant="on-call" user={ctx.user}>
-        <AvatarImage />
-        <AvatarFallback />
-      </Avatar>
-      <span>{ctx.user.fullname}</span>
+    <div class="relative size-full aspect-video">
+      <video
+        autoplay
+        playsinline
+        class="border size-full object-cover"
+        muted={props.type === 'my-view'}
+        ref={(el) => {
+          if (props.type === 'my-view') {
+            myRTC.setRef(el)
+            el.srcObject = myRTC.stream
+          } else {
+            setRemoteVideoRef(el)
+          }
+        }}
+      />
 
-      <div class="absolute top-0 left-0 w-full h-full">
-        <VideoView type="them-view" />
-      </div>
-      <div class="absolute bottom-2 right-2 aspect-video w-30">
-        <VideoView type="my-view" />
+      <NoVideoView
+        type={props.type}
+        class={cn('opacity-0 absolute top-0 left-0', video() === false && 'opacity-100')}
+      />
 
-        <Show when={ctx.state.audio === false}>
-          <Button variant="outline" size="icon-xs" class="absolute bottom-1 right-1 v-destructive pointer-events-none">
-            <MicOffIcon class="size-4" />
-          </Button>
-        </Show>
-      </div>
-    </>
+      <Button
+        variant="outline"
+        size="icon-xs"
+        class={cn(
+          'absolute bottom-1 right-1 v-destructive pointer-events-none opacity-0',
+          audio() === false && 'opacity-100',
+        )}
+      >
+        <MicOffIcon class="size-4" />
+      </Button>
+    </div>
   )
 }
 
-const HostContent: Record<Doc<'calls'>['status'], Component<{}>> = {
-  preparing() {
-    const ctx = useRtcCardContext()
-    return (
-      <>
-        <Avatar variant="on-call" user={ctx.user}>
-          <AvatarImage />
-          <AvatarFallback />
-        </Avatar>
-        <span>{ctx.user.fullname}</span>
-      </>
-    )
-  },
-  'awaiting-response'() {
-    const ctx = useRtcCardContext()
-    return (
-      <>
-        <Avatar variant="on-call" user={ctx.user} class="animate-bounce repeat-infinite">
-          <AvatarImage />
-          <AvatarFallback />
-        </Avatar>
-        <span class="typing">Calling {ctx.user.fullname}</span>
-        <div class={cn('absolute bottom-2 right-2 aspect-video w-30')}>
-          <VideoView type="my-view" />
-        </div>
-      </>
-    )
-  },
-  'in-progress'() {
-    return <InProgressView />
-  },
-}
+function NoVideoView(
+  props: ParentProps<{
+    type: 'my-view' | 'them-view'
+    callType?: 'incoming' | 'outgoing'
+    class?: string
+  }>,
+) {
+  const ctx = useRtcCardContext()
+  const currentUser = useCurrentUser()
+  const user = createMemo(() => (props.type === 'my-view' ? currentUser() : ctx.theirUser))
 
-const HostActions: Record<Doc<'calls'>['status'], Component<{}>> = {
-  preparing() {
-    return (
-      <>
-        <Actions.StartAudioCall />
-        <Actions.StartVideoCall />
-        <Actions.CancelCall />
-      </>
-    )
-  },
-  'awaiting-response'() {
-    return (
-      <>
-        <Actions.AudioToggle />
-        <Actions.VideoToggle />
-        <Actions.EndCall />
-      </>
-    )
-  },
-  'in-progress'() {
-    return (
-      <>
-        <Actions.AudioToggle />
-        <Actions.VideoToggle />
-        <Actions.EndCall />
-      </>
-    )
-  },
-}
+  return (
+    <div
+      class={cn(
+        '@container bg-card border-white border size-full flex items-center justify-center flex-col gap-2',
+        props.class,
+      )}
+    >
+      <Avatar
+        variant="on-call"
+        user={user()}
+        class={cn(
+          props.callType != null && 'animate-bounce repeat-infinite',
+          props.type === 'my-view' && 'size-[clamp(1.5rem,20cqi,3rem)]!',
+        )}
+      >
+        <AvatarImage />
+        <AvatarFallback />
+      </Avatar>
 
-const GuestContent: Record<Doc<'calls'>['status'], Component<{}>> = {
-  preparing() {
-    return null
-  },
-  'awaiting-response'() {
-    const ctx = useRtcCardContext()
-    return (
-      <>
-        <Avatar variant="on-call" user={ctx.user} class="animate-bounce repeat-infinite">
-          <AvatarImage />
-          <AvatarFallback />
-        </Avatar>
-        <span class="italic">{ctx.user.fullname} is calling</span>
-      </>
-    )
-  },
-  'in-progress'() {
-    return <InProgressView />
-  },
-}
+      <span
+        class={cn(
+          'flex items-center justify-center gap-1 tracking-wide',
+          props.type === 'my-view' && 'font-light text-[clamp(0.625rem,8cqi,4rem)]',
+        )}
+      >
+        <Show when={props.callType === 'outgoing'}>
+          <span>Calling</span>
+        </Show>
 
-const GuestActions: Record<Doc<'calls'>['status'], Component<{}>> = {
-  preparing() {
-    return null
-  },
-  'awaiting-response'() {
-    return (
-      <>
-        <Actions.AcceptCall />
-        <Actions.DeclineCall />
-      </>
-    )
-  },
-  'in-progress'() {
-    return (
-      <>
-        <Actions.AudioToggle />
-        <Actions.VideoToggle />
-        <Actions.EndCall />
-      </>
-    )
-  },
+        <span>{user()?.fullname}</span>
+
+        <Show when={props.callType === 'incoming'}>
+          <span>is calling</span>
+        </Show>
+      </span>
+    </div>
+  )
 }
 
 const Actions = {
@@ -263,31 +279,31 @@ const Actions = {
     )
   },
   AudioToggle() {
-    const ctx = useRtcCardContext()
+    const { data: myAudio } = useQuery(api.activeCall.myAudio, {})
     const toggleAudio = useMutation(api.activeCall.toggleAudio)
     return (
-      <AudioButton label={ctx.state.audio ? 'Mute' : 'Unmute'} class="v-tertiary">
+      <AudioButton label={myAudio() ? 'Mute' : 'Unmute'} class="v-tertiary">
         <Toggle
           variant="outline"
-          pressed={ctx.state.audio}
+          pressed={myAudio() ?? false}
           onPressedChange={(pressed) => toggleAudio.mutate({ audio: pressed })}
         >
-          {ctx.state.audio ? <MicIcon /> : <MicOffIcon />}
+          {myAudio() ? <MicIcon /> : <MicOffIcon />}
         </Toggle>
       </AudioButton>
     )
   },
   VideoToggle() {
-    const ctx = useRtcCardContext()
+    const { data: myVideo } = useQuery(api.activeCall.myVideo, {})
     const toggleVideo = useMutation(api.activeCall.toggleVideo)
     return (
-      <VideoButton label={ctx.state.video ? 'Stop Video' : 'Start Video'} class="v-tertiary">
+      <VideoButton label={myVideo() ? 'Stop Video' : 'Start Video'} class="v-tertiary">
         <Toggle
           variant="outline"
-          pressed={ctx.state.video}
+          pressed={myVideo() ?? false}
           onPressedChange={(pressed) => toggleVideo.mutate({ video: pressed })}
         >
-          {ctx.state.video ? <VideoIcon /> : <VideoOffIcon />}
+          {myVideo() ? <VideoIcon /> : <VideoOffIcon />}
         </Toggle>
       </VideoButton>
     )

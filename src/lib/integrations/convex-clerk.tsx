@@ -68,10 +68,11 @@ export function useCurrentUser() {
     enabled: auth.isAuthenticated(),
     keepPreviousData: true,
   }))
-  return createMemo(() => currentUser()!)
+  return currentUser
 }
 
 export function ConvexClerkProvider(props: ParentProps) {
+  console.log('ConvexClerkProvider')
   const auth = useAuth()
   const client = setupConvex(env.VITE_CONVEX_URL, { unsavedChangesWarning: import.meta.env.PROD, expectAuth: true })
   const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
@@ -94,6 +95,7 @@ export function ConvexClerkProvider(props: ParentProps) {
   })
 
   async function fetchAccessToken({ forceRefreshToken }: { forceRefreshToken: boolean }) {
+    console.log('fetching')
     try {
       const token = await auth.getToken({ template: 'convex', skipCache: forceRefreshToken })
 

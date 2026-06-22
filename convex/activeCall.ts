@@ -12,11 +12,7 @@ type CallRtcMessageAnswer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 
 type CallRtcMessageIceCandidate = Extract<Doc<'call_rtc_messages'>, { type: 'ice-candidate' }>
 
 export const get = query({
-  args: {},
-  handler: async (ctx) => {
-    const call = await Calls.findMyCurrentCall(ctx)
-    return call?.call ?? null
-  },
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.call ?? null,
 })
 
 export const start = mutation({
@@ -47,7 +43,6 @@ export const start = mutation({
 })
 
 export const cancel = mutation({
-  args: {},
   handler: async (ctx) => {
     const { call } = await Calls.getMyCurrentCall(ctx)
     await FloatingPanels.deletePanelsForCall(ctx, call._id)
@@ -55,9 +50,16 @@ export const cancel = mutation({
   },
 })
 
+export const accept = mutation({
+  handler: async (ctx) => {
+    const { call, myParticipant } = await Calls.getMyCurrentCall(ctx)
+    await ctx.db.patch('calls', call._id, { status: 'in-progress', startedAt: Date.now() })
+    await ctx.db.patch('call_participants', myParticipant._id, { status: 'joined', audio: true })
+  },
+})
+
 // Guest only
 export const reject = mutation({
-  args: {},
   handler: async (ctx) => {
     const { call, myParticipant } = await Calls.getMyCurrentCall(ctx)
 
@@ -72,6 +74,7 @@ export const reject = mutation({
     const chatter = myParticipant.role === 'host' ? call.toUserId : call.fromUserId
     const chat = await Chats.getDirectChatWithUser(ctx, chatter)
     if (!chat) throw new Error('No chat found')
+
     await ctx.db.insert('chat_messages', {
       type: 'system',
       chatId: chat._id,
@@ -84,17 +87,7 @@ export const reject = mutation({
   },
 })
 
-export const accept = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const { call, myParticipant } = await Calls.getMyCurrentCall(ctx)
-    await ctx.db.patch('calls', call._id, { status: 'in-progress', startedAt: Date.now() })
-    await ctx.db.patch('call_participants', myParticipant._id, { status: 'joined', audio: true })
-  },
-})
-
 export const end = mutation({
-  args: {},
   handler: async (ctx) => {
     const { call, myParticipant } = await Calls.getMyCurrentCall(ctx)
 
@@ -103,11 +96,7 @@ export const end = mutation({
      * dependent on the current active call data so we do this to prevent data
      * being fetched for the call that doesn't exist anymore.
      */
-    const panels = await ctx.db
-      .query('floating_panels')
-      .withIndex('by_call', (q) => q.eq('callId', call._id))
-      .collect()
-    await Promise.all(panels.map((p) => FloatingPanels.deletePanel(ctx, p)))
+    await FloatingPanels.deletePanelsForCall(ctx, call._id)
 
     // insert a system message into the chat to have a record about the call
     const chatter = myParticipant.role === 'host' ? call.toUserId : call.fromUserId
@@ -145,25 +134,40 @@ export const toggleVideo = mutation({
   },
 })
 
-export const findParticipantUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const call = await Calls.findMyCurrentCall(ctx)
-    if (!call) return null
-    const user = await ctx.db.get(
-      'users',
-      call.myParticipant.role === 'host' ? call.call.toUserId : call.call.fromUserId,
-    )
-    return user
-  },
+export const status = query({
+  handler: async (ctx) => (await Calls.getMyCurrentCall(ctx)).call.status,
 })
 
-export const myCallState = query({
-  args: {},
-  handler: async (ctx) => {
-    const call = await Calls.findMyCurrentCall(ctx)
-    return call?.myParticipant ?? null
-  },
+export const startedAt = query({
+  handler: async (ctx) => (await Calls.getMyCurrentCall(ctx)).call.startedAt,
+})
+
+export const findMyParticipant = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.myParticipant ?? null,
+})
+
+export const findTheirParticipant = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.theirParticipant ?? null,
+})
+
+export const findTheirUser = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.theirUser,
+})
+
+export const myAudio = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.myParticipant?.audio ?? false,
+})
+
+export const myVideo = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.myParticipant?.video ?? false,
+})
+
+export const theirAudio = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.theirParticipant?.audio ?? false,
+})
+
+export const theirVideo = query({
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.theirParticipant?.video ?? false,
 })
 
 export const sendRtcMessage = mutation({
@@ -180,66 +184,118 @@ export const sendRtcMessage = mutation({
     ),
   },
   handler: async (ctx, { message: args }) => {
-    console.log('sendRtcMessage', args.type)
     const call = await Calls.getMyCurrentCall(ctx)
     const toUserId = await Calls.getRtcMessageReceiver(ctx, args.type)
+    await ctx.db.insert('call_rtc_messages', { callId: call.call._id, claimed: false, toUserId, ...args })
+  },
+})
 
-    if (args.type === 'offer') {
-      /**
-       * If an offer is sent – cleanup all the potential existing messages for this call.
-       *
-       * Off the top of my head, one scenario when this can happen is if for some reason
-       * any user reloaded the page and some message in the offer/answer/candidate chain
-       * got removed before being processed. In that case we need to re-initiate the whole
-       * handshake process all over again so we need to cleanup existing messages.
-       */
-      await Calls.deleteCallRtcMessages(ctx, call.call._id)
-    } else if (args.type === 'answer') {
-      /**
-       * Answer can be sent by the invitee only if the offer was received so at this point
-       * that can be presumed and we can safely delete the offer from the db.
-       */
-      await Calls.deleteRtcOfferIfExists(ctx, call.call._id)
+export const claimRtcMessage = mutation({
+  args: {
+    ids: v.union(v.id('call_rtc_messages'), v.array(v.id('call_rtc_messages'))),
+  },
+  handler: async (ctx, args) => {
+    const ids = Array.isArray(args.ids) ? args.ids : [args.ids]
+    for (const id of ids) {
+      await ctx.db.patch('call_rtc_messages', id, { claimed: true })
+    }
+  },
+})
+
+export const canSendOfferRtcMessage = query({
+  handler: async (ctx) => {
+    const call = await Calls.findMyCurrentCall(ctx)
+    if (!call) return false
+
+    /* Only hosts can send offers */
+    if (call.isHost === false) return false
+
+    const existingOffer = await ctx.db
+      .query('call_rtc_messages')
+      .withIndex('by_call_type', (q) => q.eq('callId', call.call._id).eq('type', 'offer'))
+      .unique()
+
+    /* If the offer already exists, claimed or not – we cannot send another one. */
+    if (existingOffer) return false
+
+    /**
+     * Otherwise, if there is no offer – we can only send one if the call status is in progress.
+     * At this point the call being "in progress" means it just got accepted but offer was not
+     * sent yet.
+     */
+    if (call.call.status === 'in-progress') return true
+    return false
+  },
+})
+
+export const canSendAnswerRtcMessage = query({
+  handler: async (ctx) => {
+    const call = await Calls.findMyCurrentCall(ctx)
+    if (!call) return false
+
+    /* Only participants can send answers */
+    if (call.isParticipant === false) return false
+
+    const existingAnswer = await ctx.db
+      .query('call_rtc_messages')
+      .withIndex('by_call_type', (q) => q.eq('callId', call.call._id).eq('type', 'answer'))
+      .unique()
+
+    /* If the answer already exists, claimed or not – we cannot send another one. */
+    if (existingAnswer) return false
+
+    const existingOffer = await ctx.db
+      .query('call_rtc_messages')
+      .withIndex('by_call_type', (q) => q.eq('callId', call.call._id).eq('type', 'offer'))
+      .unique()
+
+    if (!existingOffer) return false
+    // if (!existingOffer) throw new Error("Answer should not be triggered if there's no offer available for this call.")
+
+    /* If the offer is claimed – the answer was already sent, do not send another one. */
+    if (existingOffer.claimed) return false
+
+    /**
+     * At this point we can send the answer only if the following conditions are met:
+     *  1. There exists an offer and it is not claimed.
+     *  2. There was no answer created yet.
+     *  3. Current call status is "in progress". This means we've just accepted the call
+     *     and this request was sent to create the first (and only) answer.
+     */
+    if (call.call.status === 'in-progress') return existingOffer as CallRtcMessageOffer
+    return false
+  },
+})
+
+export const canClaimAnswer = query({
+  handler: async (ctx) => {
+    const call = await Calls.findMyCurrentCall(ctx)
+    if (!call) return false
+
+    /* Only hosts can receive and claim answers */
+    if (call.isHost === false) return false
+
+    const existingAnswer = await ctx.db
+      .query('call_rtc_messages')
+      .withIndex('by_call_type', (q) => q.eq('callId', call.call._id).eq('type', 'answer'))
+      .unique()
+
+    /* If there is no answer then there's nothing to claim yet */
+    if (!existingAnswer) return false
+
+    /* If the answer exists but it is already claimed then nothing to claim anymore */
+    if (existingAnswer.claimed) return false
+
+    /* If there is an unclaimed answer and the call is "in progress" - send the answer to claim. */
+    if (call.call.status === 'in-progress') {
+      return existingAnswer as CallRtcMessageAnswer
     }
 
-    await ctx.db.insert('call_rtc_messages', { callId: call.call._id, toUserId, ...args })
-  },
-})
-
-export const offerRtcMessage = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await Users.getCurrentUser(ctx)
-    const call = await Calls.findMyCurrentCall(ctx)
-    if (!call) return null
-    const offer = await ctx.db
-      .query('call_rtc_messages')
-      .withIndex('by_toUser_call_type', (q) =>
-        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'offer'),
-      )
-      .unique()
-    return offer as CallRtcMessageOffer
-  },
-})
-
-export const answerRtcMessage = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await Users.getCurrentUser(ctx)
-    const call = await Calls.findMyCurrentCall(ctx)
-    if (!call) return null
-    const answer = await ctx.db
-      .query('call_rtc_messages')
-      .withIndex('by_toUser_call_type', (q) =>
-        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'answer'),
-      )
-      .unique()
-    return answer as CallRtcMessageAnswer
+    return false
   },
 })
 
 export const iceCandidateRtcMessages = query({
-  args: {},
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
     const call = await Calls.findMyCurrentCall(ctx)
@@ -254,22 +310,6 @@ export const iceCandidateRtcMessages = query({
   },
 })
 
-export const deleteRtcMessage = mutation({
-  args: {
-    id: v.id('call_rtc_messages'),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.delete('call_rtc_messages', args.id)
-  },
-})
-
-export const deleteRtcMessages = mutation({
-  args: {
-    ids: v.array(v.id('call_rtc_messages')),
-  },
-  handler: async (ctx, args) => {
-    for (const id of args.ids) {
-      await ctx.db.delete('call_rtc_messages', id)
-    }
-  },
+export const isCallEstablished = query({
+  handler: async (ctx) => await Calls.isCurrentCallEstablished(ctx),
 })

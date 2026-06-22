@@ -3,27 +3,57 @@ import { type MutationCtx, type QueryCtx } from '../_generated/server'
 import * as Users from './users'
 import * as FloatingPanels from './floatingPanels'
 
-export async function findMyCurrentCall(ctx: QueryCtx | MutationCtx) {
-  const myParticipant = await getMyCurrentActiveParticipant(ctx)
-  if (!myParticipant) return null
-  const call = await ctx.db.get(myParticipant.callId)
-  if (!call) return null
-  return { call, myParticipant }
+async function findCall(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
+  const call = await ctx.db
+    .query('calls')
+    .filter((p) => p.or(p.eq(p.field('fromUserId'), userId), p.eq(p.field('toUserId'), userId)))
+    .unique()
+  return call
 }
 
-/**
- * @throws
- */
-export async function getMyCurrentCall(ctx: QueryCtx | MutationCtx) {
-  const myParticipant = await getMyCurrentActiveParticipant(ctx)
-  if (!myParticipant) throw new Error('No active call participant')
+async function listParticipants(ctx: QueryCtx | MutationCtx, callId: Id<'calls'>) {
+  const participants = await ctx.db
+    .query('call_participants')
+    .withIndex('by_call', (q) => q.eq('callId', callId))
+    .collect()
+  return participants
+}
 
-  const call = await ctx.db.get(myParticipant.callId)
+export async function findMyCurrentCall(ctx: QueryCtx | MutationCtx) {
+  const user = await Users.getCurrentUser(ctx)
+  const call = await findCall(ctx, user._id)
+  if (!call) return null
+
+  const isHost = call.fromUserId === user._id
+  const isParticipant = call.toUserId === user._id
+  const theirUser = await ctx.db.get('users', isHost ? call.toUserId : call.fromUserId)
+  if (!theirUser) return null
+
+  const participants = await listParticipants(ctx, call._id)
+  const myParticipant = participants.find((p) => p.userId === user._id)
+  if (!myParticipant) return null
+
+  const theirParticipant = participants.find((p) => p._id !== myParticipant._id)
+  return { call, user, myParticipant, theirUser, theirParticipant, isHost, isParticipant }
+}
+
+/** @throws */
+export async function getMyCurrentCall(ctx: QueryCtx | MutationCtx) {
+  const user = await Users.getCurrentUser(ctx)
+  const call = await findCall(ctx, user._id)
   if (!call) throw new Error('Call not found')
 
-  const guestUserId = myParticipant.role === 'host' ? call.toUserId : call.fromUserId
-  const guestParticipant = await getActiveParticipantByUser(ctx, guestUserId)
-  return { call, myParticipant, guestParticipant }
+  const isHost = call.fromUserId === user._id
+  const isParticipant = call.toUserId === user._id
+  const theirUser = await ctx.db.get('users', isHost ? call.toUserId : call.fromUserId)
+  if (!theirUser) throw new Error('Their user not found')
+
+  const participants = await listParticipants(ctx, call._id)
+  const myParticipant = participants.find((p) => p.userId === user._id)
+  if (!myParticipant) throw new Error('My participant not found')
+
+  const theirParticipant = participants.find((p) => p._id !== myParticipant._id)
+  return { call, user, myParticipant, theirUser, theirParticipant, isHost, isParticipant }
 }
 
 export async function getMyCurrentActiveParticipant(ctx: QueryCtx | MutationCtx) {
@@ -40,7 +70,7 @@ export async function getActiveParticipantByUser(ctx: QueryCtx | MutationCtx, us
   return participant
 }
 
-export async function deleteCallParticipants(ctx: MutationCtx, callId: Id<'calls'>) {
+async function deleteCallParticipants(ctx: MutationCtx, callId: Id<'calls'>) {
   const participants = await ctx.db
     .query('call_participants')
     .withIndex('by_call', (q) => q.eq('callId', callId))
@@ -50,7 +80,7 @@ export async function deleteCallParticipants(ctx: MutationCtx, callId: Id<'calls
   }
 }
 
-export async function deleteCallRtcMessages(ctx: MutationCtx, callId: Id<'calls'>) {
+async function deleteCallRtcMessages(ctx: MutationCtx, callId: Id<'calls'>) {
   const rtcMessages = await ctx.db
     .query('call_rtc_messages')
     .withIndex('by_call', (q) => q.eq('callId', callId))
@@ -120,12 +150,18 @@ export async function getRtcMessageReceiver(ctx: QueryCtx | MutationCtx, type: D
   return call.call.fromUserId === user._id ? call.call.toUserId : call.call.fromUserId
 }
 
-export async function deleteRtcOfferIfExists(ctx: MutationCtx, callId: Id<'calls'>) {
-  const existingOffer = await ctx.db
+export async function isCurrentCallEstablished(ctx: QueryCtx | MutationCtx) {
+  const call = await findMyCurrentCall(ctx)
+
+  if (!call) return false
+  if (call.call.status !== 'in-progress') return false
+
+  const messages = await ctx.db
     .query('call_rtc_messages')
-    .withIndex('by_call_type', (q) => q.eq('callId', callId).eq('type', 'offer'))
-    .unique()
-  if (existingOffer) {
-    await ctx.db.delete('call_rtc_messages', existingOffer._id)
-  }
+    .withIndex('by_call', (q) => q.eq('callId', call.call._id))
+    .collect()
+
+  const offerClaimed = messages.find((message) => message.type === 'offer' && message.claimed)
+  const answerClaimed = messages.find((message) => message.type === 'answer' && message.claimed)
+  return !!(offerClaimed && answerClaimed)
 }
