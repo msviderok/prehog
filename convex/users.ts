@@ -110,15 +110,15 @@ export const upsertFromClerk = internalMutation({
   async handler(ctx, { data }) {
     const user = await Users.userByExternalId(ctx, data.id)
     if (user === null) {
-      const newUserId = await ctx.db.insert('users', {
+      await ctx.db.insert('users', {
         externalId: data.id,
         eventBatches: [],
         x: 0,
         y: 100,
         fullname: `${data.first_name} ${data.last_name}`,
         avatar: data.image_url,
+        isOnline: false,
       })
-      await ctx.db.insert('online', { userId: newUserId, isOnline: false })
     } else {
       await ctx.db.patch(user._id, {
         externalId: data.id,
@@ -145,15 +145,18 @@ export const deleteFromClerk = internalMutation({
 export const setMyOnline = mutation({
   args: {
     isOnline: v.boolean(),
+    reason: v.optional(v.union(v.literal('unload'), v.literal('visibility'))),
   },
   handler: async (ctx, args) => {
-    try {
-      const user = await Users.getCurrentUser(ctx)
-      const presence = await Users.getOnline(ctx, user._id)
-      if (presence.isOnline === args.isOnline) return
+    const user = await Users.getCurrentUser(ctx)
+    if (user.isOnline === args.isOnline) return
+    await ctx.db.patch('users', user._id, { isOnline: args.isOnline })
 
-      await ctx.db.patch('online', presence._id, args)
-    } catch (e) {}
+    if (args.isOnline === false) {
+      const members = await Chats.getChatMembersByUserId(ctx, user._id)
+      const typingMembers = members.filter((m) => m.isTyping)
+      await Promise.all(typingMembers.map((m) => ctx.db.patch('chat_members', m._id, { isTyping: false })))
+    }
   },
 })
 
@@ -163,9 +166,10 @@ export const setOnline = mutation({
     isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const presence = await Users.getOnline(ctx, args.userId)
-    if (presence.isOnline === args.isOnline) return
-    await ctx.db.patch('online', presence._id, args)
+    const user = await ctx.db.get('users', args.userId)
+    if (!user) throw new Error(`User not found: ${args.userId}`)
+    if (user.isOnline === args.isOnline) return
+    await ctx.db.patch('users', user._id, args)
   },
 })
 
@@ -174,8 +178,9 @@ export const isOnline = query({
     userId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const presence = await Users.getOnline(ctx, args.userId)
-    return presence.isOnline
+    const user = await ctx.db.get('users', args.userId)
+    if (!user) throw new Error(`User not found: ${args.userId}`)
+    return user.isOnline
   },
 })
 

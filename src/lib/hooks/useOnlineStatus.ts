@@ -1,4 +1,4 @@
-import { useMutation } from 'convex-solidjs'
+import { useConvexClient, useMutation } from 'convex-solidjs'
 import { useConvexClerkAuth } from '../integrations/convex-clerk'
 import { api } from '@/convex/api'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
@@ -12,10 +12,11 @@ export function useOnlineStatus() {
   const setMyOnline = useMutation(api.users.setMyOnline)
 
   function onLeave() {
-    setMyOnline.mutate({ isOnline: document.visibilityState === 'visible' })
+    setMyOnline.mutate({ isOnline: document.visibilityState === 'visible', reason: 'visibility' })
   }
+
   function onBeforeUnload() {
-    void setMyOnline.mutate({ isOnline: false })
+    setMyOnline.mutate({ isOnline: false, reason: 'unload' })
   }
 
   createEffect(() => {
@@ -31,12 +32,12 @@ export function useOnlineStatus() {
 
     window.addEventListener('beforeunload', onBeforeUnload)
     window.addEventListener('unload', onBeforeUnload)
-    window.addEventListener('pagehide', onBeforeUnload)
+    window.addEventListener('pagehide', onLeave)
     document.addEventListener('visibilitychange', onLeave)
     onCleanup(() => {
       window.removeEventListener('beforeunload', onBeforeUnload)
       window.removeEventListener('unload', onBeforeUnload)
-      window.removeEventListener('pagehide', onBeforeUnload)
+      window.removeEventListener('pagehide', onLeave)
       document.removeEventListener('visibilitychange', onLeave)
     })
   })

@@ -73,10 +73,12 @@ export async function getSenderByMemberId(ctx: QueryCtx | MutationCtx, memberId:
 }
 
 export async function getIsTyping(ctx: QueryCtx, args: Pick<Doc<'chat_members'>, 'chatId' | 'userId'>) {
-  return (await ctx.db
-    .query('typing')
+  const chat = await ctx.db
+    .query('chat_members')
     .withIndex('by_chat_user', (q) => q.eq('chatId', args.chatId).eq('userId', args.userId))
-    .unique())!
+    .unique()
+  if (!chat) throw new Error('Chat not found')
+  return chat.isTyping
 }
 
 export async function getGroupedMembersBetweenMeAndUser(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {

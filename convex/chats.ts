@@ -14,11 +14,8 @@ export const initChat = mutation({
     const user = await Users.getCurrentUser(ctx)
     const newChatId = await ctx.db.insert('chats', {})
 
-    await ctx.db.insert('chat_members', { chatId: newChatId, userId: user._id })
-    await ctx.db.insert('typing', { chatId: newChatId, userId: user._id, isTyping: false })
-
-    await ctx.db.insert('chat_members', { chatId: newChatId, userId: args.userId })
-    await ctx.db.insert('typing', { chatId: newChatId, userId: args.userId, isTyping: false })
+    await ctx.db.insert('chat_members', { chatId: newChatId, userId: user._id, isTyping: false })
+    await ctx.db.insert('chat_members', { chatId: newChatId, userId: args.userId, isTyping: false })
 
     await FloatingPanels.createNewPanel(ctx, {
       x: args.x,
@@ -108,11 +105,10 @@ export const setIsTyping = mutation({
     chatId: v.id('chats'),
     isTyping: v.boolean(),
   },
-  handler: async (ctx, { isTyping, ...args }) => {
-    const user = await Users.getCurrentUser(ctx)
-    const typing = await Chats.getIsTyping(ctx, { ...args, userId: user._id })
-    if (typing.isTyping === isTyping) return
-    await ctx.db.patch('typing', typing._id, { isTyping })
+  handler: async (ctx, args) => {
+    const member = await Chats.getMyChatMembership(ctx, args.chatId)
+    if (member.isTyping === args.isTyping) return
+    await ctx.db.patch('chat_members', member._id, { isTyping: args.isTyping })
   },
 })
 
@@ -122,8 +118,8 @@ export const isTyping = query({
     chatId: v.id('chats'),
   },
   handler: async (ctx, args) => {
-    const typing = await Chats.getIsTyping(ctx, args)
-    return typing.isTyping
+    const member = await Chats.getMyChatMembership(ctx, args.chatId)
+    return member.isTyping
   },
 })
 

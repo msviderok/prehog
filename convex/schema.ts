@@ -19,17 +19,13 @@ export default defineSchema({
     y: v.number(),
     fullname: v.string(),
     avatar: v.optional(v.string()),
-  }).index('by_clerkId', ['externalId']),
-  online: defineTable({
-    userId: v.id('users'),
     isOnline: v.boolean(),
-  })
-    .index('by_user', ['userId'])
-    .index('by_isOnline', ['isOnline']),
+  }).index('by_clerkId', ['externalId']),
   chats: defineTable({}),
   chat_members: defineTable({
     chatId: v.id('chats'),
     userId: v.id('users'),
+    isTyping: v.boolean(),
   })
     .index('by_user', ['userId'])
     .index('by_chat', ['chatId'])
@@ -63,11 +59,6 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_chat', ['chatId'])
     .index('by_chat_user', ['chatId', 'userId']),
-  typing: defineTable({
-    userId: v.id('users'),
-    chatId: v.id('chats'),
-    isTyping: v.boolean(),
-  }).index('by_chat_user', ['chatId', 'userId']),
   floating_panels: defineTable(
     v.union(
       v.object({
