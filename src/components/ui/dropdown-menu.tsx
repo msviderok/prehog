@@ -1,32 +1,28 @@
-import type { Menu as MenuPrimitiveType } from '@msviderok/base-ui-solid/menu'
 import { cn, defaultProps } from '@/lib/utils'
+import { Menu as MenuPrimitive } from '@msviderok/base-ui-solid/menu'
 import { CheckIcon, ChevronRightIcon } from 'lucide-solid'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'
-import { isServer } from 'solid-js/web'
 import { Button, type ExtraButtonProps } from './button'
+import { Toggle } from './toggle'
 
-const MenuPrimitive = isServer
-  ? ({} as typeof import('@msviderok/base-ui-solid/menu').Menu)
-  : (await import('@msviderok/base-ui-solid/menu')).Menu
-
-function DropdownMenu(props: MenuPrimitiveType.Root.Props) {
+function DropdownMenu(props: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
 }
 
-function DropdownMenuPortal(props: MenuPrimitiveType.Portal.Props) {
+function DropdownMenuPortal(props: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-function DropdownMenuTrigger(componentProps: MenuPrimitiveType.Trigger.Props & ExtraButtonProps) {
+function DropdownMenuTrigger(componentProps: MenuPrimitive.Trigger.Props & ExtraButtonProps) {
   const props = defaultProps(componentProps, { variant: 'default', size: 'default' })
   const [buttonProps, rest] = splitProps(props, ['class', 'variant', 'size'])
-  const restPropsWithRender = defaultProps(rest, { render: (p) => <Button {...p} {...buttonProps} /> })
+  const restPropsWithRender = defaultProps(rest, { render: (p) => <Toggle {...p} {...buttonProps} /> })
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...restPropsWithRender} />
 }
 
 function DropdownMenuContent(
-  props: MenuPrimitiveType.Popup.Props &
-    Pick<MenuPrimitiveType.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>,
+  props: MenuPrimitive.Popup.Props &
+    Pick<MenuPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>,
 ) {
   const mergedProps = mergeProps(
     {
@@ -46,7 +42,6 @@ function DropdownMenuContent(
         alignOffset={local.alignOffset}
         side={local.side}
         sideOffset={local.sideOffset}
-        positionMethod="fixed"
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
@@ -61,12 +56,12 @@ function DropdownMenuContent(
   )
 }
 
-function DropdownMenuGroup(props: MenuPrimitiveType.Group.Props) {
+function DropdownMenuGroup(props: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
 }
 
 function DropdownMenuLabel(
-  props: MenuPrimitiveType.GroupLabel.Props & {
+  props: MenuPrimitive.GroupLabel.Props & {
     inset?: boolean
   },
 ) {
@@ -82,7 +77,7 @@ function DropdownMenuLabel(
 }
 
 function DropdownMenuItem(
-  props: MenuPrimitiveType.Item.Props & {
+  props: MenuPrimitive.Item.Props & {
     inset?: boolean
     variant?: 'default' | 'destructive'
   },
@@ -103,12 +98,12 @@ function DropdownMenuItem(
   )
 }
 
-function DropdownMenuSub(props: MenuPrimitiveType.SubmenuRoot.Props) {
+function DropdownMenuSub(props: MenuPrimitive.SubmenuRoot.Props) {
   return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
 }
 
 function DropdownMenuSubTrigger(
-  props: MenuPrimitiveType.SubmenuTrigger.Props & {
+  props: MenuPrimitive.SubmenuTrigger.Props & {
     inset?: boolean
   },
 ) {
@@ -157,7 +152,7 @@ function DropdownMenuSubContent(props: ComponentProps<typeof DropdownMenuContent
 }
 
 function DropdownMenuCheckboxItem(
-  props: MenuPrimitiveType.CheckboxItem.Props & {
+  props: MenuPrimitive.CheckboxItem.Props & {
     inset?: boolean
   },
 ) {
@@ -186,12 +181,12 @@ function DropdownMenuCheckboxItem(
   )
 }
 
-function DropdownMenuRadioGroup(props: MenuPrimitiveType.RadioGroup.Props) {
+function DropdownMenuRadioGroup(props: MenuPrimitive.RadioGroup.Props) {
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />
 }
 
 function DropdownMenuRadioItem(
-  props: MenuPrimitiveType.RadioItem.Props & {
+  props: MenuPrimitive.RadioItem.Props & {
     inset?: boolean
   },
 ) {
@@ -219,7 +214,7 @@ function DropdownMenuRadioItem(
   )
 }
 
-function DropdownMenuSeparator(props: MenuPrimitiveType.Separator.Props) {
+function DropdownMenuSeparator(props: MenuPrimitive.Separator.Props) {
   const [local, rest] = splitProps(props, ['class'])
   return (
     <MenuPrimitive.Separator

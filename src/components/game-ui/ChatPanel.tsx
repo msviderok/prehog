@@ -11,6 +11,7 @@ import { Toggle } from '../ui/toggle'
 import { useFloatingContext } from './FloatingContext'
 import { UserCard } from './UserCard'
 import { useCurrentUser } from '@/lib/integrations/convex-clerk'
+import { ChatMessage } from './ChatMessage'
 
 export function ChatPanel(props: ChatPanel.Props) {
   const { data: chat } = useQuery(api.chats.byId, { chatId: props.chatId })
@@ -100,54 +101,10 @@ function ChatMessages(props: Doc<'chats'>) {
       )}
     >
       <div class="grid auto-rows-auto min-h-full gap-0.5 *:[overflow-anchor:none]">
-        <For each={messages()}>{(message) => <Message message={message} />}</For>
+        <For each={messages()}>{(message) => <ChatMessage type="chat" message={message} />}</For>
         <div class="[overflow-anchor:auto]! h-px" />
       </div>
     </CardContent>
-  )
-}
-
-function Message(props: { message: Doc<'chat_messages'> }) {
-  const currentUser = useCurrentUser()
-  return (
-    <div
-      class={cn(
-        'max-w-[80%] p-1.5 px-3 rounded-base text-white animate-in wrap-break-word [word-break:break-word]',
-        props.message.userId === currentUser()?._id
-          ? 'bg-blue-500 justify-self-end'
-          : 'bg-slate-700 justify-self-start',
-      )}
-    >
-      <Switch fallback={<span>{(props.message as MessageDM).body}</span>}>
-        <Match when={props.message.type === 'system' && props.message}>
-          {(msg) => (
-            <Switch>
-              <Match when={msg().body.status === 'ended' && (msg().body as MessageBodySystemCallEnded)}>
-                {(sysMsg) => (
-                  <p>
-                    <span class="flex gap-2 items-center">
-                      <PhoneIcon class="size-3.5" /> Call ended
-                    </span>
-                    <span class="flex justify-end text-xs text-tint-muted/20 tracking-tighter">
-                      {sysMsg().duration}
-                    </span>
-                  </p>
-                )}
-              </Match>
-              <Match when={msg().body.status === 'declined' && (msg().body as MessageBodySystemCallDeclined)}>
-                {(sysMsg) => (
-                  <p>
-                    <span class="flex gap-2 items-center">
-                      <PhoneMissedIcon class="size-3.5" /> Call declined
-                    </span>
-                  </p>
-                )}
-              </Match>
-            </Switch>
-          )}
-        </Match>
-      </Switch>
-    </div>
   )
 }
 

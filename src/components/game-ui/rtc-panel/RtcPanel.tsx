@@ -13,24 +13,26 @@ export function RtcPanel(_props: RtcPanel.Props) {
   const { data: myParticipant } = useQuery(api.activeCall.findMyParticipant, {})
   const { data: theirParticipant } = useQuery(api.activeCall.findTheirParticipant, {})
 
-  createEffect(() => {
-    console.log({
-      callStatus: callStatus(),
-      theirUser: theirUser(),
-      myParticipant: myParticipant(),
-      bool: callStatus() && theirUser() && myParticipant(),
-    })
-  })
-
   return (
-    <RtcContext.Provider value={rtcState}>
+    <RtcContext.Provider
+      value={{
+        rtc: rtcState,
+        get callStatus() {
+          return callStatus()!
+        },
+        get theirUser() {
+          return theirUser()!
+        },
+        get myParticipant() {
+          return myParticipant()!
+        },
+        get theirParticipant() {
+          return theirParticipant()
+        },
+      }}
+    >
       <Show when={callStatus() && theirUser() && myParticipant()}>
-        <RtcCard
-          callStatus={callStatus()!}
-          theirUser={theirUser()!}
-          myParticipant={myParticipant()!}
-          theirParticipant={theirParticipant()}
-        />
+        <RtcCard />
       </Show>
       <RtcEffectsListener />
     </RtcContext.Provider>
@@ -47,7 +49,7 @@ function RtcEffectsListener() {
 }
 
 function useHandleMediaToggle() {
-  const { toggleAudio, toggleVideo } = useRtcContext()
+  const { rtc } = useRtcContext()
   const { data: audio } = useQuery(api.activeCall.myAudio, {}, { initialData: false, keepPreviousData: true })
   const { data: video } = useQuery(api.activeCall.myVideo, {}, { initialData: false, keepPreviousData: true })
   const { data: isCallEstablished } = useQuery(
@@ -60,7 +62,7 @@ function useHandleMediaToggle() {
   createEffect(
     on([() => audio()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
       if (callEstablished === false) return
-      toggleAudio(enabled)
+      rtc.toggleAudio(enabled)
     }),
   )
 
@@ -68,13 +70,13 @@ function useHandleMediaToggle() {
   createEffect(
     on([() => video()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
       if (callEstablished === false) return
-      toggleVideo(enabled)
+      rtc.toggleVideo(enabled)
     }),
   )
 }
 
 function useHandleSendOffer() {
-  const { createOffer } = useRtcContext()
+  const { rtc } = useRtcContext()
   const canSendOffer = useQuery(api.activeCall.canSendOfferRtcMessage, {})
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 
@@ -83,7 +85,7 @@ function useHandleSendOffer() {
       () => canSendOffer.data() ?? false,
       async (sendOfferAllowed) => {
         if (sendOfferAllowed === false) return
-        const offer = await createOffer()
+        const offer = await rtc.createOffer()
         sendRtcMessage.mutate({ message: { type: 'offer', data: offer } })
       },
     ),
@@ -91,7 +93,7 @@ function useHandleSendOffer() {
 }
 
 function useHandleReceiveOfferAndSendAnswer() {
-  const { createAnswer } = useRtcContext()
+  const { rtc } = useRtcContext()
   const canSendAnswer = useQuery(api.activeCall.canSendAnswerRtcMessage, {})
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
   const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
@@ -102,7 +104,7 @@ function useHandleReceiveOfferAndSendAnswer() {
       () => canSendAnswer.data() ?? false,
       async (offer) => {
         if (!offer) return
-        const answer = await createAnswer(offer.data)
+        const answer = await rtc.createAnswer(offer.data)
         await claimRtcMessage.mutate({ ids: offer._id })
         await sendRtcMessage.mutate({ message: { type: 'answer', data: answer } })
       },
@@ -111,7 +113,7 @@ function useHandleReceiveOfferAndSendAnswer() {
 }
 
 function useHandleReceiveAnswer() {
-  const { myRTC, addPendingCandidates } = useRtcContext()
+  const { rtc } = useRtcContext()
   const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
   const canClaimAnswer = useQuery(api.activeCall.canClaimAnswer, {})
 
@@ -122,8 +124,8 @@ function useHandleReceiveAnswer() {
       async (answer) => {
         if (!answer) return
 
-        await myRTC.peer.setRemoteDescription(answer.data)
-        await addPendingCandidates()
+        await rtc.myRTC.peer.setRemoteDescription(answer.data)
+        await rtc.addPendingCandidates()
         await claimRtcMessage.mutate({ ids: answer._id })
       },
     ),
@@ -131,7 +133,7 @@ function useHandleReceiveAnswer() {
 }
 
 function useHandleIceCandidates() {
-  const { myRTC, addPendingCandidates } = useRtcContext()
+  const { rtc } = useRtcContext()
   const isCallEstablished = useQuery(api.activeCall.isCallEstablished, {})
   const iceCandidateRtcMessages = useQuery(api.activeCall.iceCandidateRtcMessages, {})
   const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
@@ -149,10 +151,10 @@ function useHandleIceCandidates() {
         processedEntries.add(candidate._id)
 
         if (candidate.type === 'ice-candidate') {
-          if (myRTC.peer.remoteDescription) {
-            await myRTC.peer.addIceCandidate(candidate.data)
+          if (rtc.myRTC.peer.remoteDescription) {
+            await rtc.myRTC.peer.addIceCandidate(candidate.data)
           } else {
-            myRTC.pendingCandidates.push(candidate.data)
+            rtc.myRTC.pendingCandidates.push(candidate.data)
           }
 
           processedIds.push(candidate._id)
@@ -171,7 +173,7 @@ function useHandleIceCandidates() {
     on(
       () => isCallEstablished.data() ?? false,
       (callEstablished) => {
-        if (callEstablished) addPendingCandidates()
+        if (callEstablished) rtc.addPendingCandidates()
       },
     ),
   )

@@ -1,10 +1,10 @@
-import type { Doc } from '@/convex/dataModel'
+import { api } from '@/convex/api'
+import { useQuery } from 'convex-solidjs'
+import type { FunctionReturnType } from 'convex/server'
 import { createEffect, createMemo, createSignal, onCleanup } from 'solid-js'
 import { formatDurationMMSS } from '../duration'
-import { useQuery } from 'convex-solidjs'
-import { api } from '@/convex/api'
 
-export function useCallDuration(props: { callStatus: Doc<'calls'>['status'] }) {
+export function useCallDuration(props: { callStatus: FunctionReturnType<typeof api.activeCall.status> }) {
   let interval: NodeJS.Timeout | undefined
   const [now, setNow] = createSignal(Date.now())
   const { data: startedAt } = useQuery(api.activeCall.startedAt, {})

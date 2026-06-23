@@ -151,6 +151,7 @@ export const setMyOnline = mutation({
       const user = await Users.getCurrentUser(ctx)
       const presence = await Users.getOnline(ctx, user._id)
       if (presence.isOnline === args.isOnline) return
+
       await ctx.db.patch('online', presence._id, args)
     } catch (e) {}
   },

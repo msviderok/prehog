@@ -1,10 +1,6 @@
 import { cn } from '@/lib/utils'
 import { splitProps, type ComponentProps } from 'solid-js'
-import { isServer } from 'solid-js/web'
-
-const InputPrimitive = isServer
-  ? ({} as typeof import('@msviderok/base-ui-solid/input').Input)
-  : (await import('@msviderok/base-ui-solid/input')).Input
+import { Input as InputPrimitive } from '@msviderok/base-ui-solid/input'
 
 function Input(props: ComponentProps<'input'>) {
   const [local, rest] = splitProps(props, ['class', 'type'])

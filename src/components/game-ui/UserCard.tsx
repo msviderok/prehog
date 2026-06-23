@@ -7,6 +7,7 @@ import type { Doc } from '@/convex/dataModel'
 import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Skeleton } from '../ui/skeleton'
 import { useCurrentUser } from '@/lib/integrations/convex-clerk'
+import { ChatMessage } from './ChatMessage'
 
 interface VariantProps {
   variant?: 'default' | 'chat'
@@ -21,7 +22,7 @@ export function UserCard(
   return (
     <div
       class={cn(
-        'flex gap-2 items-center p-2 overflow-hidden relative border-b border-muted/30',
+        'flex gap-3 items-center p-2 overflow-hidden relative border-b border-muted/30',
         local.variant === 'default' &&
           'hover:bg-tint-card/10 data-pressed:bg-blue-200/10 cursor-pointer transition-colors duration-50 ease-out',
         local.class,
@@ -92,10 +93,7 @@ function LastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'> } & Varian
   function LastMessage() {
     return (
       <Show when={lastMessage()}>
-        <Show when={sender()?._id === currentUser()?._id}>
-          <span class="text-blue-300">You:</span>
-        </Show>
-        <p class="text-tint-muted/30 truncate">{lastMessage()!.body}</p>
+        <ChatMessage type="last-message" message={lastMessage()!} />
       </Show>
     )
   }

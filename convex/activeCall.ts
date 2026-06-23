@@ -135,11 +135,11 @@ export const toggleVideo = mutation({
 })
 
 export const status = query({
-  handler: async (ctx) => (await Calls.getMyCurrentCall(ctx)).call.status,
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.call.status,
 })
 
 export const startedAt = query({
-  handler: async (ctx) => (await Calls.getMyCurrentCall(ctx)).call.startedAt,
+  handler: async (ctx) => (await Calls.findMyCurrentCall(ctx))?.call.startedAt,
 })
 
 export const findMyParticipant = query({

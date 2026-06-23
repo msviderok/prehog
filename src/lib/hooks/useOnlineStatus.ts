@@ -15,7 +15,7 @@ export function useOnlineStatus() {
     setMyOnline.mutate({ isOnline: document.visibilityState === 'visible' })
   }
   function onBeforeUnload() {
-    setMyOnline.mutate({ isOnline: false })
+    void setMyOnline.mutate({ isOnline: false })
   }
 
   createEffect(() => {
@@ -30,9 +30,13 @@ export function useOnlineStatus() {
     setMounted(true)
 
     window.addEventListener('beforeunload', onBeforeUnload)
+    window.addEventListener('unload', onBeforeUnload)
+    window.addEventListener('pagehide', onBeforeUnload)
     document.addEventListener('visibilitychange', onLeave)
     onCleanup(() => {
       window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('unload', onBeforeUnload)
+      window.removeEventListener('pagehide', onBeforeUnload)
       document.removeEventListener('visibilitychange', onLeave)
     })
   })

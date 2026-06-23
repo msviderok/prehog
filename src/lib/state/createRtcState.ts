@@ -1,45 +1,12 @@
 import { api } from '@/convex/api'
 import { makePersisted } from '@solid-primitives/storage'
 import { useMutation } from 'convex-solidjs'
-import { createResource, createSignal, onCleanup, onMount } from 'solid-js'
-import { createStore, produce } from 'solid-js/store'
-import { getLSKey } from '../utils'
+import { createMemo, createResource, createSignal, onCleanup, onMount } from 'solid-js'
+import { createStore } from 'solid-js/store'
 import { HAVE_AUDIO_OUTPUT_SELECTOR } from '../constants'
+import { getLSKey } from '../utils'
 
-async function listDevices() {
-  const devices = await navigator.mediaDevices.enumerateDevices()
-  const defaultDevices = new Set<string>()
-  return devices
-    .map((device) => {
-      if (device.deviceId === 'default') {
-        const label = device.label.replace('Default - ', '')
-        const actualDevice = devices.find(
-          (d) => d.label === label && d.kind === device.kind && d.groupId === device.groupId,
-        )
-
-        if (actualDevice) {
-          defaultDevices.add(actualDevice.deviceId)
-        }
-      }
-      return device
-    })
-    .filter((d) => d.deviceId !== 'default')
-    .reduce(
-      (acc, device) => {
-        if (defaultDevices.has(device.deviceId)) {
-          acc[device.kind].unshift(device)
-        } else {
-          acc[device.kind].push(device)
-        }
-        return acc
-      },
-      {
-        audioinput: [],
-        audiooutput: [],
-        videoinput: [],
-      } as Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>,
-    )
-}
+type OptionalDevice = { deviceId?: string; device?: never } | { deviceId?: never; device?: MediaDeviceInfo }
 
 export type RtcState = ReturnType<typeof createRtcState>
 export function createRtcState() {
@@ -48,9 +15,75 @@ export function createRtcState() {
 
   const [myVideoRef, setMyVideoRef] = createSignal<HTMLVideoElement>()
   const [remoteVideoRef, setRemoteVideoRefInternal] = createSignal<HTMLVideoElement>()
-  const [devices, devicesAction] = createResource(listDevices)
+
+  const [audioPermissions, audioAction] = createResource(async () => {
+    if (!navigator.permissions.query) {
+      console.warn('Navigator permissions not supported')
+      return 'unknown'
+    }
+
+    try {
+      const status = await navigator.permissions.query({ name: 'microphone' })
+      status.onchange = async (e) => {
+        audioAction.mutate((e.target as PermissionStatus).state)
+        await refetchDevices()
+      }
+      return status.state
+    } catch {
+      console.warn('Failed to query microphone permission')
+      return 'unknown'
+    }
+  })
+  const [videoPermissions, videoAction] = createResource(async () => {
+    if (!navigator.permissions.query) {
+      console.warn('Navigator permissions not supported')
+      return 'unknown'
+    }
+
+    try {
+      const status = await navigator.permissions.query({ name: 'camera' })
+      status.onchange = async (e) => {
+        videoAction.mutate((e.target as PermissionStatus).state)
+        await refetchDevices()
+      }
+      return status.state
+    } catch {
+      console.warn('Failed to query camera permission')
+      return 'unknown'
+    }
+  })
+
+  const [devices, { refetch: refetchDevices }] = createResource(async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    return devices.reduce(
+      (acc, device) => {
+        acc.all.push(device)
+        acc.byId[device.deviceId] = device
+        acc.allGrouped[device.kind].push(device)
+
+        if (device.deviceId === 'default' || device.label.startsWith('Default - ')) return acc
+        acc.dropdown[device.kind].push(device)
+        return acc
+      },
+      {
+        all: [] as MediaDeviceInfo[],
+        byId: {} as Record<string, MediaDeviceInfo | undefined>,
+        allGrouped: {
+          audioinput: [],
+          audiooutput: [],
+          videoinput: [],
+        } as Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>,
+        dropdown: {
+          audioinput: [],
+          audiooutput: [],
+          videoinput: [],
+        } as Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>,
+      },
+    )
+  })
+
   const [selectedDevices, setSelectedDevices] = makePersisted(
-    createStore<Record<MediaDeviceInfo['kind'], string | undefined>>({
+    createStore<Record<MediaDeviceInfo['kind'], MediaDeviceInfo | undefined>>({
       audioinput: undefined,
       audiooutput: undefined,
       videoinput: undefined,
@@ -66,18 +99,96 @@ export function createRtcState() {
     pendingCandidates: [] as RTCIceCandidateInit[],
   }
 
-  function getMediaConstraints(kind: Kind): MediaTrackConstraints | boolean {
+  /**
+   * This function is supposed to find the actual device that is used. Some browser implementation
+   * of `enumerateDevices()` might return the same device twice: whether with `deviceId`
+   * set to 'default' or with the label starting with `Default - `.
+   */
+  function getUnambiguousSelectedDevice(kind: MediaDeviceInfo['kind']) {
+    if (selectedDevices[kind]) {
+      const storedDevice = findDevice(selectedDevices[kind])
+      /* If I found the actual device store, then just return it  */
+      if (storedDevice) return storedDevice
+    }
+
+    const list = devices.latest?.allGrouped[kind] ?? []
+    const browserDefaultDevice = list.find((d) => d.deviceId === 'device' || d.label.startsWith('Default - '))
+    const actualLabel = browserDefaultDevice?.label.replace('Default - ', '')
+    const actualDevice = list.find((d) => d.label === actualLabel)
+    return actualDevice ?? list[0] ?? ({ deviceId: '' } as MediaDeviceInfo)
+  }
+
+  const selectedAudioInputDevice = createMemo<MediaDeviceInfo>(() => getUnambiguousSelectedDevice('audioinput'))
+  const selectedAudioOutputDevice = createMemo<MediaDeviceInfo>(() => getUnambiguousSelectedDevice('audiooutput'))
+  const selectedVideoInputDevice = createMemo<MediaDeviceInfo>(() => getUnambiguousSelectedDevice('videoinput'))
+
+  function findDeviceById(deviceId: string | undefined) {
+    if (!deviceId) {
+      console.log(`findDeviceById: deviceId is undefined`)
+      return undefined
+    }
+
+    if (!devices.latest) {
+      console.log(`findDeviceById: enumerateDevices() was not called yet.`)
+      return undefined
+    }
+
+    const list = devices.latest.all
+    if (list.length === 0) {
+      console.log(`findDeviceById: no devices returned from enumerateDevices()`)
+      return undefined
+    }
+
+    return list.find((d) => d.deviceId === deviceId)
+  }
+
+  function findDevice(device: MediaDeviceInfo | undefined) {
+    if (device == null) {
+      console.log(`findDevice: provided device is undefined`)
+      return undefined
+    }
+
+    if (!devices.latest) {
+      console.log(`findDevice: enumerateDevices() was not called yet.`)
+      return undefined
+    }
+
+    if (devices.latest.all.length === 0) {
+      console.log(`findDevice: no devices returned from enumerateDevices() for ${device.kind}`)
+      return undefined
+    }
+
+    return devices.latest.all.find((d) => d.deviceId === device.deviceId || d.label === device.label)
+  }
+
+  async function getMediaConstraints(
+    kind: Kind,
+    deviceArgs: OptionalDevice = {},
+  ): Promise<MediaTrackConstraints | true> {
     const deviceKind: MediaDeviceKind = kind === 'audio' ? 'audioinput' : 'videoinput'
-    const storedDevice = devices()?.[deviceKind].find((d) => d.deviceId === selectedDevices[deviceKind])?.deviceId
-    return storedDevice ? { deviceId: { exact: storedDevice } } : true
+    const stored = deviceArgs.device ?? findDeviceById(deviceArgs.deviceId) ?? selectedDevices[deviceKind]
+
+    if (!stored) {
+      console.log(`No stored ${deviceKind} found`)
+      return true
+    }
+
+    const device = findDevice(stored) ?? devices.latest?.dropdown[deviceKind][0]!
+    return { deviceId: { exact: device.deviceId } }
   }
 
   /** @throws */
-  async function requestNewStream(kind: 'audio' | 'video' | 'both') {
+  async function requestNewStream(
+    args:
+      | ({ kind: 'audio' | 'video' } & OptionalDevice)
+      | { kind: 'both'; audio?: OptionalDevice; video?: OptionalDevice },
+  ) {
     try {
+      const videoConstraints = await getMediaConstraints('video', args.kind === 'both' ? args.video : args)
+      const audioConstraints = await getMediaConstraints('audio', args.kind === 'both' ? args.audio : args)
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: kind === 'video' || kind === 'both' ? getMediaConstraints('video') : false,
-        audio: kind === 'audio' || kind === 'both' ? getMediaConstraints('audio') : false,
+        video: args.kind === 'video' || args.kind === 'both' ? videoConstraints : false,
+        audio: args.kind === 'audio' || args.kind === 'both' ? audioConstraints : false,
       })
       return stream
     } catch (error) {
@@ -89,9 +200,10 @@ export function createRtcState() {
   /** @throws */
   async function requestNewTrack<
     T extends 'audio' | 'video' | 'both',
+    S = T extends 'both' ? { audio?: OptionalDevice; video?: OptionalDevice } : OptionalDevice,
     R = T extends 'both' ? { audio: MediaStreamTrack; video: MediaStreamTrack } : MediaStreamTrack,
-  >(kind: T): Promise<R> {
-    const stream = await requestNewStream(kind)
+  >(kind: T, deviceArgs?: S): Promise<R> {
+    const stream = await requestNewStream({ kind, ...deviceArgs })
     const [audioTrack] = stream.getAudioTracks()
     const [videoTrack] = stream.getVideoTracks()
 
@@ -110,39 +222,25 @@ export function createRtcState() {
     return { audio: audioTrack, video: videoTrack } as R
   }
 
-  async function requestAudioPermissions() {
+  async function checkAudioPermissions() {
+    if (audioPermissions() === 'granted' || audioPermissions() === 'denied') return
+
     try {
-      const audioStream = await requestNewStream('audio')
+      const audioStream = await requestNewStream({ kind: 'audio' })
       audioStream.getAudioTracks().forEach((track) => track.stop())
     } catch (error) {
       console.warn('Failed to request audio permissions', { error })
     }
   }
 
-  async function requestVideoPermissions() {
+  async function checkVideoPermissions() {
+    if (videoPermissions() === 'granted' || videoPermissions() === 'denied') return
+
     try {
-      const videoStream = await requestNewStream('video')
+      const videoStream = await requestNewStream({ kind: 'video' })
       videoStream.getVideoTracks().forEach((track) => track.stop())
     } catch (error) {
       console.warn('Failed to request video permissions', { error })
-    }
-  }
-
-  async function refetchDevices(kind: Kind) {
-    try {
-      if (kind === 'audio') await requestAudioPermissions()
-      else await requestVideoPermissions()
-
-      await devicesAction.refetch()
-      setSelectedDevices(
-        produce((state) => {
-          state.audioinput ??= devices()?.audioinput[0]?.deviceId
-          state.audiooutput ??= devices()?.audiooutput[0]?.deviceId
-          state.videoinput ??= devices()?.videoinput[0]?.deviceId
-        }),
-      )
-    } catch (error) {
-      console.warn('Failed to refetch devices', { error })
     }
   }
 
@@ -158,8 +256,15 @@ export function createRtcState() {
     const isAudio = kind === 'audioinput'
     const trackKind: Kind = isAudio ? 'audio' : 'video'
 
-    /* Ignore if the device is already selected */
-    if (deviceId === selectedDevices[kind]) return
+    const newDevice = findDeviceById(deviceId)
+    const storedDevice = findDevice(selectedDevices[kind])
+
+    if (newDevice == null) throw new Error(`Device not found: ${deviceId}`)
+
+    /* Ignore if the device is already selected and it's the same device that was stored */
+    if (storedDevice && storedDevice.label === newDevice.label && storedDevice.deviceId === newDevice.deviceId) {
+      return
+    }
 
     const newTrack = await requestNewTrack(trackKind)
     const [oldTrack] = isAudio ? myRTC.stream.getAudioTracks() : myRTC.stream.getVideoTracks()
@@ -175,18 +280,36 @@ export function createRtcState() {
     }
 
     myRTC.stream.addTrack(newTrack)
-    setSelectedDevices(kind, deviceId)
+    setSelectedDevices(kind, newDevice.toJSON())
   }
 
   /** @throws */
   async function setOutputDevice(deviceId: string) {
     /* Ignore if browser does not support audio output selection */
     if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
-    /* Ignore if the device is already selected */
-    if (deviceId === selectedDevices['audiooutput']) return
 
-    await remoteVideoRef()?.setSinkId(deviceId)
-    setSelectedDevices('audiooutput', deviceId)
+    const newDevice = findDeviceById(deviceId)
+    const storedDevice = findDevice(selectedDevices.audiooutput)
+
+    if (newDevice == null) throw new Error(`Device not found: ${deviceId}`)
+
+    /* Ignore if the device is already selected and it's the same device that was stored */
+    if (storedDevice && storedDevice.label === newDevice.label && storedDevice.deviceId === newDevice.deviceId) {
+      return
+    }
+
+    await remoteVideoRef()?.setSinkId(newDevice.deviceId)
+    setSelectedDevices('audiooutput', newDevice.toJSON())
+  }
+
+  async function updateSelectedDeviceValue(kind: MediaDeviceInfo['kind'], deviceId: string) {
+    const device = devices.latest?.byId[deviceId]
+    if (!device) {
+      console.warn(`Device not found: ${deviceId}`)
+      return
+    }
+
+    setSelectedDevices(kind, device.toJSON())
   }
 
   async function setDevice(kind: MediaDeviceInfo['kind'], deviceId: string) {
@@ -316,11 +439,7 @@ export function createRtcState() {
     /* Ignore if browser does not support audio output selection */
     if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
 
-    const outputs = devices()?.audiooutput ?? []
-    const device = selectedDevices.audiooutput
-      ? (outputs.find((i) => i.deviceId === selectedDevices.audiooutput) ?? outputs[0])
-      : outputs[0]
-
+    const device = selectedDevices.audiooutput ?? devices()?.audiooutput[0]
     if (!device) throw new Error('No audio output device found')
     await remoteRef.setSinkId(device.deviceId)
   }
@@ -332,7 +451,7 @@ export function createRtcState() {
   }
 
   onMount(() => {
-    myRTC.peer.ontrack = (e) => {
+    myRTC.peer.ontrack = async (e) => {
       themStream.addTrack(e.track)
     }
 
@@ -342,44 +461,44 @@ export function createRtcState() {
         sendRtcMessage.mutate({ message: { type: 'ice-candidate', data: candidate } })
       }
     }
-  })
 
-  onCleanup(() => {
-    for (const sender of myRTC.peer.getSenders()) {
-      sender.track?.stop()
-    }
+    navigator.mediaDevices.addEventListener('devicechange', refetchDevices)
 
-    for (const track of myRTC.stream.getTracks()) {
-      track.stop()
-      myRTC.stream.removeTrack(track)
-    }
+    onCleanup(() => {
+      for (const sender of myRTC.peer.getSenders()) {
+        sender.track?.stop()
+      }
 
-    for (const track of themStream.getTracks()) {
-      track.stop()
-      themStream.removeTrack(track)
-    }
+      for (const track of myRTC.stream.getTracks()) {
+        track.stop()
+        myRTC.stream.removeTrack(track)
+      }
 
-    const myRef = myVideoRef()
-    if (myRef) {
-      myRef.pause()
-      myRef.srcObject = null
-    }
+      for (const track of themStream.getTracks()) {
+        track.stop()
+        themStream.removeTrack(track)
+      }
 
-    const themRef = remoteVideoRef()
-    if (themRef) {
-      themRef.pause()
-      themRef.srcObject = null
-    }
+      const myRef = myVideoRef()
+      if (myRef) {
+        myRef.pause()
+        myRef.srcObject = null
+      }
 
-    myRTC.peer.close()
+      const themRef = remoteVideoRef()
+      if (themRef) {
+        themRef.pause()
+        themRef.srcObject = null
+      }
+
+      myRTC.peer.close()
+      navigator.mediaDevices.removeEventListener('devicechange', refetchDevices)
+    })
   })
 
   return {
-    requestAudioPermissions,
-    requestVideoPermissions,
     myRTC,
     devices,
-    refetchDevices,
     toggleAudio,
     toggleVideo,
     setDevice,
@@ -390,5 +509,13 @@ export function createRtcState() {
     setRemoteVideoRef,
     requestNewStream,
     selectedDevices,
+    selectedAudioInputDevice,
+    selectedAudioOutputDevice,
+    selectedVideoInputDevice,
+    updateSelectedDeviceValue,
+    audioPermissions,
+    videoPermissions,
+    checkAudioPermissions,
+    checkVideoPermissions,
   }
 }

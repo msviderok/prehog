@@ -93,18 +93,10 @@
   }
 }
 
-@utility typing {
-  width: calc(min-content + 1rem);
-  position: relative;
-  &:after {
-    @apply overflow-hidden align-bottom absolute top-0 left-full w-0;
-    animation: ellipsis steps(5, end) 900ms infinite;
-    content: '\2026'; /* ascii code for the ellipsis character */
-  }
-}
-
 @keyframes ellipsis {
   to {
     width: 1rem;
   }
 }
+
+@custom-variant data-pressed (&[data-pressed]);

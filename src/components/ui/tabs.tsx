@@ -1,14 +1,9 @@
-import type { Tabs as TabsPrimitiveType } from '@msviderok/base-ui-solid/tabs'
+import { Tabs as TabsPrimitive } from '@msviderok/base-ui-solid/tabs'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { mergeProps, splitProps } from 'solid-js'
 import { cn } from '@/lib/utils'
-import { isServer } from 'solid-js/web'
 
-const TabsPrimitive = isServer
-  ? ({} as typeof import('@msviderok/base-ui-solid/tabs').Tabs)
-  : (await import('@msviderok/base-ui-solid/tabs')).Tabs
-
-function Tabs(props: TabsPrimitiveType.Root.Props) {
+function Tabs(props: TabsPrimitive.Root.Props) {
   const mergedProps = mergeProps({ orientation: 'horizontal' as const }, props)
   const [local, rest] = splitProps(mergedProps, ['class', 'orientation'])
   return (
@@ -36,7 +31,7 @@ const tabsListVariants = cva(
   },
 )
 
-function TabsList(props: TabsPrimitiveType.List.Props & VariantProps<typeof tabsListVariants>) {
+function TabsList(props: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants>) {
   const mergedProps = mergeProps({ variant: 'default' as const }, props)
   const [local, rest] = splitProps(mergedProps, ['class', 'variant'])
   return (
@@ -49,7 +44,7 @@ function TabsList(props: TabsPrimitiveType.List.Props & VariantProps<typeof tabs
   )
 }
 
-function TabsTrigger(props: TabsPrimitiveType.Tab.Props) {
+function TabsTrigger(props: TabsPrimitive.Tab.Props) {
   const [local, rest] = splitProps(props, ['class'])
   return (
     <TabsPrimitive.Tab
@@ -66,7 +61,7 @@ function TabsTrigger(props: TabsPrimitiveType.Tab.Props) {
   )
 }
 
-function TabsContent(props: TabsPrimitiveType.Panel.Props) {
+function TabsContent(props: TabsPrimitive.Panel.Props) {
   const [local, rest] = splitProps(props, ['class'])
   return (
     <TabsPrimitive.Panel

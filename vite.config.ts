@@ -8,4 +8,7 @@ export default defineConfig({
   server: { port: 3000 },
   resolve: { tsconfigPaths: true, external: ['@dnd-kit/solid'] },
   plugins: [nitro(), tailwindcss(), tanstackStart(), solidPlugin({ ssr: true })],
+  experimental: {
+    bundledDev: false,
+  },
 })
