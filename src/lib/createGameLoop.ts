@@ -18,6 +18,11 @@ export function createGameLoop(options: { autostart?: boolean; fn: (timestamp: n
   }
 
   function gameLoop(timestamp: number) {
+    if (props.autostart === false) {
+      props.fn(timestamp)
+      return
+    }
+
     if (!tickTimer) tickTimer = timestamp
 
     const delta = timestamp - tickTimer

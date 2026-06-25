@@ -1,13 +1,12 @@
+import { api } from '@/convex/api'
+import type { Doc } from '@/convex/dataModel'
 import { cn, defaultProps } from '@/lib/utils'
 import { useQuery } from 'convex-solidjs'
 import { differenceInCalendarDays, formatDate } from 'date-fns'
 import { createMemo, Match, Show, splitProps, Switch, type ComponentProps } from 'solid-js'
-import { api } from '@/convex/api'
-import type { Doc } from '@/convex/dataModel'
 import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Skeleton } from '../ui/skeleton'
-import { useCurrentUser } from '@/lib/integrations/convex-clerk'
-import { ChatMessage } from './ChatMessage'
+import { ChatMessage } from './ChatMessages'
 
 interface VariantProps {
   variant?: 'default' | 'chat'
@@ -54,18 +53,12 @@ export function UserCard(
 }
 
 function LastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'> } & VariantProps) {
-  const currentUser = useCurrentUser()
   const { data: lastMessage } = useQuery(api.chats.lastMessage, { chatId: props.chat._id })
   const { data: isTyping } = useQuery(api.chats.isTyping, { chatId: props.chat._id, userId: props.user._id })
   const { data: isOnline } = useQuery(
     api.users.isOnline,
     { userId: props.user._id },
     { enabled: props.variant === 'chat' },
-  )
-  const { data: sender } = useQuery(
-    api.users.byId,
-    () => ({ userId: lastMessage()?.userId as any }),
-    () => ({ enabled: lastMessage() != null }),
   )
 
   function Timestamp() {

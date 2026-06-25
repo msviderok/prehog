@@ -6,9 +6,6 @@ import { getOfflineRouteTree } from './components/OfflineRouteTree'
 export function getRouter() {
   const router = createTanStackRouter({
     routeTree: env.VITE_OFFLINE ? getOfflineRouteTree() : routeTree,
-    scrollRestoration: true,
-    defaultPreload: 'intent',
-    defaultPreloadStaleTime: 0,
     defaultErrorComponent(props) {
       console.trace(props.error)
       return <ErrorComponent {...props} />

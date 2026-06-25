@@ -4,6 +4,7 @@ import { createKeyPressedState } from '@/lib/state/createKeyPressedState'
 import { createMiscState } from '@/lib/state/createMiscState'
 import { createPlayerState } from '@/lib/state/createPlayerState'
 import { createSceneState } from '@/lib/state/createSceneState'
+import { createRtcState } from '@/lib/state/createRtcState'
 import { createContext, createEffect, useContext, type ParentProps } from 'solid-js'
 
 const GlobalStateContext = createContext<GlobalState.State>()
@@ -20,6 +21,7 @@ export function GlobalStateProvider(props: ParentProps) {
   const sceneState = createSceneState()
   const playerState = createPlayerState()
   const miscState = createMiscState()
+  const rtcState = createRtcState()
 
   return (
     <GlobalStateContext.Provider
@@ -29,6 +31,7 @@ export function GlobalStateProvider(props: ParentProps) {
         ...sceneState,
         ...playerState,
         ...miscState,
+        rtc: rtcState,
       }}
     >
       <GlobalStateEffects>{props.children}</GlobalStateEffects>

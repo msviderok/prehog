@@ -6,14 +6,19 @@ import { createStore } from 'solid-js/store'
 import { HAVE_AUDIO_OUTPUT_SELECTOR } from '../constants'
 import { getLSKey } from '../utils'
 
+type GroupedDevices = Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>
 type OptionalDevice = { deviceId?: string; device?: never } | { deviceId?: never; device?: MediaDeviceInfo }
 
 export type RtcState = ReturnType<typeof createRtcState>
 export function createRtcState() {
-  const themStream = new MediaStream()
+  let myStream = new MediaStream()
+  let themStream = new MediaStream()
+  let peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+  const pendingCandidates: RTCIceCandidateInit[] = []
+
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 
-  const [myVideoRef, setMyVideoRef] = createSignal<HTMLVideoElement>()
+  const [myVideoRef, setMyVideoRefInternal] = createSignal<HTMLVideoElement>()
   const [remoteVideoRef, setRemoteVideoRefInternal] = createSignal<HTMLVideoElement>()
 
   const [audioPermissions, audioAction] = createResource(async () => {
@@ -68,16 +73,8 @@ export function createRtcState() {
       {
         all: [] as MediaDeviceInfo[],
         byId: {} as Record<string, MediaDeviceInfo | undefined>,
-        allGrouped: {
-          audioinput: [],
-          audiooutput: [],
-          videoinput: [],
-        } as Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>,
-        dropdown: {
-          audioinput: [],
-          audiooutput: [],
-          videoinput: [],
-        } as Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>,
+        allGrouped: { audioinput: [], audiooutput: [], videoinput: [] } as GroupedDevices,
+        dropdown: { audioinput: [], audiooutput: [], videoinput: [] } as GroupedDevices,
       },
     )
   })
@@ -91,18 +88,16 @@ export function createRtcState() {
     { name: getLSKey('selected-media-devices') },
   )
 
-  const myRTC = {
-    ref: myVideoRef,
-    setRef: setMyVideoRef,
-    peer: new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }),
-    stream: new MediaStream(),
-    pendingCandidates: [] as RTCIceCandidateInit[],
+  function setMyVideoRef(el: HTMLVideoElement) {
+    initRtc(el)
   }
 
   /**
    * This function is supposed to find the actual device that is used. Some browser implementation
-   * of `enumerateDevices()` might return the same device twice: whether with `deviceId`
-   * set to 'default' or with the label starting with `Default - `.
+   * of `enumerateDevices()` might return the same device twice:
+   *   - with _`deviceId`_ set to _`"default"`_
+   *   - or with the label starting with _`"Default - "`_
+   *   - or both simultaneously
    */
   function getUnambiguousSelectedDevice(kind: MediaDeviceInfo['kind']) {
     if (selectedDevices[kind]) {
@@ -124,18 +119,18 @@ export function createRtcState() {
 
   function findDeviceById(deviceId: string | undefined) {
     if (!deviceId) {
-      console.log(`findDeviceById: deviceId is undefined`)
+      console.warn(`findDeviceById: deviceId is undefined`)
       return undefined
     }
 
     if (!devices.latest) {
-      console.log(`findDeviceById: enumerateDevices() was not called yet.`)
+      console.warn(`findDeviceById: enumerateDevices() was not called yet.`)
       return undefined
     }
 
     const list = devices.latest.all
     if (list.length === 0) {
-      console.log(`findDeviceById: no devices returned from enumerateDevices()`)
+      console.warn(`findDeviceById: no devices returned from enumerateDevices()`)
       return undefined
     }
 
@@ -144,21 +139,26 @@ export function createRtcState() {
 
   function findDevice(device: MediaDeviceInfo | undefined) {
     if (device == null) {
-      console.log(`findDevice: provided device is undefined`)
+      console.warn(`findDevice: provided device is undefined`)
       return undefined
     }
 
     if (!devices.latest) {
-      console.log(`findDevice: enumerateDevices() was not called yet.`)
+      console.warn(`findDevice: enumerateDevices() was not called yet.`)
       return undefined
     }
 
     if (devices.latest.all.length === 0) {
-      console.log(`findDevice: no devices returned from enumerateDevices() for ${device.kind}`)
+      console.warn(`findDevice: no devices returned from enumerateDevices() for ${device.kind}`)
       return undefined
     }
 
-    return devices.latest.all.find((d) => d.deviceId === device.deviceId || d.label === device.label)
+    if (devices.latest.byId[device.deviceId] == null) {
+      console.warn(`findDevice: device ID ${device.deviceId} not found in enumerateDevices()`)
+      return undefined
+    }
+
+    return devices.latest.allGrouped[device.kind].find((d) => d.label === device.label)
   }
 
   async function getMediaConstraints(
@@ -169,7 +169,7 @@ export function createRtcState() {
     const stored = deviceArgs.device ?? findDeviceById(deviceArgs.deviceId) ?? selectedDevices[deviceKind]
 
     if (!stored) {
-      console.log(`No stored ${deviceKind} found`)
+      console.warn(`No stored ${deviceKind} found`)
       return true
     }
 
@@ -245,7 +245,7 @@ export function createRtcState() {
   }
 
   function getTransceiver(kind: Kind) {
-    const transceiver = myRTC.peer
+    const transceiver = peerConnection
       .getTransceivers()
       .find((t) => (t.sender.track?.kind ?? t.receiver.track.kind) === kind)
     return transceiver
@@ -267,7 +267,7 @@ export function createRtcState() {
     }
 
     const newTrack = await requestNewTrack(trackKind)
-    const [oldTrack] = isAudio ? myRTC.stream.getAudioTracks() : myRTC.stream.getVideoTracks()
+    const [oldTrack] = isAudio ? myStream.getAudioTracks() : myStream.getVideoTracks()
 
     const transceiver = getTransceiver(trackKind)
     if (!transceiver) throw new Error(`No transceiver found for ${trackKind}`)
@@ -275,11 +275,11 @@ export function createRtcState() {
     await transceiver.sender.replaceTrack(newTrack)
 
     if (oldTrack) {
-      myRTC.stream.removeTrack(oldTrack)
+      myStream.removeTrack(oldTrack)
       oldTrack.stop()
     }
 
-    myRTC.stream.addTrack(newTrack)
+    myStream.addTrack(newTrack)
     setSelectedDevices(kind, newDevice.toJSON())
   }
 
@@ -375,7 +375,7 @@ export function createRtcState() {
         const track = await requestNewTrack('video')
         await transceiver.sender.replaceTrack(track)
         /* We need to add video track to our local stream so we can see our own video */
-        myRTC.stream.addTrack(track)
+        myStream.addTrack(track)
         track.enabled = true
         return
       }
@@ -388,7 +388,7 @@ export function createRtcState() {
 
       if (existingTrack) {
         existingTrack.enabled = false
-        myRTC.stream.removeTrack(existingTrack)
+        myStream.removeTrack(existingTrack)
         existingTrack.stop()
       }
     } catch (error) {
@@ -398,17 +398,17 @@ export function createRtcState() {
 
   /** @throws */
   async function createOffer() {
-    myRTC.peer.addTransceiver('audio', { direction: 'sendrecv' })
-    myRTC.peer.addTransceiver('video', { direction: 'sendrecv' })
+    peerConnection.addTransceiver('audio', { direction: 'sendrecv' })
+    peerConnection.addTransceiver('video', { direction: 'sendrecv' })
 
-    const offer = await myRTC.peer.createOffer()
-    await myRTC.peer.setLocalDescription(offer)
+    const offer = await peerConnection.createOffer()
+    await peerConnection.setLocalDescription(offer)
     return offer
   }
 
   /** @throws */
   async function createAnswer(offer: RTCSessionDescriptionInit) {
-    await myRTC.peer.setRemoteDescription(offer)
+    await peerConnection.setRemoteDescription(offer)
 
     const audioTransceiver = getTransceiver('audio')
     const videoTransceiver = getTransceiver('video')
@@ -418,20 +418,33 @@ export function createRtcState() {
     audioTransceiver.direction = 'sendrecv'
     videoTransceiver.direction = 'sendrecv'
 
-    const answer = await myRTC.peer.createAnswer()
-    await myRTC.peer.setLocalDescription(answer)
+    const answer = await peerConnection.createAnswer()
+    await peerConnection.setLocalDescription(answer)
     return answer
   }
 
   async function addPendingCandidates() {
     try {
-      for (const candidate of myRTC.pendingCandidates) {
-        await myRTC.peer.addIceCandidate(candidate)
+      for (const candidate of pendingCandidates) {
+        await peerConnection.addIceCandidate(candidate)
       }
-      myRTC.pendingCandidates.length = 0
+      pendingCandidates.length = 0
     } catch (error) {
       console.warn('Failed to add pending candidates', { error })
     }
+  }
+
+  async function queueCandidate(candidate: RTCIceCandidateInit) {
+    if (peerConnection.remoteDescription) {
+      await peerConnection.addIceCandidate(candidate)
+    } else {
+      pendingCandidates.push(candidate)
+    }
+  }
+
+  async function receiveAnswer(answer: RTCSessionDescriptionInit) {
+    await peerConnection.setRemoteDescription(answer)
+    await addPendingCandidates()
   }
 
   /** @throws */
@@ -439,76 +452,91 @@ export function createRtcState() {
     /* Ignore if browser does not support audio output selection */
     if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
 
-    const device = selectedDevices.audiooutput ?? devices()?.audiooutput[0]
+    const device = findDevice(selectedDevices.audiooutput) ?? devices()?.allGrouped.audiooutput[0]
     if (!device) throw new Error('No audio output device found')
     await remoteRef.setSinkId(device.deviceId)
   }
 
   async function setRemoteVideoRef(ref: HTMLVideoElement) {
-    ref.srcObject = themStream
     setRemoteVideoRefInternal(ref)
     attachAudioOutput(ref)
+
+    themStream = new MediaStream()
+    ref.srcObject = themStream
   }
 
-  onMount(() => {
-    myRTC.peer.ontrack = async (e) => {
+  function initRtc(el: HTMLVideoElement) {
+    peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+
+    myStream = new MediaStream()
+    el.srcObject = myStream
+
+    peerConnection.ontrack = async (e) => {
       themStream.addTrack(e.track)
     }
 
-    myRTC.peer.onicecandidate = (event) => {
+    peerConnection.onicecandidate = (event) => {
       const candidate = event.candidate?.toJSON()
       if (candidate) {
         sendRtcMessage.mutate({ message: { type: 'ice-candidate', data: candidate } })
       }
     }
 
+    setMyVideoRefInternal(el)
     navigator.mediaDevices.addEventListener('devicechange', refetchDevices)
+  }
 
-    onCleanup(() => {
-      for (const sender of myRTC.peer.getSenders()) {
-        sender.track?.stop()
-      }
+  function cleanup() {
+    if (peerConnection.connectionState === 'closed') return
 
-      for (const track of myRTC.stream.getTracks()) {
-        track.stop()
-        myRTC.stream.removeTrack(track)
-      }
+    for (const transceiver of peerConnection.getTransceivers()) {
+      transceiver.sender.track?.stop()
+      transceiver.stop()
+    }
 
-      for (const track of themStream.getTracks()) {
-        track.stop()
-        themStream.removeTrack(track)
-      }
+    for (const track of myStream.getTracks()) {
+      track.stop()
+      myStream.removeTrack(track)
+    }
 
-      const myRef = myVideoRef()
-      if (myRef) {
-        myRef.pause()
-        myRef.srcObject = null
-      }
+    for (const track of themStream.getTracks()) {
+      track.stop()
+      themStream.removeTrack(track)
+    }
 
-      const themRef = remoteVideoRef()
-      if (themRef) {
-        themRef.pause()
-        themRef.srcObject = null
-      }
+    const myRef = myVideoRef()
+    if (myRef) {
+      myRef.pause()
+      myRef.srcObject = null
+    }
 
-      myRTC.peer.close()
-      navigator.mediaDevices.removeEventListener('devicechange', refetchDevices)
-    })
-  })
+    const themRef = remoteVideoRef()
+    if (themRef) {
+      themRef.pause()
+      themRef.srcObject = null
+    }
+
+    pendingCandidates.length = 0
+    peerConnection.close()
+    navigator.mediaDevices.removeEventListener('devicechange', refetchDevices)
+    setMyVideoRefInternal(undefined)
+    setRemoteVideoRefInternal(undefined)
+  }
+
+  onCleanup(() => cleanup())
 
   return {
-    myRTC,
     devices,
     toggleAudio,
     toggleVideo,
     setDevice,
     createOffer,
     createAnswer,
+    receiveAnswer,
     addPendingCandidates,
-    remoteVideoRef,
+    queueCandidate,
+    setMyVideoRef,
     setRemoteVideoRef,
-    requestNewStream,
-    selectedDevices,
     selectedAudioInputDevice,
     selectedAudioOutputDevice,
     selectedVideoInputDevice,
@@ -517,5 +545,6 @@ export function createRtcState() {
     videoPermissions,
     checkAudioPermissions,
     checkVideoPermissions,
+    cleanup,
   }
 }

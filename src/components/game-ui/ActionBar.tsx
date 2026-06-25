@@ -58,7 +58,7 @@ export function ActionBar() {
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <TabsList variant="line">
               <TabsTrigger value="chats">Chats</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="users">Unconnected users</TabsTrigger>
             </TabsList>
 
             <TabsContent value="chats">
@@ -88,7 +88,6 @@ export function ActionBar() {
                 }
               >
                 <div class="flex flex-col w-full gap-1">
-                  <Input placeholder="Start typing users name..." />
                   <For each={unconnectedUsers.data()}>{(user) => <UnconnectedUserListItem {...user} />}</For>
                 </div>
               </Show>

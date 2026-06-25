@@ -4,7 +4,6 @@ import * as v from 'valibot'
 
 export const env = createEnv({
   server: {
-    SERVER_URL: v.optional(v.pipe(v.string(), v.url())),
     CLERK_FRONTEND_API_URL: v.pipe(v.string(), v.url()),
     CLERK_SECRET_KEY: v.optional(v.pipe(v.string(), v.minLength(1))),
     CLERK_JWT_ISSUER_DOMAIN: v.optional(v.pipe(v.string(), v.url())),

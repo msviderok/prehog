@@ -3,11 +3,12 @@ import type { IntervalsState } from './lib/state/createIntervalState'
 import type { KeyPressedState } from './lib/state/createKeyPressedState'
 import type { MiscState } from './lib/state/createMiscState'
 import type { PlayerState } from './lib/state/createPlayerState'
+import type { RtcState } from './lib/state/createRtcState'
 import type { SceneState, SceneNode as SceneStateNode } from './lib/state/createSceneState'
 
 declare global {
   namespace GlobalState {
-    type State = KeyPressedState & PlayerState & SceneState & IntervalsState & MiscState
+    type State = KeyPressedState & PlayerState & SceneState & IntervalsState & MiscState & { rtc: RtcState }
 
     type KeyPressed = KeyPressedState['keyPressed']
     type Player = PlayerState['player']
@@ -21,7 +22,7 @@ declare global {
 
   type MessageDM = Extract<Doc<'chat_messages'>, { type: 'dm' }>
   type MessageSystem = Extract<Doc<'chat_messages'>, { type: 'system' }>
-  type MessageSystemCall = Extract<Doc<'chat_messages'>, { body: { type: 'call' } }>
+  type MessageSystemCall = Extract<Doc<'chat_messages'>['body'], { type: 'call' }>
   type MessageBodySystemCallEnded = Extract<Doc<'chat_messages'>['body'], { type: 'call'; status: 'ended' }>
   type MessageBodySystemCallDeclined = Extract<Doc<'chat_messages'>['body'], { type: 'call'; status: 'declined' }>
 

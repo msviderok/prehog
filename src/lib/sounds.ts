@@ -5,7 +5,7 @@ import reject from '@/assets/sounds/reject.m4a'
 import accept from '@/assets/sounds/accept.m4a'
 import { Howl } from 'howler'
 
-const VOLUME = 0
+const VOLUME = 0.1
 
 export const SOUNDS = {
   dial: new Howl({ src: dial, loop: true, volume: VOLUME }),

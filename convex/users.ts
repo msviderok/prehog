@@ -157,6 +157,10 @@ export const setMyOnline = mutation({
       const typingMembers = members.filter((m) => m.isTyping)
       await Promise.all(typingMembers.map((m) => ctx.db.patch('chat_members', m._id, { isTyping: false })))
     }
+
+    if (args.reason === 'unload') {
+      await Users.cleanupUserActivity(ctx, user._id)
+    }
   },
 })
 

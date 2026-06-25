@@ -1,184 +1,365 @@
+import { useCallDuration } from '@/components/game-ui/rtc-panel/useCallDuration'
+import { useGlobalState } from '@/components/GlobalStateContext'
+import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
-import { createRtcState } from '@/lib/state/createRtcState'
+import { useCurrentUser } from '@/lib/integrations/convex-clerk'
+import { SOUNDS } from '@/lib/sounds'
+import { cn } from '@/lib/utils'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { createEffect, on, Show } from 'solid-js'
-import { RtcCard } from './RtcCard'
-import { RtcContext, useRtcContext } from './useRtcContext'
+import {
+  MicIcon,
+  MicOffIcon,
+  PhoneIcon,
+  PhoneIncomingIcon,
+  PhoneOffIcon,
+  VideoIcon,
+  VideoOffIcon,
+  XIcon,
+} from 'lucide-solid'
+import { createEffect, createMemo, Match, on, onCleanup, Show, Switch, type ParentProps } from 'solid-js'
+import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from '../../ui/avatar'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../ui/card'
+import { Separator } from '../../ui/separator'
+import { Toggle } from '../../ui/toggle'
+import { AudioButton } from './AudioButton'
+import { VideoButton } from './VideoButton'
+import {
+  useHandleIceCandidates,
+  useHandleMediaToggle,
+  useHandleReceiveAnswer,
+  useHandleReceiveOfferAndSendAnswer,
+  useHandleRtcCleanup,
+  useHandleSendOffer,
+  useHandleSound,
+} from './useRtcHandlers'
+
+export namespace RtcPanel {
+  export type Props = PanelTypeRTC
+}
 
 export function RtcPanel(_props: RtcPanel.Props) {
-  const rtcState = createRtcState()
   const { data: callStatus } = useQuery(api.activeCall.status, {})
   const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
   const { data: myParticipant } = useQuery(api.activeCall.findMyParticipant, {})
-  const { data: theirParticipant } = useQuery(api.activeCall.findTheirParticipant, {})
-
   return (
-    <RtcContext.Provider
-      value={{
-        rtc: rtcState,
-        get callStatus() {
-          return callStatus()!
-        },
-        get theirUser() {
-          return theirUser()!
-        },
-        get myParticipant() {
-          return myParticipant()!
-        },
-        get theirParticipant() {
-          return theirParticipant()
-        },
-      }}
-    >
-      <Show when={callStatus() && theirUser() && myParticipant()}>
-        <RtcCard />
-      </Show>
-      <RtcEffectsListener />
-    </RtcContext.Provider>
+    <Show when={callStatus() && theirUser() && myParticipant()}>
+      <RtcPanelContent />
+    </Show>
   )
 }
 
-function RtcEffectsListener() {
+function RtcPanelContent() {
+  const duration = useCallDuration()
+  const { data: callStatus } = useQuery(api.activeCall.status, {})
+  const { data: myParticipant } = useQuery(api.activeCall.findMyParticipant, {})
+  const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
+
+  useHandleSound()
   useHandleMediaToggle()
+  useHandleRtcCleanup()
+
   useHandleSendOffer()
   useHandleReceiveOfferAndSendAnswer()
   useHandleReceiveAnswer()
   useHandleIceCandidates()
-  return null
-}
 
-function useHandleMediaToggle() {
-  const { rtc } = useRtcContext()
-  const { data: audio } = useQuery(api.activeCall.myAudio, {}, { initialData: false, keepPreviousData: true })
-  const { data: video } = useQuery(api.activeCall.myVideo, {}, { initialData: false, keepPreviousData: true })
-  const { data: isCallEstablished } = useQuery(
-    api.activeCall.isCallEstablished,
-    {},
-    { initialData: false, keepPreviousData: true },
-  )
+  return (
+    <Card variant="rtc-panel">
+      <CardHeader>
+        <AvatarBadgeOnline isOnline inline />
+        <Show when={theirUser()}>{(u) => <CardTitle>{u().fullname}</CardTitle>}</Show>
+        <Show when={callStatus() === 'in-progress'}>
+          <Separator orientation="vertical" />
+          <span class="text-muted font-light tracking-widest">{duration()}</span>
+        </Show>
+      </CardHeader>
 
-  /* Mute/unmute audio */
-  createEffect(
-    on([() => audio()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
-      if (callEstablished === false) return
-      rtc.toggleAudio(enabled)
-    }),
-  )
-
-  /* Start/stop video */
-  createEffect(
-    on([() => video()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
-      if (callEstablished === false) return
-      rtc.toggleVideo(enabled)
-    }),
-  )
-}
-
-function useHandleSendOffer() {
-  const { rtc } = useRtcContext()
-  const canSendOffer = useQuery(api.activeCall.canSendOfferRtcMessage, {})
-  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
-
-  createEffect(
-    on(
-      () => canSendOffer.data() ?? false,
-      async (sendOfferAllowed) => {
-        if (sendOfferAllowed === false) return
-        const offer = await rtc.createOffer()
-        sendRtcMessage.mutate({ message: { type: 'offer', data: offer } })
-      },
-    ),
-  )
-}
-
-function useHandleReceiveOfferAndSendAnswer() {
-  const { rtc } = useRtcContext()
-  const canSendAnswer = useQuery(api.activeCall.canSendAnswerRtcMessage, {})
-  const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
-  const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
-
-  /* Receive offer, claim it and then create and send the answer */
-  createEffect(
-    on(
-      () => canSendAnswer.data() ?? false,
-      async (offer) => {
-        if (!offer) return
-        const answer = await rtc.createAnswer(offer.data)
-        await claimRtcMessage.mutate({ ids: offer._id })
-        await sendRtcMessage.mutate({ message: { type: 'answer', data: answer } })
-      },
-    ),
-  )
-}
-
-function useHandleReceiveAnswer() {
-  const { rtc } = useRtcContext()
-  const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
-  const canClaimAnswer = useQuery(api.activeCall.canClaimAnswer, {})
-
-  /* Receive answer and claim it */
-  createEffect(
-    on(
-      () => canClaimAnswer.data() ?? false,
-      async (answer) => {
-        if (!answer) return
-
-        await rtc.myRTC.peer.setRemoteDescription(answer.data)
-        await rtc.addPendingCandidates()
-        await claimRtcMessage.mutate({ ids: answer._id })
-      },
-    ),
-  )
-}
-
-function useHandleIceCandidates() {
-  const { rtc } = useRtcContext()
-  const isCallEstablished = useQuery(api.activeCall.isCallEstablished, {})
-  const iceCandidateRtcMessages = useQuery(api.activeCall.iceCandidateRtcMessages, {})
-  const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
-
-  /* Process all the incoming ice-candidates */
-  const processedEntries = new Set<Id<'call_rtc_messages'>>()
-  createEffect(
-    on(iceCandidateRtcMessages.data, async (candidates) => {
-      if (!candidates) return
-
-      const processedIds = []
-      for (const candidate of candidates) {
-        /* Ignore the candidate if we've already processed it, otherwise add it to the set. */
-        if (processedEntries.has(candidate._id)) continue
-        processedEntries.add(candidate._id)
-
-        if (candidate.type === 'ice-candidate') {
-          if (rtc.myRTC.peer.remoteDescription) {
-            await rtc.myRTC.peer.addIceCandidate(candidate.data)
-          } else {
-            rtc.myRTC.pendingCandidates.push(candidate.data)
+      <CardContent>
+        <Show
+          when={callStatus() === 'in-progress'}
+          fallback={
+            <NoVideoView
+              type="them-view"
+              callType={
+                callStatus() === 'preparing' ? undefined : myParticipant()?.role === 'host' ? 'outgoing' : 'incoming'
+              }
+            />
           }
+        >
+          <VideoView type="them-view" />
 
-          processedIds.push(candidate._id)
-          continue
-        }
-      }
+          <div class="absolute bottom-3 right-3 w-30">
+            <VideoView type="my-view" />
+          </div>
+        </Show>
+      </CardContent>
 
-      if (processedIds.length) {
-        await claimRtcMessage.mutate({ ids: processedIds })
-      }
-    }),
-  )
+      <CardFooter>
+        <ButtonGroup>
+          <Switch>
+            <Match when={myParticipant()?.role === 'host' && callStatus() === 'preparing'}>
+              <Actions.StartAudioCall />
+              <Actions.StartVideoCall />
+              <Actions.CancelCall />
+            </Match>
 
-  /* Once the call is established we can process pending ICE candidates if there are any */
-  createEffect(
-    on(
-      () => isCallEstablished.data() ?? false,
-      (callEstablished) => {
-        if (callEstablished) rtc.addPendingCandidates()
-      },
-    ),
+            <Match when={myParticipant()?.role === 'host' && callStatus() === 'awaiting-response'}>
+              <Actions.AudioToggle />
+              <Actions.VideoToggle />
+              <Actions.EndCall />
+            </Match>
+
+            <Match when={myParticipant()?.role === 'participant' && callStatus() === 'awaiting-response'}>
+              <Actions.AcceptCall />
+              <Actions.DeclineCall />
+            </Match>
+
+            <Match when={callStatus() === 'in-progress'}>
+              <Actions.AudioToggle />
+              <Actions.VideoToggle />
+              <Actions.EndCall />
+            </Match>
+          </Switch>
+        </ButtonGroup>
+      </CardFooter>
+    </Card>
   )
 }
 
-export namespace RtcPanel {
-  export type Props = PanelTypeRTC
+function VideoView(props: { type: 'my-view' | 'them-view' }) {
+  const { rtc } = useGlobalState()
+
+  const isMyView = props.type === 'my-view'
+  const { data: myAudio } = useQuery(api.activeCall.myAudio, {}, { keepPreviousData: true, enabled: isMyView })
+  const { data: myVideo } = useQuery(api.activeCall.myVideo, {}, { keepPreviousData: true, enabled: isMyView })
+  const { data: theirAudio } = useQuery(api.activeCall.theirAudio, {}, { keepPreviousData: true, enabled: !isMyView })
+  const { data: theirVideo } = useQuery(api.activeCall.theirVideo, {}, { keepPreviousData: true, enabled: !isMyView })
+
+  const audio = createMemo(() => (props.type === 'my-view' ? (myAudio() ?? false) : (theirAudio() ?? false)))
+  const video = createMemo(() => (props.type === 'my-view' ? (myVideo() ?? false) : (theirVideo() ?? false)))
+
+  return (
+    <div class="relative size-full aspect-video">
+      <video
+        autoplay
+        playsinline
+        class="border size-full object-cover"
+        muted={props.type === 'my-view'}
+        ref={props.type === 'my-view' ? rtc.setMyVideoRef : rtc.setRemoteVideoRef}
+      />
+
+      <NoVideoView
+        type={props.type}
+        class={cn('opacity-0 absolute top-0 left-0', video() === false && 'opacity-100')}
+      />
+
+      <Button
+        variant="outline"
+        size="icon-xs"
+        class={cn(
+          'absolute bottom-1 right-1 v-destructive pointer-events-none opacity-0',
+          audio() === false && 'opacity-100',
+        )}
+      >
+        <MicOffIcon class="size-4" />
+      </Button>
+    </div>
+  )
+}
+
+function NoVideoView(
+  props: ParentProps<{
+    type: 'my-view' | 'them-view'
+    callType?: 'incoming' | 'outgoing'
+    class?: string
+  }>,
+) {
+  const currentUser = useCurrentUser()
+  const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
+  const user = createMemo(() => (props.type === 'my-view' ? currentUser() : theirUser()))
+
+  return (
+    <div
+      class={cn(
+        '@container bg-card border-white border size-full flex items-center justify-center flex-col gap-2',
+        props.class,
+      )}
+    >
+      <Show when={user()}>
+        {(u) => (
+          <Avatar
+            variant="on-call"
+            user={u()}
+            class={cn(
+              props.callType != null && 'animate-bounce repeat-infinite',
+              props.type === 'my-view' && 'size-[clamp(1.5rem,20cqi,3rem)]!',
+            )}
+          >
+            <AvatarImage />
+            <AvatarFallback />
+          </Avatar>
+        )}
+      </Show>
+
+      <span
+        class={cn(
+          'flex items-center justify-center gap-1 tracking-wide',
+          props.type === 'my-view' && 'font-light text-[clamp(0.625rem,8cqi,4rem)]',
+        )}
+      >
+        <Show when={props.callType === 'outgoing'}>
+          <span>Calling</span>
+        </Show>
+
+        <Show when={user()}>{(u) => <span>{u().fullname}</span>}</Show>
+
+        <Show when={props.callType === 'incoming'}>
+          <span>is calling</span>
+        </Show>
+      </span>
+    </div>
+  )
+}
+
+const Actions = {
+  StartAudioCall() {
+    const { rtc } = useGlobalState()
+    const startCall = useMutation(api.activeCall.start)
+    return (
+      <AudioButton label="Start Call" class="v-tertiary">
+        <Button
+          variant="outline"
+          animate="scale-icon"
+          disabled={rtc.audioPermissions() === 'denied'}
+          onClick={async () => {
+            await rtc.checkAudioPermissions()
+            await startCall.mutate({ audio: true, video: false })
+            SOUNDS.dial.play()
+          }}
+        >
+          <PhoneIcon />
+        </Button>
+      </AudioButton>
+    )
+  },
+  StartVideoCall() {
+    const { rtc } = useGlobalState()
+    const startCall = useMutation(api.activeCall.start)
+    return (
+      <VideoButton label="Start Video" class="v-tertiary">
+        <Button
+          variant="outline"
+          animate="scale-icon"
+          disabled={rtc.videoPermissions() === 'denied'}
+          onClick={async () => {
+            await rtc.checkVideoPermissions()
+            await startCall.mutate({ audio: true, video: true })
+            SOUNDS.dial.play()
+          }}
+        >
+          <VideoIcon />
+        </Button>
+      </VideoButton>
+    )
+  },
+  AudioToggle() {
+    const { data: myAudio } = useQuery(api.activeCall.myAudio, {})
+    const toggleAudio = useMutation(api.activeCall.toggleAudio)
+    return (
+      <AudioButton label={myAudio() ? 'Mute' : 'Unmute'} class="v-tertiary">
+        <Toggle
+          variant="outline"
+          pressed={myAudio() ?? false}
+          onPressedChange={(pressed) => toggleAudio.mutate({ audio: pressed })}
+        >
+          {myAudio() ? <MicIcon /> : <MicOffIcon />}
+        </Toggle>
+      </AudioButton>
+    )
+  },
+  VideoToggle() {
+    const { data: myVideo } = useQuery(api.activeCall.myVideo, {})
+    const toggleVideo = useMutation(api.activeCall.toggleVideo)
+    return (
+      <VideoButton label={myVideo() ? 'Stop Video' : 'Start Video'} class="v-tertiary">
+        <Toggle
+          variant="outline"
+          pressed={myVideo() ?? false}
+          onPressedChange={(pressed) => toggleVideo.mutate({ video: pressed })}
+        >
+          {myVideo() ? <VideoIcon /> : <VideoOffIcon />}
+        </Toggle>
+      </VideoButton>
+    )
+  },
+  AcceptCall() {
+    const acceptCall = useMutation(api.activeCall.accept)
+    return (
+      <AudioButton label="Accept">
+        <Button
+          variant="outline"
+          class="v-secondary"
+          onClick={async () => {
+            await acceptCall.mutate({})
+            SOUNDS.accept.play()
+          }}
+        >
+          <PhoneIncomingIcon />
+        </Button>
+      </AudioButton>
+    )
+  },
+  DeclineCall() {
+    const rejectCall = useMutation(api.activeCall.reject)
+    return (
+      <ButtonGroupWrapper>
+        <Button
+          variant="outline"
+          class="v-destructive"
+          onClick={async () => {
+            await rejectCall.mutate({})
+            SOUNDS.reject.play()
+          }}
+        >
+          <PhoneOffIcon />
+        </Button>
+        <ButtonGroupText>Decline</ButtonGroupText>
+      </ButtonGroupWrapper>
+    )
+  },
+  EndCall() {
+    const endCall = useMutation(api.activeCall.end)
+    return (
+      <ButtonGroupWrapper>
+        <ButtonGroup>
+          <Button
+            variant="outline"
+            class="v-destructive"
+            onClick={async () => {
+              await endCall.mutate({})
+              SOUNDS.end.play()
+            }}
+          >
+            <PhoneIcon />
+          </Button>
+        </ButtonGroup>
+        <ButtonGroupText>End call</ButtonGroupText>
+      </ButtonGroupWrapper>
+    )
+  },
+  CancelCall() {
+    const cancelCall = useMutation(api.activeCall.cancel)
+    return (
+      <ButtonGroupWrapper>
+        <ButtonGroup>
+          <Button variant="outline" animate="scale-icon" class="v-muted" onClick={() => cancelCall.mutate({})}>
+            <XIcon />
+          </Button>
+        </ButtonGroup>
+        <ButtonGroupText>Cancel</ButtonGroupText>
+      </ButtonGroupWrapper>
+    )
+  },
 }

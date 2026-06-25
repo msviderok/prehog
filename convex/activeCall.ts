@@ -1,6 +1,6 @@
-import { v, Validator } from 'convex/values'
-import { formatDurationFull } from '../src/lib/duration'
-import { Doc } from './_generated/dataModel'
+import { v, type Validator } from 'convex/values'
+import { formatDurationFull } from '../src/lib/date'
+import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import * as Calls from './model/calls'
 import * as Chats from './model/chats'
@@ -99,13 +99,13 @@ export const end = mutation({
     await FloatingPanels.deletePanelsForCall(ctx, call._id)
 
     // insert a system message into the chat to have a record about the call
-    const chatter = myParticipant.role === 'host' ? call.toUserId : call.fromUserId
-    const chat = await Chats.getDirectChatWithUser(ctx, chatter)
+    const theirUserId = myParticipant.role === 'host' ? call.toUserId : call.fromUserId
+    const chat = await Chats.getDirectChatWithUser(ctx, theirUserId)
     if (!chat) throw new Error('No chat found')
     await ctx.db.insert('chat_messages', {
       type: 'system',
       chatId: chat._id,
-      body: { type: 'call', status: 'ended', duration: formatDurationFull(call.startedAt!, Date.now()) },
+      body: { type: 'call', status: 'ended', duration: formatDurationFull(call.startedAt ?? Date.now(), Date.now()) },
       userId: call.fromUserId,
     })
 
@@ -197,7 +197,10 @@ export const claimRtcMessage = mutation({
   handler: async (ctx, args) => {
     const ids = Array.isArray(args.ids) ? args.ids : [args.ids]
     for (const id of ids) {
-      await ctx.db.patch('call_rtc_messages', id, { claimed: true })
+      const message = await ctx.db.get(id)
+      if (message && message.claimed === false) {
+        await ctx.db.patch('call_rtc_messages', id, { claimed: true })
+      }
     }
   },
 })
@@ -302,8 +305,8 @@ export const iceCandidateRtcMessages = query({
     if (!call) return null
     const candidates = await ctx.db
       .query('call_rtc_messages')
-      .withIndex('by_toUser_call_type', (q) =>
-        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'ice-candidate'),
+      .withIndex('by_toUser_call_type_claimed', (q) =>
+        q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'ice-candidate').eq('claimed', false),
       )
       .collect()
     return candidates as CallRtcMessageIceCandidate[]

@@ -41,9 +41,14 @@ export async function cleanupUserActivity(ctx: MutationCtx, userId: Id<'users'>)
     .query('call_participants')
     .withIndex('by_user', (q) => q.eq('userId', userId))
     .collect()
-  await Promise.all(callParticipants.map((p) => ctx.db.delete('call_participants', p._id)))
 
   for (const { callId } of callParticipants) {
+    const allParticipants = await ctx.db
+      .query('call_participants')
+      .withIndex('by_call', (q) => q.eq('callId', callId))
+      .collect()
+    await Promise.all(allParticipants.map((p) => ctx.db.delete('call_participants', p._id)))
+
     const callRtcMessages = await ctx.db
       .query('call_rtc_messages')
       .withIndex('by_call', (q) => q.eq('callId', callId))

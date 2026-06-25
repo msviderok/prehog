@@ -1,3 +1,4 @@
+import { useGlobalState } from '@/components/GlobalStateContext'
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import {
   DropdownMenu,
@@ -8,12 +9,14 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { api } from '@/convex/api'
+import { useQuery } from 'convex-solidjs'
 import { ChevronUpIcon, LoaderCircleIcon } from 'lucide-solid'
 import { For, type ParentProps } from 'solid-js'
-import { useRtcContext } from './useRtcContext'
 
 export function VideoButton(props: ParentProps<{ label: string; class?: string }>) {
-  const ctx = useRtcContext()
+  const { rtc } = useGlobalState()
+  const { data: callStatus } = useQuery(api.activeCall.status, {})
 
   return (
     <ButtonGroupWrapper class={props.class}>
@@ -24,28 +27,30 @@ export function VideoButton(props: ParentProps<{ label: string; class?: string }
             size="icon"
             animate="scale-icon"
             class="h-10"
-            disabled={ctx.rtc.videoPermissions() === 'denied'}
+            disabled={rtc.videoPermissions() === 'denied'}
             onClick={async () => {
-              await ctx.rtc.checkVideoPermissions()
+              await rtc.checkVideoPermissions()
             }}
           >
-            {ctx.rtc.devices.loading ? <LoaderCircleIcon class="animate-spin" /> : <ChevronUpIcon />}
+            {rtc.devices.loading ? <LoaderCircleIcon class="animate-spin" /> : <ChevronUpIcon />}
           </DropdownMenuTrigger>
 
           <DropdownMenuContent class="w-max" side="top" align="start">
             <DropdownMenuGroup>
               <DropdownMenuLabel>Video Device</DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={ctx.rtc.selectedVideoInputDevice().deviceId}
+                value={rtc.selectedVideoInputDevice().deviceId}
                 onValueChange={async (value) => {
-                  if (ctx.callStatus === 'in-progress') {
-                    await ctx.rtc.setDevice('videoinput', value)
+                  if (callStatus() == null) return
+
+                  if (callStatus() === 'in-progress') {
+                    await rtc.setDevice('videoinput', value)
                   } else {
-                    await ctx.rtc.updateSelectedDeviceValue('videoinput', value)
+                    await rtc.updateSelectedDeviceValue('videoinput', value)
                   }
                 }}
               >
-                <For each={ctx.rtc.devices.latest?.dropdown.videoinput ?? []}>
+                <For each={rtc.devices.latest?.dropdown.videoinput ?? []}>
                   {(device) => <DropdownMenuRadioItem value={device.deviceId}>{device.label}</DropdownMenuRadioItem>}
                 </For>
               </DropdownMenuRadioGroup>

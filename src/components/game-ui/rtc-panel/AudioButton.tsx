@@ -1,3 +1,4 @@
+import { useGlobalState } from '@/components/GlobalStateContext'
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import {
   DropdownMenu,
@@ -9,13 +10,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { api } from '@/convex/api'
 import { HAVE_AUDIO_OUTPUT_SELECTOR } from '@/lib/constants'
+import { useQuery } from 'convex-solidjs'
 import { ChevronUpIcon, LoaderCircleIcon } from 'lucide-solid'
 import { For, Show, type ParentProps } from 'solid-js'
-import { useRtcContext } from './useRtcContext'
 
 export function AudioButton(props: ParentProps<{ label: string; class?: string; disabled?: boolean }>) {
-  const ctx = useRtcContext()
+  const { rtc } = useGlobalState()
+  const { data: callStatus } = useQuery(api.activeCall.status, {})
 
   return (
     <ButtonGroupWrapper class={props.class}>
@@ -26,28 +29,30 @@ export function AudioButton(props: ParentProps<{ label: string; class?: string; 
             variant="outline"
             animate="scale-icon"
             class="h-10 aria-expanded:[&_svg]:rotate-z-180"
-            disabled={ctx.rtc.audioPermissions() === 'denied'}
+            disabled={rtc.audioPermissions() === 'denied'}
             onClick={async () => {
-              await ctx.rtc.checkAudioPermissions()
+              await rtc.checkAudioPermissions()
             }}
           >
-            {ctx.rtc.devices.loading ? <LoaderCircleIcon class="animate-spin" /> : <ChevronUpIcon />}
+            {rtc.devices.loading ? <LoaderCircleIcon class="animate-spin" /> : <ChevronUpIcon />}
           </DropdownMenuTrigger>
 
           <DropdownMenuContent class="w-max" side="top" align="start">
             <DropdownMenuGroup>
               <DropdownMenuLabel>Input Device</DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={ctx.rtc.selectedAudioInputDevice().deviceId}
+                value={rtc.selectedAudioInputDevice().deviceId}
                 onValueChange={async (value) => {
-                  if (ctx.callStatus === 'in-progress') {
-                    await ctx.rtc.setDevice('audioinput', value)
+                  if (callStatus() == null) return
+
+                  if (callStatus() === 'in-progress') {
+                    await rtc.setDevice('audioinput', value)
                   } else {
-                    await ctx.rtc.updateSelectedDeviceValue('audioinput', value)
+                    await rtc.updateSelectedDeviceValue('audioinput', value)
                   }
                 }}
               >
-                <For each={ctx.rtc.devices.latest?.dropdown?.audioinput}>
+                <For each={rtc.devices.latest?.dropdown?.audioinput}>
                   {(device) => <DropdownMenuRadioItem value={device.deviceId}>{device.label}</DropdownMenuRadioItem>}
                 </For>
               </DropdownMenuRadioGroup>
@@ -59,16 +64,18 @@ export function AudioButton(props: ParentProps<{ label: string; class?: string; 
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Output Device</DropdownMenuLabel>
                   <DropdownMenuRadioGroup
-                    value={ctx.rtc.selectedAudioOutputDevice().deviceId}
+                    value={rtc.selectedAudioOutputDevice().deviceId}
                     onValueChange={async (value) => {
-                      if (ctx.callStatus === 'in-progress') {
-                        await ctx.rtc.setDevice('audiooutput', value)
+                      if (callStatus() == null) return
+
+                      if (callStatus() === 'in-progress') {
+                        await rtc.setDevice('audiooutput', value)
                       } else {
-                        await ctx.rtc.updateSelectedDeviceValue('audiooutput', value)
+                        await rtc.updateSelectedDeviceValue('audiooutput', value)
                       }
                     }}
                   >
-                    <For each={ctx.rtc.devices.latest?.dropdown.audiooutput}>
+                    <For each={rtc.devices.latest?.dropdown.audiooutput}>
                       {(device) => (
                         <DropdownMenuRadioItem value={device.deviceId}>{device.label}</DropdownMenuRadioItem>
                       )}
