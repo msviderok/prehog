@@ -15,7 +15,6 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       tsconfigPaths: true,
-      external: ['@dnd-kit/solid'],
     },
     plugins: [
       nitro(),
