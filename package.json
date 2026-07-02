@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
-    "start": "node .output/server/index.mjs",
+    "start": "node --env-file=.env.local .output/server/index.mjs",
     "lint": "oxlint",
     "format": "oxfmt && oxlint --fix",
     "check": "oxfmt --check",
@@ -13,7 +13,7 @@
     "catalog": "pnx codemod pnpm/catalog"
   },
   "dependencies": {
-    "@chenglou/pretext": "^0.0.8",
+    "@chenglou/pretext": "catalog:",
     "@clerk/ui": "catalog:",
     "@dnd-kit/abstract": "catalog:",
     "@dnd-kit/dom": "catalog:",
@@ -44,7 +44,8 @@
     "tailwindcss": "catalog:",
     "tslib": "catalog:",
     "tw-animate-css": "catalog:",
-    "valibot": "catalog:"
+    "valibot": "catalog:",
+    "vercel": "catalog:"
   },
   "devDependencies": {
     "@clerk/backend": "catalog:",

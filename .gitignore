@@ -15,3 +15,4 @@ __unconfig*
 *.key
 *.crt
 .cert/
+.vercel
