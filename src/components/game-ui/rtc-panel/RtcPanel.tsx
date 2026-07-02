@@ -2,7 +2,6 @@ import { useCallDuration } from '@/components/game-ui/rtc-panel/useCallDuration'
 import { useGlobalState } from '@/components/GlobalStateContext'
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import { api } from '@/convex/api'
-import type { Id } from '@/convex/dataModel'
 import { useCurrentUser } from '@/lib/integrations/convex-clerk'
 import { SOUNDS } from '@/lib/sounds'
 import { cn } from '@/lib/utils'
@@ -17,14 +16,23 @@ import {
   VideoOffIcon,
   XIcon,
 } from 'lucide-solid'
-import { createEffect, createMemo, Match, on, onCleanup, Show, Switch, type ParentProps } from 'solid-js'
+import {
+  createMemo,
+  Match,
+  onCleanup,
+  onMount,
+  Show,
+  splitProps,
+  Switch,
+  type ComponentProps,
+  type ParentProps,
+} from 'solid-js'
 import { Avatar, AvatarBadgeOnline, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import { Button } from '../../ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../ui/card'
 import { Separator } from '../../ui/separator'
 import { Toggle } from '../../ui/toggle'
 import { AudioButton } from './AudioButton'
-import { VideoButton } from './VideoButton'
 import {
   useHandleIceCandidates,
   useHandleMediaToggle,
@@ -34,6 +42,7 @@ import {
   useHandleSendOffer,
   useHandleSound,
 } from './useRtcHandlers'
+import { VideoButton } from './VideoButton'
 
 export namespace RtcPanel {
   export type Props = PanelTypeRTC
@@ -42,18 +51,21 @@ export namespace RtcPanel {
 export function RtcPanel(_props: RtcPanel.Props) {
   const { data: callStatus } = useQuery(api.activeCall.status, {})
   const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
-  const { data: myParticipant } = useQuery(api.activeCall.findMyParticipant, {})
+  const { data: myRole } = useQuery(api.activeCall.myRole, {})
   return (
-    <Show when={callStatus() && theirUser() && myParticipant()}>
+    <Show when={callStatus() && theirUser() && myRole()}>
       <RtcPanelContent />
     </Show>
   )
 }
 
 function RtcPanelContent() {
+  let myRef!: HTMLVideoElement
+  let remoteRef!: HTMLVideoElement
   const duration = useCallDuration()
+  const { rtc } = useGlobalState()
   const { data: callStatus } = useQuery(api.activeCall.status, {})
-  const { data: myParticipant } = useQuery(api.activeCall.findMyParticipant, {})
+  const { data: myRole } = useQuery(api.activeCall.myRole, {})
   const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
 
   useHandleSound()
@@ -64,6 +76,9 @@ function RtcPanelContent() {
   useHandleReceiveOfferAndSendAnswer()
   useHandleReceiveAnswer()
   useHandleIceCandidates()
+
+  onMount(() => rtc.initRtc(myRef, remoteRef))
+  onCleanup(() => rtc.cleanup())
 
   return (
     <Card variant="rtc-panel">
@@ -77,41 +92,29 @@ function RtcPanelContent() {
       </CardHeader>
 
       <CardContent>
-        <Show
-          when={callStatus() === 'in-progress'}
-          fallback={
-            <NoVideoView
-              type="them-view"
-              callType={
-                callStatus() === 'preparing' ? undefined : myParticipant()?.role === 'host' ? 'outgoing' : 'incoming'
-              }
-            />
-          }
-        >
-          <VideoView type="them-view" />
+        <VideoView ref={remoteRef} type="them-view" />
 
-          <div class="absolute bottom-3 right-3 w-30">
-            <VideoView type="my-view" />
-          </div>
-        </Show>
+        <div class="absolute bottom-3 right-3 w-30">
+          <VideoView ref={myRef} type="my-view" />
+        </div>
       </CardContent>
 
       <CardFooter>
         <ButtonGroup>
           <Switch>
-            <Match when={myParticipant()?.role === 'host' && callStatus() === 'preparing'}>
+            <Match when={myRole() === 'host' && callStatus() === 'preparing'}>
               <Actions.StartAudioCall />
-              <Actions.StartVideoCall />
+              {/*<Actions.StartVideoCall />*/}
               <Actions.CancelCall />
             </Match>
 
-            <Match when={myParticipant()?.role === 'host' && callStatus() === 'awaiting-response'}>
+            <Match when={myRole() === 'host' && callStatus() === 'awaiting-response'}>
               <Actions.AudioToggle />
               <Actions.VideoToggle />
               <Actions.EndCall />
             </Match>
 
-            <Match when={myParticipant()?.role === 'participant' && callStatus() === 'awaiting-response'}>
+            <Match when={myRole() === 'participant' && callStatus() === 'awaiting-response'}>
               <Actions.AcceptCall />
               <Actions.DeclineCall />
             </Match>
@@ -128,40 +131,43 @@ function RtcPanelContent() {
   )
 }
 
-function VideoView(props: { type: 'my-view' | 'them-view' }) {
-  const { rtc } = useGlobalState()
-
+function VideoView(props: { type: 'my-view' | 'them-view'; ref: HTMLVideoElement }) {
   const isMyView = props.type === 'my-view'
+
+  const { data: isCallEstablished } = useQuery(api.activeCall.isCallEstablished, {})
   const { data: myAudio } = useQuery(api.activeCall.myAudio, {}, { keepPreviousData: true, enabled: isMyView })
   const { data: myVideo } = useQuery(api.activeCall.myVideo, {}, { keepPreviousData: true, enabled: isMyView })
   const { data: theirAudio } = useQuery(api.activeCall.theirAudio, {}, { keepPreviousData: true, enabled: !isMyView })
   const { data: theirVideo } = useQuery(api.activeCall.theirVideo, {}, { keepPreviousData: true, enabled: !isMyView })
 
-  const audio = createMemo(() => (props.type === 'my-view' ? (myAudio() ?? false) : (theirAudio() ?? false)))
-  const video = createMemo(() => (props.type === 'my-view' ? (myVideo() ?? false) : (theirVideo() ?? false)))
+  const audio = createMemo(() => (props.type === 'my-view' ? myAudio() : theirAudio()))
+  const video = createMemo(() => (props.type === 'my-view' ? myVideo() : theirVideo()))
 
   return (
-    <div class="relative size-full aspect-video">
+    <div
+      class="group/video relative size-full aspect-video"
+      data-whos={props.type}
+      data-audio={typeof audio() === 'boolean' ? audio() : 'none'}
+      data-video={typeof video() === 'boolean' ? video() : 'none'}
+      data-call-established={isCallEstablished()}
+    >
       <video
         autoplay
         playsinline
-        class="border size-full object-cover"
         muted={props.type === 'my-view'}
-        ref={props.type === 'my-view' ? rtc.setMyVideoRef : rtc.setRemoteVideoRef}
+        ref={props.ref}
+        class="border size-full object-cover"
       />
 
       <NoVideoView
         type={props.type}
-        class={cn('opacity-0 absolute top-0 left-0', video() === false && 'opacity-100')}
+        class="absolute top-0 left-0 opacity-100 group-data-[video=true]/video:opacity-0"
       />
 
       <Button
         variant="outline"
         size="icon-xs"
-        class={cn(
-          'absolute bottom-1 right-1 v-destructive pointer-events-none opacity-0',
-          audio() === false && 'opacity-100',
-        )}
+        class="absolute bottom-1 right-1 v-destructive pointer-events-none group-data-[audio=true]/video:opacity-0 group-data-[audio=false]/video:opacity-100 group-data-[audio=none]/video:hidden group-data-[whos=them-view]/video:top-2 group-data-[whos=them-view]/video:left-2 group-data-[call-established=false]/video:opacity-0"
       >
         <MicOffIcon class="size-4" />
       </Button>
@@ -169,14 +175,11 @@ function VideoView(props: { type: 'my-view' | 'them-view' }) {
   )
 }
 
-function NoVideoView(
-  props: ParentProps<{
-    type: 'my-view' | 'them-view'
-    callType?: 'incoming' | 'outgoing'
-    class?: string
-  }>,
-) {
+function NoVideoView(props: ComponentProps<'div'> & ParentProps<{ type: 'my-view' | 'them-view' }>) {
+  const [local, rest] = splitProps(props, ['type', 'class'])
   const currentUser = useCurrentUser()
+  const { data: callStatus } = useQuery(api.activeCall.status, {})
+  const { data: myRole } = useQuery(api.activeCall.myRole, {})
   const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
   const user = createMemo(() => (props.type === 'my-view' ? currentUser() : theirUser()))
 
@@ -184,8 +187,9 @@ function NoVideoView(
     <div
       class={cn(
         '@container bg-card border-white border size-full flex items-center justify-center flex-col gap-2',
-        props.class,
+        local.class,
       )}
+      {...rest}
     >
       <Show when={user()}>
         {(u) => (
@@ -193,8 +197,8 @@ function NoVideoView(
             variant="on-call"
             user={u()}
             class={cn(
-              props.callType != null && 'animate-bounce repeat-infinite',
-              props.type === 'my-view' && 'size-[clamp(1.5rem,20cqi,3rem)]!',
+              callStatus() === 'awaiting-response' && 'animate-bounce repeat-infinite',
+              local.type === 'my-view' && 'size-[clamp(1.5rem,20cqi,3rem)]!',
             )}
           >
             <AvatarImage />
@@ -206,16 +210,16 @@ function NoVideoView(
       <span
         class={cn(
           'flex items-center justify-center gap-1 tracking-wide',
-          props.type === 'my-view' && 'font-light text-[clamp(0.625rem,8cqi,4rem)]',
+          local.type === 'my-view' && 'font-light text-[clamp(0.625rem,8cqi,4rem)]',
         )}
       >
-        <Show when={props.callType === 'outgoing'}>
+        <Show when={callStatus() === 'awaiting-response' && myRole() === 'host' && props.type !== 'my-view'}>
           <span>Calling</span>
         </Show>
 
         <Show when={user()}>{(u) => <span>{u().fullname}</span>}</Show>
 
-        <Show when={props.callType === 'incoming'}>
+        <Show when={callStatus() === 'awaiting-response' && myRole() === 'participant'}>
           <span>is calling</span>
         </Show>
       </span>
@@ -235,7 +239,7 @@ const Actions = {
           disabled={rtc.audioPermissions() === 'denied'}
           onClick={async () => {
             await rtc.checkAudioPermissions()
-            await startCall.mutate({ audio: true, video: false })
+            await startCall.mutate({ audio: false, video: false })
             SOUNDS.dial.play()
           }}
         >
@@ -255,7 +259,7 @@ const Actions = {
           disabled={rtc.videoPermissions() === 'denied'}
           onClick={async () => {
             await rtc.checkVideoPermissions()
-            await startCall.mutate({ audio: true, video: true })
+            await startCall.mutate({ audio: false, video: false })
             SOUNDS.dial.play()
           }}
         >
@@ -265,6 +269,7 @@ const Actions = {
     )
   },
   AudioToggle() {
+    const { rtc } = useGlobalState()
     const { data: myAudio } = useQuery(api.activeCall.myAudio, {})
     const toggleAudio = useMutation(api.activeCall.toggleAudio)
     return (
@@ -272,7 +277,10 @@ const Actions = {
         <Toggle
           variant="outline"
           pressed={myAudio() ?? false}
-          onPressedChange={(pressed) => toggleAudio.mutate({ audio: pressed })}
+          onPressedChange={async (pressed) => {
+            const audioEnabled = await rtc.toggleAudio(pressed)
+            await toggleAudio.mutate({ audio: audioEnabled })
+          }}
         >
           {myAudio() ? <MicIcon /> : <MicOffIcon />}
         </Toggle>
@@ -354,7 +362,14 @@ const Actions = {
     return (
       <ButtonGroupWrapper>
         <ButtonGroup>
-          <Button variant="outline" animate="scale-icon" class="v-muted" onClick={() => cancelCall.mutate({})}>
+          <Button
+            variant="outline"
+            animate="scale-icon"
+            class="v-muted"
+            onClick={() => {
+              cancelCall.mutate({})
+            }}
+          >
             <XIcon />
           </Button>
         </ButtonGroup>

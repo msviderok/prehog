@@ -4,7 +4,6 @@ import * as v from 'valibot'
 
 export const env = createEnv({
   server: {
-    CLERK_FRONTEND_API_URL: v.pipe(v.string(), v.url()),
     CLERK_SECRET_KEY: v.optional(v.pipe(v.string(), v.minLength(1))),
     CLERK_JWT_ISSUER_DOMAIN: v.optional(v.pipe(v.string(), v.url())),
   },
@@ -18,7 +17,6 @@ export const env = createEnv({
   clientPrefix: 'VITE_',
 
   client: {
-    VITE_APP_TITLE: v.optional(v.pipe(v.string(), v.minLength(1))),
     VITE_CONVEX_URL: v.pipe(v.string(), v.url()),
     VITE_CLERK_PUBLISHABLE_KEY: v.pipe(v.string(), v.minLength(1)),
     VITE_OFFLINE: v.optional(v.pipe(v.string(), v.toBoolean())),

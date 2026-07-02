@@ -316,3 +316,11 @@ export const iceCandidateRtcMessages = query({
 export const isCallEstablished = query({
   handler: async (ctx) => await Calls.isCurrentCallEstablished(ctx),
 })
+
+export const myRole = query({
+  handler: async (ctx) => {
+    const call = await Calls.findMyCurrentCall(ctx)
+    if (!call) return null
+    return call.myParticipant.role
+  },
+})

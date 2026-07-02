@@ -41,7 +41,7 @@ export function AudioButton(props: ParentProps<{ label: string; class?: string; 
             <DropdownMenuGroup>
               <DropdownMenuLabel>Input Device</DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={rtc.selectedAudioInputDevice().deviceId}
+                value={rtc.selectedAudioInputValue()}
                 onValueChange={async (value) => {
                   if (callStatus() == null) return
 
@@ -64,7 +64,7 @@ export function AudioButton(props: ParentProps<{ label: string; class?: string; 
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Output Device</DropdownMenuLabel>
                   <DropdownMenuRadioGroup
-                    value={rtc.selectedAudioOutputDevice().deviceId}
+                    value={rtc.selectedAudioOutputValue()}
                     onValueChange={async (value) => {
                       if (callStatus() == null) return
 

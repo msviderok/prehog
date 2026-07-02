@@ -7,7 +7,6 @@ import { createEffect, on, onCleanup } from 'solid-js'
 
 export function useHandleMediaToggle() {
   const { rtc } = useGlobalState()
-  const { data: audio } = useQuery(api.activeCall.myAudio, {}, { initialData: false, keepPreviousData: true })
   const { data: video } = useQuery(api.activeCall.myVideo, {}, { initialData: false, keepPreviousData: true })
   const { data: isCallEstablished } = useQuery(
     api.activeCall.isCallEstablished,
@@ -15,11 +14,9 @@ export function useHandleMediaToggle() {
     { initialData: false, keepPreviousData: true },
   )
 
-  /* Mute/unmute audio */
   createEffect(
-    on([() => audio()!, () => isCallEstablished()!], ([enabled, callEstablished]) => {
-      if (callEstablished === false) return
-      rtc.toggleAudio(enabled)
+    on(isCallEstablished, async (established) => {
+      if (established) await rtc.confirmConnectionEstablished()
     }),
   )
 
@@ -71,6 +68,7 @@ export function useHandleReceiveOfferAndSendAnswer() {
 
 export function useHandleReceiveAnswer() {
   const { rtc } = useGlobalState()
+  const toggleAudio = useMutation(api.activeCall.toggleAudio)
   const claimRtcMessage = useMutation(api.activeCall.claimRtcMessage)
   const canClaimAnswer = useQuery(api.activeCall.canClaimAnswer, {})
 
@@ -83,6 +81,9 @@ export function useHandleReceiveAnswer() {
 
         await rtc.receiveAnswer(answer.data)
         await claimRtcMessage.mutate({ ids: answer._id })
+
+        const shouldEnableAudio = await rtc.toggleAudio(true)
+        await toggleAudio.mutate({ audio: shouldEnableAudio })
       },
     ),
   )
@@ -138,9 +139,9 @@ export function useHandleSound() {
     SOUNDS.dial.stop()
     SOUNDS.call.stop()
 
-    if (SOUNDS.end.playing() === false) {
-      SOUNDS.end.play()
-    }
+    // if (SOUNDS.end.playing() === false) {
+    //   SOUNDS.end.play()
+    // }
   })
 
   createEffect(() => {

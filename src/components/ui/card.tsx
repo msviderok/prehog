@@ -51,7 +51,7 @@ function CardHeader(props: ComponentProps<'div'>) {
     <div
       data-slot="card-header"
       class={cn(
-        'group/card-header @container/card-header grid auto-rows-min items-center gap-1 rounded-t-base px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] select-none border-input/10 border-b-2 py-2 group-data-[variant=rtc-panel]/card:bg-shade-card/50 group-data-[variant=rtc-panel]/card:items-center group-data-[variant=rtc-panel]/card:flex group-data-[variant=rtc-panel]/card:gap-2 group-data-[variant=chat-panel]/card:border-b-2 group-data-[variant=chat-panel]/card:border-muted/50 group-data-[variant=chat-panel]/card:py-0 group-data-[variant=chat-panel]/card:flex group-data-[variant=chat-panel]/card:justify-between group-data-[variant=chat-panel]/card:items-center group-data-[variant=chat-panel]/card:pl-1',
+        'group/card-header @container/card-header grid auto-rows-min items-center gap-1 rounded-t-base px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] select-none border-input/10 border-b-2 py-2 group-data-[variant=rtc-panel]/card:bg-shade-card/50 group-data-[variant=rtc-panel]/card:items-center group-data-[variant=rtc-panel]/card:flex group-data-[variant=rtc-panel]/card:gap-2 group-data-[variant=chat-panel]/card:border-b-2 group-data-[variant=chat-panel]/card:border-muted/50 group-data-[variant=chat-panel]/card:py-0 group-data-[variant=chat-panel]/card:flex group-data-[variant=chat-panel]/card:justify-between group-data-[variant=chat-panel]/card:items-center group-data-[variant=chat-panel]/card:pl-1 cursor-move',
         local.class,
       )}
       ref={(el) => {

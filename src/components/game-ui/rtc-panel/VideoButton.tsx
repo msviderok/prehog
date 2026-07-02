@@ -39,7 +39,7 @@ export function VideoButton(props: ParentProps<{ label: string; class?: string }
             <DropdownMenuGroup>
               <DropdownMenuLabel>Video Device</DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={rtc.selectedVideoInputDevice().deviceId}
+                value={rtc.selectedVideoInputValue()}
                 onValueChange={async (value) => {
                   if (callStatus() == null) return
 
@@ -50,7 +50,7 @@ export function VideoButton(props: ParentProps<{ label: string; class?: string }
                   }
                 }}
               >
-                <For each={rtc.devices.latest?.dropdown.videoinput ?? []}>
+                <For each={rtc.devices().dropdown.videoinput ?? []}>
                   {(device) => <DropdownMenuRadioItem value={device.deviceId}>{device.label}</DropdownMenuRadioItem>}
                 </For>
               </DropdownMenuRadioGroup>

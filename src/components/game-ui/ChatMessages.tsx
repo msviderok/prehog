@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { useQuery } from 'convex-solidjs'
 import { formatDate, isToday } from 'date-fns'
 import { ArrowDownLeftIcon, ArrowUpRightIcon, PhoneIcon, PhoneMissedIcon } from 'lucide-solid'
-import { createEffect, createMemo, For, on, Show, type ValidComponent } from 'solid-js'
+import { createEffect, createMemo, For, on, Show, type Component, type ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { CardContent } from '../ui/card'
 
@@ -13,18 +13,20 @@ type MessageType = 'chat' | 'last-message'
 type CallType = 'incoming' | 'outgoing'
 type Whos = 'mine' | 'their'
 
-const SYSTEM_MESSAGE: Record<MessageSystemCall['status'], ValidComponent> = {
-  ended: () => (
+const SYSTEM_MESSAGE: Record<MessageSystemCall['status'], Component<{ callType: CallType }>> = {
+  ended: (props) => (
     <p>
-      <span class="flex gap-2 items-center">
-        <PhoneIcon class="size-3.5" /> Call ended
+      <span class="flex gap-2 items-center relative">
+        <CallArrow callType={props.callType} />
+        <PhoneIcon class="size-3 relative -top-0.5 text-tint-muted/50" /> Call ended
       </span>
     </p>
   ),
-  declined: () => (
+  declined: (props) => (
     <p>
-      <span class="flex gap-2 items-center">
-        <PhoneMissedIcon class="size-3.5" /> Call declined
+      <span class="flex gap-2 items-center relative">
+        <CallArrow callType={props.callType} />
+        <PhoneMissedIcon class="size-3 relative -top-0.5 text-tint-muted/50" /> Call declined
       </span>
     </p>
   ),
@@ -62,14 +64,20 @@ export function ChatMessages(props: Doc<'chats'>) {
           '*:max-w-[80%] *:p-1.5 *:px-3 *:rounded-lg *:text-white *:animate-in *:wrap-break-word *:[word-break:break-word] *:font-light',
 
           // ALL messages' main element containing an actual message
-          `*:*:after:content-(--date)
-          *:*:after:text-xs
-          *:*:after:text-white/50
-          *:*:after:font-extralight
-          *:*:after:block
-          *:*:after:h-0
-          *:*:after:text-right
-          *:*:after:pb-3`,
+          `*:after:content-(--date)
+          *:after:text-[11px]
+          *:after:text-white/40
+          *:after:font-extralight
+          *:after:block
+          *:after:h-0
+          *:after:pb-3
+          *:after:pt-0.5
+          *:data-[type=system]:data-[whos=mine]:after:text-right
+          *:data-[type=system]:data-[whos=their]:after:text-left
+          `,
+
+          `*:data-[type=system]:data-[whos=mine]:[&_span]:justify-end
+          *:data-[type=system]:data-[whos=their]:[&_span]:justify-start`,
 
           /* ––– MY MESSAGES ––– */
 
@@ -117,9 +125,15 @@ export function ChatMessage(props: { type: MessageType; message: Doc<'chat_messa
   const currentUser = useCurrentUser()
   const whos = createMemo<Whos>(() => (props.message.userId === currentUser()?._id ? 'mine' : 'their'))
   const timestamp = createMemo(() => {
-    return isToday(props.message._creationTime)
+    const date = isToday(props.message._creationTime)
       ? formatDate(props.message._creationTime, 'HH:mm')
-      : formatDate(props.message._creationTime, 'MM/DD HH:mm')
+      : formatDate(props.message._creationTime, 'MM/dd HH:mm')
+
+    if (props.message.type === 'system' && props.message.body.status === 'ended') {
+      return whos() === 'mine' ? `${props.message.body.duration} · ${date}` : `${date} · ${props.message.body.duration}`
+    }
+
+    return date
   })
 
   return (
@@ -128,50 +142,34 @@ export function ChatMessage(props: { type: MessageType; message: Doc<'chat_messa
       data-variant={props.type}
       data-type={props.message.type}
       class="group"
-      style={
-        props.type === 'chat'
-          ? {
-              '--date': `"${timestamp()}`,
-              '--duration':
-                props.message.type === 'system' && props.message.body.status === 'ended'
-                  ? props.message.body.duration
-                  : undefined,
-            }
-          : undefined
-      }
+      style={props.type === 'chat' ? { '--date': `"${timestamp()}"` } : undefined}
     >
-      <div
-        class={cn(
-          `group-data-[variant=last-message]:flex
-          group-data-[variant=last-message]:items-center
-          group-data-[variant=last-message]:gap-1`,
-        )}
+      <Show
+        when={props.type === 'chat'}
+        fallback={<LastMessage whos={whos()} type={props.type} message={props.message} />}
       >
         <Show
-          when={props.type === 'chat'}
-          fallback={<LastMessage whos={whos()} type={props.type} message={props.message} />}
+          when={props.message.type === 'system' && props.message.body.status}
+          fallback={(props.message as MessageDM).body}
         >
-          <Show
-            when={props.message.type === 'system' && props.message.body.status}
-            fallback={(props.message as MessageDM).body}
-          >
-            {(status) => <Dynamic component={SYSTEM_MESSAGE[status()]} />}
-          </Show>
+          {(status) => (
+            <Dynamic component={SYSTEM_MESSAGE[status()]} callType={whos() === 'mine' ? 'outgoing' : 'incoming'} />
+          )}
         </Show>
-      </div>
+      </Show>
     </div>
   )
 }
 
 function LastMessage(props: { whos: Whos; type: MessageType; message: Doc<'chat_messages'> }) {
   return (
-    <>
+    <div class="flex items-center gap-1">
       <Show when={props.whos === 'mine'}>
         <span class="text-blue-300">You:</span>
       </Show>
 
       <Show when={props.message.type === 'system'}>
-        <CallArrow type={props.type} callType={props.whos === 'mine' ? 'outgoing' : 'incoming'} />
+        <CallArrow callType={props.whos === 'mine' ? 'outgoing' : 'incoming'} />
       </Show>
 
       <p data-type={props.message.type} class="text-tint-muted/30 truncate data-[type=system]:italic">
@@ -183,11 +181,11 @@ function LastMessage(props: { whos: Whos; type: MessageType; message: Doc<'chat_
               ? 'Call ended'
               : ''}
       </p>
-    </>
+    </div>
   )
 }
 
-function CallArrow(props: { type: MessageType; callType: CallType }) {
+function CallArrow(props: { callType: CallType }) {
   return (
     <div class="size-3">
       <Show when={props.callType === 'outgoing'} fallback={<ArrowDownLeftIcon class="size-3 text-destructive" />}>

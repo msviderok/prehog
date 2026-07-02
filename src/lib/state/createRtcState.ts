@@ -1,13 +1,10 @@
 import { api } from '@/convex/api'
-import { makePersisted } from '@solid-primitives/storage'
 import { useMutation } from 'convex-solidjs'
-import { createMemo, createResource, createSignal, onCleanup, onMount } from 'solid-js'
-import { createStore } from 'solid-js/store'
+import { createResource, createSignal, onCleanup } from 'solid-js'
 import { HAVE_AUDIO_OUTPUT_SELECTOR } from '../constants'
-import { getLSKey } from '../utils'
+import { createMediaDevices } from '../createMediaDevices'
 
-type GroupedDevices = Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>
-type OptionalDevice = { deviceId?: string; device?: never } | { deviceId?: never; device?: MediaDeviceInfo }
+type OptionalDevice = { deviceId: string; device?: never } | { deviceId?: never; device: MediaDeviceInfo }
 
 export type RtcState = ReturnType<typeof createRtcState>
 export function createRtcState() {
@@ -18,8 +15,8 @@ export function createRtcState() {
 
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 
-  const [myVideoRef, setMyVideoRefInternal] = createSignal<HTMLVideoElement>()
-  const [remoteVideoRef, setRemoteVideoRefInternal] = createSignal<HTMLVideoElement>()
+  const [myRef, setMyRef] = createSignal<HTMLVideoElement | undefined>()
+  const [remoteRef, setRemoteRef] = createSignal<HTMLVideoElement | undefined>()
 
   const [audioPermissions, audioAction] = createResource(async () => {
     if (!navigator.permissions.query) {
@@ -58,64 +55,87 @@ export function createRtcState() {
     }
   })
 
-  const [devices, { refetch: refetchDevices }] = createResource(async () => {
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    return devices.reduce(
-      (acc, device) => {
-        acc.all.push(device)
-        acc.byId[device.deviceId] = device
-        acc.allGrouped[device.kind].push(device)
+  const {
+    devices,
+    selectedDevices,
+    refetchDevices,
+    setSelectedDevices,
+    selectedAudioInputValue,
+    selectedAudioOutputValue,
+    selectedVideoInputValue,
+  } = createMediaDevices()
 
-        if (device.deviceId === 'default' || device.label.startsWith('Default - ')) return acc
-        acc.dropdown[device.kind].push(device)
-        return acc
-      },
-      {
-        all: [] as MediaDeviceInfo[],
-        byId: {} as Record<string, MediaDeviceInfo | undefined>,
-        allGrouped: { audioinput: [], audiooutput: [], videoinput: [] } as GroupedDevices,
-        dropdown: { audioinput: [], audiooutput: [], videoinput: [] } as GroupedDevices,
-      },
-    )
-  })
+  async function initRtc(myEl: HTMLVideoElement, remoteEl: HTMLVideoElement) {
+    cleanup()
 
-  const [selectedDevices, setSelectedDevices] = makePersisted(
-    createStore<Record<MediaDeviceInfo['kind'], MediaDeviceInfo | undefined>>({
-      audioinput: undefined,
-      audiooutput: undefined,
-      videoinput: undefined,
-    }),
-    { name: getLSKey('selected-media-devices') },
-  )
+    setMyRef(myEl)
+    setRemoteRef(remoteEl)
 
-  function setMyVideoRef(el: HTMLVideoElement) {
-    initRtc(el)
-  }
+    myStream = new MediaStream()
+    themStream = new MediaStream()
+    myEl.srcObject = myStream
+    remoteEl.srcObject = themStream
 
-  /**
-   * This function is supposed to find the actual device that is used. Some browser implementation
-   * of `enumerateDevices()` might return the same device twice:
-   *   - with _`deviceId`_ set to _`"default"`_
-   *   - or with the label starting with _`"Default - "`_
-   *   - or both simultaneously
-   */
-  function getUnambiguousSelectedDevice(kind: MediaDeviceInfo['kind']) {
-    if (selectedDevices[kind]) {
-      const storedDevice = findDevice(selectedDevices[kind])
-      /* If I found the actual device store, then just return it  */
-      if (storedDevice) return storedDevice
+    peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+    peerConnection.ontrack = async (e) => {
+      themStream.addTrack(e.track)
+
+      try {
+        await setOutputDevice(remoteEl)
+      } catch (error) {
+        console.warn('remote element play failed', error)
+      }
     }
 
-    const list = devices.latest?.allGrouped[kind] ?? []
-    const browserDefaultDevice = list.find((d) => d.deviceId === 'device' || d.label.startsWith('Default - '))
-    const actualLabel = browserDefaultDevice?.label.replace('Default - ', '')
-    const actualDevice = list.find((d) => d.label === actualLabel)
-    return actualDevice ?? list[0] ?? ({ deviceId: '' } as MediaDeviceInfo)
+    peerConnection.onicecandidate = (event) => {
+      const candidate = event.candidate?.toJSON()
+      if (candidate) {
+        sendRtcMessage.mutate({ message: { type: 'ice-candidate', data: candidate } })
+      }
+    }
+
+    navigator.mediaDevices.addEventListener('devicechange', refetchDevices)
   }
 
-  const selectedAudioInputDevice = createMemo<MediaDeviceInfo>(() => getUnambiguousSelectedDevice('audioinput'))
-  const selectedAudioOutputDevice = createMemo<MediaDeviceInfo>(() => getUnambiguousSelectedDevice('audiooutput'))
-  const selectedVideoInputDevice = createMemo<MediaDeviceInfo>(() => getUnambiguousSelectedDevice('videoinput'))
+  function cleanup() {
+    pendingCandidates.length = 0
+    navigator.mediaDevices.removeEventListener('devicechange', refetchDevices)
+
+    /* Pause and clean up my video ref; stop and remove all the tracks from my stream. */
+    if (myRef()) {
+      myRef()!.pause()
+      myRef()!.srcObject = null
+      setMyRef(undefined)
+    }
+    for (const track of myStream.getTracks()) {
+      track.stop()
+      myStream.removeTrack(track)
+    }
+
+    for (const track of themStream.getTracks()) {
+      track.stop()
+      themStream.removeTrack(track)
+    }
+
+    if (remoteRef()) {
+      remoteRef()!.pause()
+      remoteRef()!.srcObject = null
+      setRemoteRef(undefined)
+    }
+
+    if (peerConnection.connectionState !== 'closed') {
+      for (const transceiver of peerConnection.getTransceivers()) {
+        transceiver.sender.track?.stop()
+        transceiver.stop()
+      }
+
+      peerConnection.close()
+    }
+  }
+
+  async function confirmConnectionEstablished() {
+    await toggleAudio(true)
+  }
 
   function findDeviceById(deviceId: string | undefined) {
     if (!deviceId) {
@@ -123,12 +143,7 @@ export function createRtcState() {
       return undefined
     }
 
-    if (!devices.latest) {
-      console.warn(`findDeviceById: enumerateDevices() was not called yet.`)
-      return undefined
-    }
-
-    const list = devices.latest.all
+    const list = devices().all
     if (list.length === 0) {
       console.warn(`findDeviceById: no devices returned from enumerateDevices()`)
       return undefined
@@ -143,53 +158,44 @@ export function createRtcState() {
       return undefined
     }
 
-    if (!devices.latest) {
-      console.warn(`findDevice: enumerateDevices() was not called yet.`)
-      return undefined
-    }
-
-    if (devices.latest.all.length === 0) {
+    if (devices().all.length === 0) {
       console.warn(`findDevice: no devices returned from enumerateDevices() for ${device.kind}`)
       return undefined
     }
 
-    if (devices.latest.byId[device.deviceId] == null) {
+    const existsById = devices().all.find((d) => d.deviceId === device.deviceId)
+    if (existsById == null) {
       console.warn(`findDevice: device ID ${device.deviceId} not found in enumerateDevices()`)
       return undefined
     }
 
-    return devices.latest.allGrouped[device.kind].find((d) => d.label === device.label)
+    return devices().all.find((d) => d.kind === device.kind && d.label === device.label)
   }
 
   async function getMediaConstraints(
     kind: Kind,
-    deviceArgs: OptionalDevice = {},
+    deviceArgs: OptionalDevice | 'default',
   ): Promise<MediaTrackConstraints | true> {
     const deviceKind: MediaDeviceKind = kind === 'audio' ? 'audioinput' : 'videoinput'
-    const stored = deviceArgs.device ?? findDeviceById(deviceArgs.deviceId) ?? selectedDevices[deviceKind]
 
-    if (!stored) {
-      console.warn(`No stored ${deviceKind} found`)
-      return true
+    if (deviceArgs === 'default') {
+      const device = findDevice(selectedDevices[deviceKind]) ?? devices.latest?.dropdown[deviceKind][0]!
+      return { deviceId: { exact: device.deviceId } }
     }
 
-    const device = findDevice(stored) ?? devices.latest?.dropdown[deviceKind][0]!
+    const deviceToFind = findDevice(deviceArgs.device) ?? findDeviceById(deviceArgs.deviceId)
+    if (deviceToFind) return deviceToFind
+
+    const device = findDevice(selectedDevices[deviceKind]) ?? devices.latest?.dropdown[deviceKind][0]!
+    console.warn('Specified device not found, setting to default', { deviceArgs, default: device })
     return { deviceId: { exact: device.deviceId } }
   }
 
   /** @throws */
-  async function requestNewStream(
-    args:
-      | ({ kind: 'audio' | 'video' } & OptionalDevice)
-      | { kind: 'both'; audio?: OptionalDevice; video?: OptionalDevice },
-  ) {
+  async function requestNewStream(kind: Kind, deviceArgs: OptionalDevice | 'default') {
     try {
-      const videoConstraints = await getMediaConstraints('video', args.kind === 'both' ? args.video : args)
-      const audioConstraints = await getMediaConstraints('audio', args.kind === 'both' ? args.audio : args)
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: args.kind === 'video' || args.kind === 'both' ? videoConstraints : false,
-        audio: args.kind === 'audio' || args.kind === 'both' ? audioConstraints : false,
-      })
+      const constraints = await getMediaConstraints(kind, deviceArgs)
+      const stream = await navigator.mediaDevices.getUserMedia({ [kind]: constraints })
       return stream
     } catch (error) {
       console.warn('Failed to request new stream', { error })
@@ -198,35 +204,19 @@ export function createRtcState() {
   }
 
   /** @throws */
-  async function requestNewTrack<
-    T extends 'audio' | 'video' | 'both',
-    S = T extends 'both' ? { audio?: OptionalDevice; video?: OptionalDevice } : OptionalDevice,
-    R = T extends 'both' ? { audio: MediaStreamTrack; video: MediaStreamTrack } : MediaStreamTrack,
-  >(kind: T, deviceArgs?: S): Promise<R> {
-    const stream = await requestNewStream({ kind, ...deviceArgs })
-    const [audioTrack] = stream.getAudioTracks()
-    const [videoTrack] = stream.getVideoTracks()
+  async function requestNewTrack(kind: Kind, deviceArgs: OptionalDevice | 'default') {
+    const stream = await requestNewStream(kind, deviceArgs)
+    const [track] = stream.getTracks()
 
-    if (kind === 'audio') {
-      if (audioTrack) return audioTrack as R
-      throw new Error('No audio track returned')
-    }
-
-    if (kind === 'video') {
-      if (videoTrack) return videoTrack as R
-      throw new Error('No video track returned')
-    }
-
-    if (!audioTrack) throw new Error('No audio track returned')
-    if (!videoTrack) throw new Error('No video track returned')
-    return { audio: audioTrack, video: videoTrack } as R
+    if (!track) throw new Error(`No ${kind} track returned`)
+    return track
   }
 
   async function checkAudioPermissions() {
     if (audioPermissions() === 'granted' || audioPermissions() === 'denied') return
 
     try {
-      const audioStream = await requestNewStream({ kind: 'audio' })
+      const audioStream = await requestNewStream('audio', 'default')
       audioStream.getAudioTracks().forEach((track) => track.stop())
     } catch (error) {
       console.warn('Failed to request audio permissions', { error })
@@ -237,7 +227,7 @@ export function createRtcState() {
     if (videoPermissions() === 'granted' || videoPermissions() === 'denied') return
 
     try {
-      const videoStream = await requestNewStream({ kind: 'video' })
+      const videoStream = await requestNewStream('video', 'default')
       videoStream.getVideoTracks().forEach((track) => track.stop())
     } catch (error) {
       console.warn('Failed to request video permissions', { error })
@@ -266,7 +256,7 @@ export function createRtcState() {
       return
     }
 
-    const newTrack = await requestNewTrack(trackKind)
+    const newTrack = await requestNewTrack(trackKind, newDevice)
     const [oldTrack] = isAudio ? myStream.getAudioTracks() : myStream.getVideoTracks()
 
     const transceiver = getTransceiver(trackKind)
@@ -284,26 +274,34 @@ export function createRtcState() {
   }
 
   /** @throws */
-  async function setOutputDevice(deviceId: string) {
+  async function setOutputDevice(refOrDeviceId: HTMLVideoElement | string) {
     /* Ignore if browser does not support audio output selection */
     if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
 
-    const newDevice = findDeviceById(deviceId)
     const storedDevice = findDevice(selectedDevices.audiooutput)
+    const newDevice =
+      refOrDeviceId instanceof HTMLVideoElement ? devices().dropdown.audiooutput[0] : findDeviceById(refOrDeviceId)
 
-    if (newDevice == null) throw new Error(`Device not found: ${deviceId}`)
+    if (newDevice == null) {
+      throw new Error(
+        refOrDeviceId instanceof HTMLVideoElement
+          ? 'Default device not found for a remote ref'
+          : `Device not found: ${refOrDeviceId}`,
+      )
+    }
 
     /* Ignore if the device is already selected and it's the same device that was stored */
     if (storedDevice && storedDevice.label === newDevice.label && storedDevice.deviceId === newDevice.deviceId) {
       return
     }
 
-    await remoteVideoRef()?.setSinkId(newDevice.deviceId)
+    const ref = refOrDeviceId instanceof HTMLVideoElement ? refOrDeviceId : remoteRef()
+    await ref?.setSinkId(newDevice.deviceId)
     setSelectedDevices('audiooutput', newDevice.toJSON())
   }
 
   async function updateSelectedDeviceValue(kind: MediaDeviceInfo['kind'], deviceId: string) {
-    const device = devices.latest?.byId[deviceId]
+    const device = devices().all.find((d) => d.kind === kind && d.deviceId === deviceId)
     if (!device) {
       console.warn(`Device not found: ${deviceId}`)
       return
@@ -325,30 +323,45 @@ export function createRtcState() {
   }
 
   async function toggleAudio(enabled: boolean) {
+    const transceiver = getTransceiver('audio')
+    if (!transceiver) {
+      console.warn('Audio toggle should not be called before the offer/answer is created and set on both sides')
+      return false
+    }
+
+    const oldTrack = transceiver.sender.track
+
+    if (enabled === false) {
+      await transceiver.sender.replaceTrack(null)
+
+      if (oldTrack) {
+        oldTrack.enabled = false
+        oldTrack.stop()
+      }
+
+      return false
+    }
+
+    if (oldTrack?.readyState === 'live') {
+      oldTrack.enabled = true
+      return true
+    }
+
+    let newTrack: MediaStreamTrack | undefined
+
     try {
-      const transceiver = getTransceiver('audio')
-      if (!transceiver) {
-        throw new Error(`Audio toggle should not be called before the offer/answer is created and set on both sides`)
-      }
+      newTrack = await requestNewTrack('audio', 'default')
+      newTrack.enabled = true
 
-      const existingTrack = transceiver.sender.track
-      if (existingTrack) {
-        existingTrack.enabled = enabled
-        return
-      }
-
-      if (!enabled) return
-
-      const track = await requestNewTrack('audio')
-      await transceiver.sender.replaceTrack(track)
-      track.enabled = enabled
-
+      await transceiver.sender.replaceTrack(newTrack)
+      return transceiver.sender.track === newTrack && newTrack.readyState === 'live'
       /**
        * Contrary to the video toggle, we don't need to add our audio to our local stream
        * as we won't need to hear ourselves.
        */
     } catch (error) {
-      console.warn(`Failed to toggle audio`, { error })
+      console.warn(`Failed to enable audio`, { error })
+      return false
     }
   }
 
@@ -372,7 +385,7 @@ export function createRtcState() {
         }
 
         /* Enabling the video should always create a new video track */
-        const track = await requestNewTrack('video')
+        const track = await requestNewTrack('video', 'default')
         await transceiver.sender.replaceTrack(track)
         /* We need to add video track to our local stream so we can see our own video */
         myStream.addTrack(track)
@@ -447,82 +460,6 @@ export function createRtcState() {
     await addPendingCandidates()
   }
 
-  /** @throws */
-  async function attachAudioOutput(remoteRef: HTMLVideoElement) {
-    /* Ignore if browser does not support audio output selection */
-    if (HAVE_AUDIO_OUTPUT_SELECTOR === false) return
-
-    const device = findDevice(selectedDevices.audiooutput) ?? devices()?.allGrouped.audiooutput[0]
-    if (!device) throw new Error('No audio output device found')
-    await remoteRef.setSinkId(device.deviceId)
-  }
-
-  async function setRemoteVideoRef(ref: HTMLVideoElement) {
-    setRemoteVideoRefInternal(ref)
-    attachAudioOutput(ref)
-
-    themStream = new MediaStream()
-    ref.srcObject = themStream
-  }
-
-  function initRtc(el: HTMLVideoElement) {
-    peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
-
-    myStream = new MediaStream()
-    el.srcObject = myStream
-
-    peerConnection.ontrack = async (e) => {
-      themStream.addTrack(e.track)
-    }
-
-    peerConnection.onicecandidate = (event) => {
-      const candidate = event.candidate?.toJSON()
-      if (candidate) {
-        sendRtcMessage.mutate({ message: { type: 'ice-candidate', data: candidate } })
-      }
-    }
-
-    setMyVideoRefInternal(el)
-    navigator.mediaDevices.addEventListener('devicechange', refetchDevices)
-  }
-
-  function cleanup() {
-    if (peerConnection.connectionState === 'closed') return
-
-    for (const transceiver of peerConnection.getTransceivers()) {
-      transceiver.sender.track?.stop()
-      transceiver.stop()
-    }
-
-    for (const track of myStream.getTracks()) {
-      track.stop()
-      myStream.removeTrack(track)
-    }
-
-    for (const track of themStream.getTracks()) {
-      track.stop()
-      themStream.removeTrack(track)
-    }
-
-    const myRef = myVideoRef()
-    if (myRef) {
-      myRef.pause()
-      myRef.srcObject = null
-    }
-
-    const themRef = remoteVideoRef()
-    if (themRef) {
-      themRef.pause()
-      themRef.srcObject = null
-    }
-
-    pendingCandidates.length = 0
-    peerConnection.close()
-    navigator.mediaDevices.removeEventListener('devicechange', refetchDevices)
-    setMyVideoRefInternal(undefined)
-    setRemoteVideoRefInternal(undefined)
-  }
-
   onCleanup(() => cleanup())
 
   return {
@@ -535,16 +472,16 @@ export function createRtcState() {
     receiveAnswer,
     addPendingCandidates,
     queueCandidate,
-    setMyVideoRef,
-    setRemoteVideoRef,
-    selectedAudioInputDevice,
-    selectedAudioOutputDevice,
-    selectedVideoInputDevice,
+    selectedAudioInputValue,
+    selectedAudioOutputValue,
+    selectedVideoInputValue,
     updateSelectedDeviceValue,
     audioPermissions,
     videoPermissions,
     checkAudioPermissions,
     checkVideoPermissions,
+    initRtc,
     cleanup,
+    confirmConnectionEstablished,
   }
 }
