@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "tags": ["-lintignore"],
+  "workspaces": {
+    ".": {}
+  },
+  "include": ["dependencies", "devDependencies", "catalog", "optionalPeerDependencies", "files"],
+  "ignore": ["convex/auth.convex.ts", "shadcn-solid.config.ts"]
+}

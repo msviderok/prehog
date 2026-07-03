@@ -10,10 +10,10 @@
     "format": "oxfmt && oxlint --fix",
     "check": "oxfmt --check",
     "shad": "pnx @msviderok/shadcn-to-solid@latest",
-    "catalog": "pnx codemod pnpm/catalog"
+    "catalog": "pnx codemod pnpm/catalog",
+    "knip": "knip"
   },
   "dependencies": {
-    "@chenglou/pretext": "catalog:",
     "@clerk/ui": "catalog:",
     "@dnd-kit/abstract": "catalog:",
     "@dnd-kit/dom": "catalog:",
@@ -23,13 +23,9 @@
     "@solid-primitives/storage": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tailwindcss/vite": "catalog:",
-    "@tanstack/router-plugin": "catalog:",
     "@tanstack/solid-router": "catalog:",
-    "@tanstack/solid-router-ssr-query": "catalog:",
     "@tanstack/solid-start": "catalog:",
-    "@types/node": "catalog:",
     "class-variance-authority": "catalog:",
-    "clerk-solidjs": "catalog:",
     "clerk-solidjs-tanstack-start": "catalog:",
     "clsx": "catalog:",
     "convex": "catalog:",
@@ -42,17 +38,16 @@
     "svix": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
-    "tslib": "catalog:",
     "tw-animate-css": "catalog:",
-    "valibot": "catalog:",
-    "vercel": "catalog:"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@clerk/backend": "catalog:",
     "@tailwindcss/typography": "catalog:",
     "@total-typescript/ts-reset": "catalog:",
     "@types/howler": "catalog:",
-    "babel-preset-solid": "catalog:",
+    "@types/node": "catalog:",
+    "knip": "^6.24.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "shadcn": "catalog:",
