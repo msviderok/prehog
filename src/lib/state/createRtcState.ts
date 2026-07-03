@@ -1,6 +1,6 @@
 import { api } from '@/convex/api'
 import { useMutation } from 'convex-solidjs'
-import { createResource, createSignal, onCleanup } from 'solid-js'
+import { createSignal, onCleanup } from 'solid-js'
 import { HAVE_AUDIO_OUTPUT_SELECTOR } from '../constants'
 import { createMediaDevices } from '../createMediaDevices'
 
@@ -18,52 +18,17 @@ export function createRtcState() {
   const [myRef, setMyRef] = createSignal<HTMLVideoElement | undefined>()
   const [remoteRef, setRemoteRef] = createSignal<HTMLVideoElement | undefined>()
 
-  const [audioPermissions, audioAction] = createResource(async () => {
-    if (!navigator.permissions.query) {
-      console.warn('Navigator permissions not supported')
-      return 'unknown'
-    }
-
-    try {
-      const status = await navigator.permissions.query({ name: 'microphone' })
-      status.onchange = async (e) => {
-        audioAction.mutate((e.target as PermissionStatus).state)
-        await refetchDevices()
-      }
-      return status.state
-    } catch {
-      console.warn('Failed to query microphone permission')
-      return 'unknown'
-    }
-  })
-  const [videoPermissions, videoAction] = createResource(async () => {
-    if (!navigator.permissions.query) {
-      console.warn('Navigator permissions not supported')
-      return 'unknown'
-    }
-
-    try {
-      const status = await navigator.permissions.query({ name: 'camera' })
-      status.onchange = async (e) => {
-        videoAction.mutate((e.target as PermissionStatus).state)
-        await refetchDevices()
-      }
-      return status.state
-    } catch {
-      console.warn('Failed to query camera permission')
-      return 'unknown'
-    }
-  })
-
+  const mediaDevices = createMediaDevices()
   const {
     devices,
     selectedDevices,
-    refetchDevices,
     setSelectedDevices,
-    selectedAudioInputValue,
-    selectedAudioOutputValue,
-    selectedVideoInputValue,
-  } = createMediaDevices()
+    refetchDevices,
+    needToCheckAudioPermissions,
+    needToCheckVideoPermissions,
+    hasEmptyAudioDevices,
+    hasEmptyVideoDevices,
+  } = mediaDevices
 
   async function initRtc(myEl: HTMLVideoElement, remoteEl: HTMLVideoElement) {
     cleanup()
@@ -143,13 +108,12 @@ export function createRtcState() {
       return undefined
     }
 
-    const list = devices().all
-    if (list.length === 0) {
+    if (devices().all.length === 0) {
       console.warn(`findDeviceById: no devices returned from enumerateDevices()`)
       return undefined
     }
 
-    return list.find((d) => d.deviceId === deviceId)
+    return devices().all.find((d) => d.deviceId === deviceId)
   }
 
   function findDevice(device: MediaDeviceInfo | undefined) {
@@ -179,14 +143,23 @@ export function createRtcState() {
     const deviceKind: MediaDeviceKind = kind === 'audio' ? 'audioinput' : 'videoinput'
 
     if (deviceArgs === 'default') {
-      const device = findDevice(selectedDevices[deviceKind]) ?? devices.latest?.dropdown[deviceKind][0]!
+      const device = findDevice(selectedDevices[deviceKind]) ?? devices().dropdown[deviceKind][0]!
+      if (device.deviceId === '' || device.label === '') {
+        console.warn(`Device ${deviceKind} has empty deviceId or label`, { deviceArgs })
+        return true
+      }
       return { deviceId: { exact: device.deviceId } }
     }
 
     const deviceToFind = findDevice(deviceArgs.device) ?? findDeviceById(deviceArgs.deviceId)
     if (deviceToFind) return deviceToFind
 
-    const device = findDevice(selectedDevices[deviceKind]) ?? devices.latest?.dropdown[deviceKind][0]!
+    const device = findDevice(selectedDevices[deviceKind]) ?? devices().dropdown[deviceKind][0]!
+    if (device.deviceId === '' || device.label === '') {
+      console.warn(`Device ${deviceKind} has empty deviceId or label`, { deviceArgs })
+      return true
+    }
+
     console.warn('Specified device not found, setting to default', { deviceArgs, default: device })
     return { deviceId: { exact: device.deviceId } }
   }
@@ -196,6 +169,11 @@ export function createRtcState() {
     try {
       const constraints = await getMediaConstraints(kind, deviceArgs)
       const stream = await navigator.mediaDevices.getUserMedia({ [kind]: constraints })
+
+      if ((kind === 'audio' && hasEmptyAudioDevices()) || (kind === 'video' && hasEmptyVideoDevices())) {
+        console.log('Devices are still not refreshed. Refetching...')
+        await refetchDevices()
+      }
       return stream
     } catch (error) {
       console.warn('Failed to request new stream', { error })
@@ -213,7 +191,7 @@ export function createRtcState() {
   }
 
   async function checkAudioPermissions() {
-    if (audioPermissions() === 'granted' || audioPermissions() === 'denied') return
+    if (needToCheckAudioPermissions() === false) return
 
     try {
       const audioStream = await requestNewStream('audio', 'default')
@@ -224,7 +202,7 @@ export function createRtcState() {
   }
 
   async function checkVideoPermissions() {
-    if (videoPermissions() === 'granted' || videoPermissions() === 'denied') return
+    if (needToCheckVideoPermissions() === false) return
 
     try {
       const videoStream = await requestNewStream('video', 'default')
@@ -463,7 +441,6 @@ export function createRtcState() {
   onCleanup(() => cleanup())
 
   return {
-    devices,
     toggleAudio,
     toggleVideo,
     setDevice,
@@ -472,16 +449,12 @@ export function createRtcState() {
     receiveAnswer,
     addPendingCandidates,
     queueCandidate,
-    selectedAudioInputValue,
-    selectedAudioOutputValue,
-    selectedVideoInputValue,
     updateSelectedDeviceValue,
-    audioPermissions,
-    videoPermissions,
     checkAudioPermissions,
     checkVideoPermissions,
     initRtc,
     cleanup,
     confirmConnectionEstablished,
+    ...mediaDevices,
   }
 }

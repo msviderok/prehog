@@ -2,8 +2,8 @@ import { cn, defaultProps } from '@/lib/utils'
 import { Menu as MenuPrimitive } from '@msviderok/base-ui-solid/menu'
 import { CheckIcon, ChevronRightIcon } from 'lucide-solid'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'
-import { Button, type ExtraButtonProps } from './button'
-import { Toggle } from './toggle'
+import { type ExtraButtonProps } from './button'
+import { Toggle, type ToggleProps } from './toggle'
 
 function DropdownMenu(props: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
@@ -13,10 +13,16 @@ function DropdownMenuPortal(props: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-function DropdownMenuTrigger(componentProps: MenuPrimitive.Trigger.Props & ExtraButtonProps) {
+function DropdownMenuTrigger(
+  componentProps: MenuPrimitive.Trigger.Props & ExtraButtonProps & Pick<ToggleProps, 'pressed' | 'onPressedChange'>,
+) {
   const props = defaultProps(componentProps, { variant: 'default', size: 'default' })
-  const [buttonProps, rest] = splitProps(props, ['class', 'variant', 'size'])
-  const restPropsWithRender = defaultProps(rest, { render: (p) => <Toggle {...p} {...buttonProps} /> })
+  const [buttonProps, toggleProps, rest] = splitProps(
+    props,
+    ['class', 'variant', 'size'],
+    ['pressed', 'onPressedChange'],
+  )
+  const restPropsWithRender = defaultProps(rest, { render: (p) => <Toggle {...p} {...buttonProps} {...toggleProps} /> })
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...restPropsWithRender} />
 }
 

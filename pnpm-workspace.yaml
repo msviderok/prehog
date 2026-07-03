@@ -1,3 +1,6 @@
+catalogMode: strict
+cleanupUnusedCatalogs: true
+
 packages:
   - .
 allowBuilds:
@@ -32,6 +35,7 @@ catalog:
   convex-solidjs: ^0.0.3
   date-fns: ^4.4.0
   howler: ^2.2.4
+  knip: ^6.24.0
   lucide-solid: ^1.23.0
   nitro: 3.0.260610-beta
   oxfmt: ^0.57.0

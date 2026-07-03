@@ -47,7 +47,7 @@
     "@total-typescript/ts-reset": "catalog:",
     "@types/howler": "catalog:",
     "@types/node": "catalog:",
-    "knip": "^6.24.0",
+    "knip": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "shadcn": "catalog:",

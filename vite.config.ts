@@ -10,9 +10,6 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
     },
-    build: {
-      sourcemap: true,
-    },
     resolve: {
       tsconfigPaths: true,
     },
@@ -22,9 +19,6 @@ export default defineConfig(({ mode }) => {
       tanstackStart(),
       solidPlugin({
         ssr: true,
-        babel: {
-          sourceMaps: true,
-        },
       }),
     ],
     environments: {

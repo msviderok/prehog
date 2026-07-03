@@ -1,6 +1,5 @@
 import { getLSKey } from '@/lib/utils'
-import { makePersisted } from '@solid-primitives/storage'
-import { createEffect, createMemo, createResource, on, onMount } from 'solid-js'
+import { createEffect, createMemo, createResource, on } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import * as v from 'valibot'
 
@@ -51,9 +50,82 @@ export function createMediaDevices() {
     },
   )
 
+  createEffect(() => {
+    console.log(devices())
+  })
+
+  const [audioPermissions, audioAction] = createResource(async () => {
+    if (!navigator.permissions.query) {
+      console.warn('Navigator permissions not supported')
+      return 'unknown'
+    }
+
+    try {
+      const status = await navigator.permissions.query({ name: 'microphone' })
+      status.onchange = async (e) => {
+        audioAction.mutate((e.target as PermissionStatus).state)
+        await refetchDevices()
+      }
+      return status.state
+    } catch {
+      console.warn('Failed to query microphone permission')
+      return 'unknown'
+    }
+  })
+  const [videoPermissions, videoAction] = createResource(async () => {
+    if (!navigator.permissions.query) {
+      console.warn('Navigator permissions not supported')
+      return 'unknown'
+    }
+
+    try {
+      const status = await navigator.permissions.query({ name: 'camera' })
+      status.onchange = async (e) => {
+        videoAction.mutate((e.target as PermissionStatus).state)
+        await refetchDevices()
+      }
+      return status.state
+    } catch {
+      console.warn('Failed to query camera permission')
+      return 'unknown'
+    }
+  })
+
   const selectedAudioInputValue = createMemo(() => selectedDevices?.audioinput?.deviceId ?? '')
   const selectedAudioOutputValue = createMemo(() => selectedDevices?.audiooutput?.deviceId ?? '')
   const selectedVideoInputValue = createMemo(() => selectedDevices?.videoinput?.deviceId ?? '')
+
+  const hasEmptyAudioDevices = createMemo(() =>
+    devices()
+      .all.filter((d) => d.kind === 'audioinput' || d.kind === 'audiooutput')
+      .some((d) => d.deviceId === '' || d.label === ''),
+  )
+  const hasAudioPermissions = createMemo(() => audioPermissions() === 'granted' && hasEmptyAudioDevices() === false)
+  const showManualAudioPermissionsWarning = createMemo(
+    () => audioPermissions() === 'denied' || (audioPermissions() === 'granted' && hasEmptyAudioDevices()),
+  )
+  const needToCheckAudioPermissions = createMemo(
+    () =>
+      audioPermissions() === 'prompt' ||
+      audioPermissions() === 'unknown' ||
+      (audioPermissions() === 'granted' && hasEmptyAudioDevices()),
+  )
+
+  const hasEmptyVideoDevices = createMemo(() =>
+    devices()
+      .all.filter((d) => d.kind === 'videoinput')
+      .some((d) => d.deviceId === '' || d.label === ''),
+  )
+  const hasVideoPermissions = createMemo(() => videoPermissions() === 'granted' && hasEmptyVideoDevices() === false)
+  const showManualVideoPermissionsWarning = createMemo(
+    () => videoPermissions() === 'denied' || (videoPermissions() === 'granted' && hasEmptyVideoDevices()),
+  )
+  const needToCheckVideoPermissions = createMemo(
+    () =>
+      videoPermissions() === 'prompt' ||
+      videoPermissions() === 'unknown' ||
+      (videoPermissions() === 'granted' && hasEmptyVideoDevices()),
+  )
 
   createEffect(
     on(
@@ -68,27 +140,21 @@ export function createMediaDevices() {
       const storedDevicesLSData = localStorage.getItem(SELECTED_LS_KEY)
       const storedDevices = v.parse(StoredMediaDeviceInfoSchema, JSON.parse(storedDevicesLSData ?? '{}'))
 
-      console.log({ storedDevices })
       for (const kind of ['audioinput', 'audiooutput', 'videoinput'] as MediaDeviceKind[]) {
         const stored = storedDevices[kind]
         const dropdownList = devices().dropdown[kind]
 
-        console.log({ kind, stored, dropdownList })
         if (dropdownList.length === 0) {
           throw new Error(`No ${kind} devices available`)
         }
 
-        console.log(1)
         if (stored == null) {
           setSelectedDevices(kind, dropdownList[0]!)
           continue
         }
 
-        console.log(2)
         const existingDeviceIsDefault = stored.deviceId === 'default' || stored.label.startsWith('Default - ')
-        console.log({ existingDeviceIsDefault })
         if (existingDeviceIsDefault) {
-          console.log(3)
           const normalizedLabel = stored.label.replace('Default - ', '')
           const actualDevice = devices().all.find((d) => d.kind === kind && d.label === normalizedLabel)
           setSelectedDevices(kind, actualDevice ?? dropdownList[0] ?? ({ deviceId: '' } as MediaDeviceInfo))
@@ -96,39 +162,32 @@ export function createMediaDevices() {
         }
 
         const existingDeviceById = devices().all.find((d) => d.kind === kind && d.deviceId === stored.deviceId)
-        console.log(4)
         if (existingDeviceById) {
           setSelectedDevices(kind, existingDeviceById)
           continue
         }
 
-        console.log(5)
         const existingDeviceByLabel = devices().all.find((d) => d.kind === kind && d.label === stored.label)
         if (existingDeviceByLabel) {
           setSelectedDevices(kind, existingDeviceByLabel)
           continue
         }
 
-        console.log(6)
         const browserDefaultDevice = devices().all.find(
           (d) => d.kind === kind && (d.deviceId === 'default' || d.label.startsWith('Default - ')),
         )
         const normalizedLabel = browserDefaultDevice?.label.replace('Default - ', '')
         const actualDevice = devices().all.find((d) => d.kind === kind && d.label === normalizedLabel)
 
-        console.log(7)
         if (actualDevice) {
-          console.log(8)
           setSelectedDevices(kind, actualDevice)
           continue
         }
 
-        console.log(9)
         if (dropdownList.length === 0) {
           throw new Error(`No ${kind} devices available`)
         }
 
-        console.log(10)
         setSelectedDevices(kind, dropdownList[0]!)
       }
     } catch (error) {
@@ -138,16 +197,35 @@ export function createMediaDevices() {
 
   function setSelectedDevices(kind: MediaDeviceKind, device: MediaDeviceInfo) {
     _setSelectedDevices(kind, device)
-    localStorage.setItem(SELECTED_LS_KEY, JSON.stringify({ ...selectedDevices, [kind]: device }))
+    const realDevicesOrUndefined = Object.entries({ ...selectedDevices, [kind]: device }).reduce(
+      (acc, [deviceKind, d]) => {
+        acc[deviceKind as MediaDeviceKind] = d == null || d.deviceId === '' || d.label === '' ? undefined : d
+        return acc
+      },
+      {} as Record<MediaDeviceKind, MediaDeviceInfo | undefined>,
+    )
+    localStorage.setItem(SELECTED_LS_KEY, JSON.stringify(realDevicesOrUndefined))
   }
 
   return {
     devices,
     refetchDevices,
+    hasEmptyAudioDevices,
+    hasEmptyVideoDevices,
     selectedDevices,
     setSelectedDevices,
     selectedAudioInputValue,
     selectedAudioOutputValue,
     selectedVideoInputValue,
+    audioPermissions,
+    videoPermissions,
+    hasAudioPermissions,
+    hasVideoPermissions,
+    needToCheckAudioPermissions,
+    needToCheckVideoPermissions,
+    showManualAudioPermissionsWarning,
+    showManualVideoPermissionsWarning,
+    audioAction,
+    videoAction,
   }
 }

@@ -30,8 +30,8 @@ export function AudioButton(props: ParentProps<{ label: string; class?: string; 
             animate="scale-icon"
             class="h-10 aria-expanded:[&_svg]:rotate-z-180"
             disabled={rtc.audioPermissions() === 'denied'}
-            onClick={async () => {
-              await rtc.checkAudioPermissions()
+            onPressedChange={async (pressed) => {
+              if (pressed) await rtc.checkAudioPermissions()
             }}
           >
             {rtc.devices.loading ? <LoaderCircleIcon class="animate-spin" /> : <ChevronUpIcon />}
