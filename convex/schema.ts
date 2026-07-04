@@ -14,13 +14,16 @@ export default defineSchema({
   users: defineTable({
     // Clerk ID, stored in the subject JWT field
     externalId: v.string(),
-    eventBatches: v.array(userEvent),
-    x: v.number(),
-    y: v.number(),
     fullname: v.string(),
     avatar: v.optional(v.string()),
     isOnline: v.boolean(),
+    playerId: v.optional(v.id('user_players')),
   }).index('by_clerkId', ['externalId']),
+  user_players: defineTable({
+    x: v.number(),
+    y: v.number(),
+    eventBatches: v.array(userEvent),
+  }),
   chats: defineTable({}),
   chat_members: defineTable({
     chatId: v.id('chats'),

@@ -1,28 +1,28 @@
 import { api } from '@/convex/api'
-import type { Doc } from '@/convex/dataModel'
+import type { Id } from '@/convex/dataModel'
 import { useDraggable } from '@dnd-kit/solid'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { createMemo, splitProps, type Component, type JSX } from 'solid-js'
-import { Dynamic, Portal } from 'solid-js/web'
+import { createEffect, createMemo, Match, onCleanup, Show, Switch, type JSX } from 'solid-js'
+import { Portal } from 'solid-js/web'
 import { ChatPanel } from './ChatPanel'
 import { FloatingContext } from './FloatingContext'
 import { RtcPanel } from './rtc-panel/RtcPanel'
 
-const FLOATING_COMPONENTS: Record<Doc<'floating_panels'>['type'], Component<any>> = {
-  chat: ChatPanel,
-  rtc: RtcPanel,
-}
-
-export function FloatingPanel(props: Doc<'floating_panels'>) {
-  const [, rest] = splitProps(props, ['type'])
+export function FloatingPanel(props: { id: Id<'floating_panels'> }) {
   const deletePanel = useMutation(api.floatingPanels.remove)
+
+  const { data: panel } = useQuery(api.floatingPanels.findById, () => ({ id: props.id }))
+  const { data: position } = useQuery(
+    api.floatingPanels.position,
+    () => ({ id: panel()?.positionId as any }),
+    () => ({ enabled: panel()?.positionId != null, keepPreviousData: true }),
+  )
+
   const { draggable, ref, handleRef } = useDraggable({
     get id() {
-      return props.positionId
+      return panel()?.positionId ?? ''
     },
   })
-
-  const { data: position } = useQuery(api.floatingPanels.position, { id: props.positionId }, { keepPreviousData: true })
 
   const style = createMemo<JSX.CSSProperties>(() => {
     const p = position()
@@ -34,27 +34,37 @@ export function FloatingPanel(props: Doc<'floating_panels'>) {
   })
 
   return (
-    <Portal>
-      <FloatingContext.Provider
-        value={{
-          draggable,
-          handleRef,
-          floatingPanel: props,
-          closePanel() {
-            deletePanel.mutate({ floatingPanelId: props._id })
-          },
-        }}
-      >
-        <div
-          id={props.positionId}
-          ref={ref}
-          data-interactive="true"
-          class="shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-accent/10 focus-within:border-tint-accent/10 rounded-base  data-dnd-dragging:not-data-dnd-dropping:border-tint-accent/10 focus-within:shadow-shade-accent/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-accent/30 focus:shadow-shade-accent/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0"
-          style={style()}
-        >
-          <Dynamic component={FLOATING_COMPONENTS[props.type]} {...(rest as any)} />
-        </div>
-      </FloatingContext.Provider>
-    </Portal>
+    <Show when={panel()}>
+      {(p) => (
+        <Portal>
+          <FloatingContext.Provider
+            value={{
+              draggable,
+              handleRef,
+              closePanel() {
+                deletePanel.mutate({ floatingPanelId: p()._id })
+              },
+            }}
+          >
+            <div
+              id={p().positionId}
+              ref={ref}
+              data-interactive="true"
+              class="shadow-[0_0_5px_3px] shadow-transparent py-0! focus:border-tint-accent/10 focus-within:border-tint-accent/10 rounded-base  data-dnd-dragging:not-data-dnd-dropping:border-tint-accent/10 focus-within:shadow-shade-accent/30 data-dnd-dragging:not-data-dnd-dropping:shadow-shade-accent/30 focus:shadow-shade-accent/30 fixed top-0 left-0 z-1000 transition-[border,box-shadow] ease-out duration-100 data-dnd-dropping:duration-0"
+              style={style()}
+            >
+              <Switch>
+                <Match when={p().type === 'chat'}>
+                  <ChatPanel chatId={(p() as PanelTypeChat).chatId} />
+                </Match>
+                <Match when={p().type === 'rtc'}>
+                  <RtcPanel />
+                </Match>
+              </Switch>
+            </div>
+          </FloatingContext.Provider>
+        </Portal>
+      )}
+    </Show>
   )
 }

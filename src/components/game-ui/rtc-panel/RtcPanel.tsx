@@ -48,7 +48,7 @@ export namespace RtcPanel {
   export type Props = PanelTypeRTC
 }
 
-export function RtcPanel(_props: RtcPanel.Props) {
+export function RtcPanel() {
   const { data: callStatus } = useQuery(api.activeCall.status, {})
   const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})
   const { data: myRole } = useQuery(api.activeCall.myRole, {})

@@ -50,10 +50,6 @@ export function createMediaDevices() {
     },
   )
 
-  createEffect(() => {
-    console.log(devices())
-  })
-
   const [audioPermissions, audioAction] = createResource(async () => {
     if (!navigator.permissions.query) {
       console.warn('Navigator permissions not supported')

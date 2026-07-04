@@ -35,6 +35,8 @@ declare global {
     : Capitalize<S>
 
   type Kind = 'audio' | 'video'
+
+  type MaybeAccessor<T> = T | Accessor<T>
 }
 
 export {}

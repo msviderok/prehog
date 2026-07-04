@@ -1,5 +1,5 @@
 import { api } from '@/convex/api'
-import type { Doc } from '@/convex/dataModel'
+import type { Doc, Id } from '@/convex/dataModel'
 import { useCurrentUser } from '@/lib/integrations/convex-clerk'
 import { getNewPanelPosition } from '@/lib/utils'
 import { debounce, throttle } from '@solid-primitives/scheduled'
@@ -13,7 +13,7 @@ import { ChatMessages } from './ChatMessages'
 import { useFloatingContext } from './FloatingContext'
 import { UserCard } from './UserCard'
 
-export function ChatPanel(props: ChatPanel.Props) {
+export function ChatPanel(props: { chatId: Id<'chats'> }) {
   const { data: chat } = useQuery(api.chats.byId, { chatId: props.chatId })
   const { data: user } = useQuery(
     api.users.byChatId,
@@ -104,8 +104,4 @@ function ChatTextarea(props: Doc<'chats'>) {
       }}
     />
   )
-}
-
-export namespace ChatPanel {
-  export type Props = PanelTypeChat
 }

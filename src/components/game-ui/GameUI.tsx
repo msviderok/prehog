@@ -8,9 +8,10 @@ import { ActionBar } from './ActionBar'
 import { FloatingPanel } from './FloatingPanel'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { api } from '@/convex/api'
+import { useStableQuery } from '@/lib/hooks/useStableQuery'
 
 export function GameUI() {
-  const floatingPanels = useQuery(api.users.floatingPanels, {}, { initialData: [], keepPreviousData: true })
+  const floatingPanels = useStableQuery(api.users.floatingPanels, {}, { initialData: [] })
   const updatePosition = useMutation(api.floatingPanels.updatePosition)
 
   function updatePanelPosition(id: Id<'floating_panels_position'>, rect: Pick<DOMRect, 'left' | 'top'>) {
@@ -36,7 +37,7 @@ export function GameUI() {
       }}
     >
       <ActionBar />
-      <For each={floatingPanels.data()}>{(panel) => <FloatingPanel {...panel} />}</For>
+      <For each={floatingPanels.data()}>{(panel) => <FloatingPanel id={panel._id} />}</For>
     </DragDropProvider>
   )
 }

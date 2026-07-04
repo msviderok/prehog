@@ -5,32 +5,12 @@ import { cn } from '@/lib/utils'
 import { useQuery } from 'convex-solidjs'
 import { formatDate, isToday } from 'date-fns'
 import { ArrowDownLeftIcon, ArrowUpRightIcon, PhoneIcon, PhoneMissedIcon } from 'lucide-solid'
-import { createEffect, createMemo, For, on, Show, type Component, type ValidComponent } from 'solid-js'
-import { Dynamic } from 'solid-js/web'
+import { createEffect, createMemo, For, Match, on, Show, Switch } from 'solid-js'
 import { CardContent } from '../ui/card'
 
 type MessageType = 'chat' | 'last-message'
 type CallType = 'incoming' | 'outgoing'
 type Whos = 'mine' | 'their'
-
-const SYSTEM_MESSAGE: Record<MessageSystemCall['status'], Component<{ callType: CallType }>> = {
-  ended: (props) => (
-    <p>
-      <span class="flex gap-2 items-center relative">
-        <CallArrow callType={props.callType} />
-        <PhoneIcon class="size-3 relative -top-0.5 text-tint-muted/50" /> Call ended
-      </span>
-    </p>
-  ),
-  declined: (props) => (
-    <p>
-      <span class="flex gap-2 items-center relative">
-        <CallArrow callType={props.callType} />
-        <PhoneMissedIcon class="size-3 relative -top-0.5 text-tint-muted/50" /> Call declined
-      </span>
-    </p>
-  ),
-}
 
 export function ChatMessages(props: Doc<'chats'>) {
   let ref!: HTMLDivElement
@@ -58,7 +38,7 @@ export function ChatMessages(props: Doc<'chats'>) {
     >
       <div
         class={cn(
-          'grid auto-rows-auto min-h-full gap-0 *:[overflow-anchor:none]',
+          'grid auto-rows-auto min-h-full gap-px *:[overflow-anchor:none]',
 
           // ALL messages
           '*:max-w-[80%] *:p-1.5 *:px-3 *:rounded-lg *:text-white *:animate-in *:wrap-break-word *:[word-break:break-word] *:font-light',
@@ -84,28 +64,29 @@ export function ChatMessages(props: Doc<'chats'>) {
           // all messages in a group
           `*:data-[whos=mine]:bg-sky-800
           *:data-[whos=mine]:justify-self-end
-          *:data-[whos=mine]:rounded-bl-xs
+          *:data-[whos=mine]:rounded-bl-lg
           *:data-[whos=mine]:rounded-br-none`,
 
           // every "next" message
-          `[&_[data-whos=mine]+[data-whos=mine]]:rounded-l-xs
+          `[&_[data-whos=mine]+[data-whos=mine]]:rounded-l-lg
           [&_[data-whos=mine]+[data-whos=mine]]:rounded-r-none
           [&_[data-whos=mine]+[data-whos=mine]]:border-t
           [&_[data-whos=mine]+[data-whos=mine]]:border-sky-900`,
 
           // last message in a group
-          '[&_[data-whos=mine]:not(:has(+[data-whos=mine]))]:rounded-b-lg',
+          `[&_[data-whos=mine]:not(:has(+[data-whos=mine]))]:rounded-b-lg
+          [&_[data-whos=mine]:not(:has(+[data-whos=mine]))]:mb-2`,
 
           /* ––– THEIR MESSAGES ––– */
 
           // all messages in a group
           `*:data-[whos=their]:bg-slate-700
           *:data-[whos=their]:justify-self-start
-          *:data-[whos=their]:rounded-br-xs
+          *:data-[whos=their]:rounded-br-lg
           *:data-[whos=their]:rounded-bl-none`,
 
           // every "next" message
-          `[&_[data-whos=their]+[data-whos=their]]:rounded-r-xs
+          `[&_[data-whos=their]+[data-whos=their]]:rounded-r-lg
           [&_[data-whos=their]+[data-whos=their]]:rounded-l-none
           [&_[data-whos=their]+[data-whos=their]]:border-t
           [&_[data-whos=their]+[data-whos=their]]:border-slate-800`,
@@ -153,7 +134,25 @@ export function ChatMessage(props: { type: MessageType; message: Doc<'chat_messa
           fallback={(props.message as MessageDM).body}
         >
           {(status) => (
-            <Dynamic component={SYSTEM_MESSAGE[status()]} callType={whos() === 'mine' ? 'outgoing' : 'incoming'} />
+            <Switch>
+              <Match when={status() === 'ended'}>
+                <p>
+                  <span class="flex gap-2 items-center relative">
+                    <CallArrow callType={whos() === 'mine' ? 'outgoing' : 'incoming'} />
+                    <PhoneIcon class="size-3 relative -top-0.5 text-tint-muted/50" /> Call ended
+                  </span>
+                </p>
+              </Match>
+
+              <Match when={status() === 'declined'}>
+                <p>
+                  <span class="flex gap-2 items-center relative">
+                    <CallArrow callType={whos() === 'mine' ? 'outgoing' : 'incoming'} />
+                    <PhoneMissedIcon class="size-3 relative -top-0.5 text-tint-muted/50" /> Call declined
+                  </span>
+                </p>
+              </Match>
+            </Switch>
           )}
         </Show>
       </Show>

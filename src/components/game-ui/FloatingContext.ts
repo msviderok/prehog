@@ -1,9 +1,7 @@
-import type { Doc } from '@/convex/dataModel'
 import type { Draggable } from '@dnd-kit/dom'
 import { createContext, useContext, type Setter } from 'solid-js'
 
 interface FloatingContextValue {
-  floatingPanel: Doc<'floating_panels'>
   draggable: Draggable
   handleRef: Setter<Element | undefined>
   closePanel(): void

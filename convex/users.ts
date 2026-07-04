@@ -112,9 +112,6 @@ export const upsertFromClerk = internalMutation({
     if (user === null) {
       await ctx.db.insert('users', {
         externalId: data.id,
-        eventBatches: [],
-        x: 0,
-        y: 100,
         fullname: `${data.first_name} ${data.last_name}`,
         avatar: data.image_url,
         isOnline: false,

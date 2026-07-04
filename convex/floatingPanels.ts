@@ -19,6 +19,16 @@ export const create = mutation({
   },
 })
 
+export const findById = query({
+  args: {
+    id: v.id('floating_panels'),
+  },
+  handler: async (ctx, args) => {
+    const panel = await ctx.db.get('floating_panels', args.id)
+    return panel
+  },
+})
+
 export const remove = mutation({
   args: {
     floatingPanelId: v.id('floating_panels'),
