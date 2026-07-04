@@ -1,6 +1,8 @@
+import { UIAudio } from '@/lib/ui-audio'
 import { cn, defaultProps } from '@/lib/utils'
+import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { splitProps } from 'solid-js'
+import { createEffect, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 
 const buttonVariants = cva(
@@ -41,12 +43,64 @@ const buttonVariants = cva(
   },
 )
 
-type ExtraButtonProps = VariantProps<typeof buttonVariants>
+type ExtraButtonProps = VariantProps<typeof buttonVariants> & {
+  sound?:
+    | {
+        click?: UIAudio.SoundKey
+        tap?: UIAudio.SoundKey
+      }
+    | 'off'
+}
 
 function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
+  let ref!: HTMLButtonElement
   const props = defaultProps(componentProps, { variant: 'default', size: 'default', animate: 'default' })
-  const [local, rest] = splitProps(props, ['class', 'size', 'variant', 'animate'])
-  return <ButtonPrimitive data-slot="button" class={cn(buttonVariants(local))} {...rest} />
+  const [local, rest] = splitProps(props, ['class', 'size', 'variant', 'animate', 'ref', 'sound'])
+
+  async function onClick() {
+    if (local.sound === 'off') return
+    await ensureReady()
+    UIAudio.play(local.sound?.click ?? 'click')
+  }
+
+  async function onTap() {
+    if (local.sound === 'off') return
+    await ensureReady()
+    UIAudio.play(local.sound?.tap ?? 'click')
+  }
+
+  async function onMouseOver() {
+    if (local.sound === 'off') return
+    await ensureReady()
+    UIAudio.play('hover')
+  }
+
+  createEffect(() => {
+    if (local.sound === 'off') return
+
+    ref.addEventListener('click', onClick)
+    ref.addEventListener('touchstart', onTap)
+    ref.addEventListener('mouseover', onMouseOver)
+    return () => {
+      ref.removeEventListener('click', onClick)
+      ref.removeEventListener('touchstart', onTap)
+      ref.removeEventListener('mouseover', onMouseOver)
+    }
+  })
+
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      class={cn(buttonVariants(local))}
+      ref={(el) => {
+        if (props.ref) {
+          ;(props.ref as any)(el)
+        }
+        ref = el
+      }}
+      {...rest}
+    />
+  )
 }
 
 export { Button, buttonVariants, type ExtraButtonProps }

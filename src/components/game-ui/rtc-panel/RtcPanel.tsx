@@ -44,10 +44,6 @@ import {
 } from './useRtcHandlers'
 import { VideoButton } from './VideoButton'
 
-export namespace RtcPanel {
-  export type Props = PanelTypeRTC
-}
-
 export function RtcPanel() {
   const { data: callStatus } = useQuery(api.activeCall.status, {})
   const { data: theirUser } = useQuery(api.activeCall.findTheirUser, {})

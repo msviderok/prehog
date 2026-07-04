@@ -25,6 +25,7 @@
     "@tailwindcss/vite": "catalog:",
     "@tanstack/solid-router": "catalog:",
     "@tanstack/solid-start": "catalog:",
+    "@web-kits/audio": "catalog:",
     "class-variance-authority": "catalog:",
     "clerk-solidjs-tanstack-start": "catalog:",
     "clsx": "catalog:",

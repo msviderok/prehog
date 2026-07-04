@@ -28,6 +28,7 @@ catalog:
   '@total-typescript/ts-reset': ^0.6.1
   '@types/howler': ^2.2.13
   '@types/node': ^26.1.0
+  '@web-kits/audio': ^0.1.0
   class-variance-authority: ^0.7.1
   clerk-solidjs-tanstack-start: ^0.0.3
   clsx: ^2.1.1
