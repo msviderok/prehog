@@ -1,15 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v, Validator } from 'convex/values'
 
-export const userEvent = v.union(
-  v.object({
-    type: v.literal('move'),
-    x: v.number(),
-    y: v.number(),
-    timeSinceBatchStart: v.number(),
-  }),
-)
-
 export default defineSchema({
   users: defineTable({
     // Clerk ID, stored in the subject JWT field
@@ -17,13 +8,22 @@ export default defineSchema({
     fullname: v.string(),
     avatar: v.optional(v.string()),
     isOnline: v.boolean(),
-    playerId: v.optional(v.id('user_players')),
   }).index('by_clerkId', ['externalId']),
-  user_players: defineTable({
+  users_game_state: defineTable({
+    userId: v.id('users'),
     x: v.number(),
     y: v.number(),
-    eventBatches: v.array(userEvent),
-  }),
+    actions: v.array(
+      v.union(
+        v.object({
+          type: v.literal('move'),
+          x: v.number(),
+          y: v.number(),
+          timeSinceBatchStart: v.number(),
+        }),
+      ),
+    ),
+  }).index('by_user', ['userId']),
   chats: defineTable({}),
   chat_members: defineTable({
     chatId: v.id('chats'),

@@ -1,6 +1,6 @@
 import { api } from '@/convex/api'
 import type { Doc, Id } from '@/convex/dataModel'
-import { useCurrentUser } from '@/lib/integrations/convex-clerk'
+import { useCurrentUser } from '@/lib/convex-clerk'
 import { getNewPanelPosition } from '@/lib/utils'
 import { debounce, throttle } from '@solid-primitives/scheduled'
 import { useMutation, useQuery } from 'convex-solidjs'

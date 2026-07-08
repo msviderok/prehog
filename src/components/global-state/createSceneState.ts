@@ -1,17 +1,15 @@
 import type { PopoverContentPositionerProps } from '@/components/ui/popover'
-import { createEffect, onCleanup, onMount } from 'solid-js'
+import { batch, createEffect, onCleanup, onMount } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { createRectFromCoords, getGameContentHeight } from '../utils'
-import { GAME_CONTENT_HEIGHT_RATIO } from '../constants'
+import { createRectFromCoords, getGameContentHeight } from '../../lib/utils'
 
 export type SceneState = ReturnType<typeof createSceneState>
-export type SceneNode = SceneState['sceneState']['nodes'][number]
+export type SceneNode = SceneState['state']['nodes'][number]
 
-export function createSceneState() {
+export function createSceneState(props: { loaded: boolean; onLoaded: () => void }) {
   const [sceneState, setSceneState] = createStore({
     ref: null as unknown as HTMLElement,
-    originalWidth: 0,
-    originalHeight: 0,
+    originalSize: { width: 0, height: 0 },
     scale: 1,
     nodes: SCENE_NODES.map((node, idx) =>
       Object.assign(
@@ -37,8 +35,8 @@ export function createSceneState() {
     },
     get realSceneSize() {
       return {
-        width: this.originalWidth * this.scale,
-        height: Math.min(getGameContentHeight(), this.originalHeight),
+        width: this.originalSize.width * this.scale,
+        height: Math.min(getGameContentHeight(), this.originalSize.height),
       }
     },
   })
@@ -59,22 +57,16 @@ export function createSceneState() {
     root?.style.setProperty('--scale', `${sceneState.scale}`)
   })
 
-  function onWindowResize() {
-    setSceneState('scale', Math.min(getGameContentHeight() / sceneState.originalHeight, 1))
-  }
-
   onMount(() => {
-    queueMicrotask(onWindowResize)
-    window.addEventListener('resize', onWindowResize)
+    props.onLoaded()
     document.addEventListener('click', onCreateNode)
   })
 
   onCleanup(() => {
-    window.removeEventListener('resize', onWindowResize)
     document.removeEventListener('click', onCreateNode)
   })
 
-  return { sceneState, setSceneState }
+  return { state: sceneState, setState: setSceneState }
 }
 
 const SCENE_NODES = [

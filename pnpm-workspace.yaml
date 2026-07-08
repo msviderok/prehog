@@ -12,14 +12,14 @@ allowBuilds:
   msw: false
   utf-8-validate: false
 catalog:
-  '@clerk/backend': ^3.10.0
-  '@clerk/ui': ^1.24.1
+  '@clerk/backend': ^3.11.0
+  '@clerk/ui': ^1.24.2
   '@dnd-kit/abstract': 0.5.0
   '@dnd-kit/dom': 0.5.0
   '@dnd-kit/solid': 0.5.0
   '@msviderok/base-ui-solid': 1.0.0-beta.12
   '@solid-primitives/scheduled': ^1.5.3
-  '@solid-primitives/storage': ^4.3.4
+  '@solid-primitives/storage': ^4.3.5
   '@t3-oss/env-core': ^0.13.10
   '@tailwindcss/typography': ^0.5.20
   '@tailwindcss/vite': ^4.3.2
@@ -38,11 +38,13 @@ catalog:
   howler: ^2.2.4
   knip: ^6.24.0
   lucide-solid: ^1.23.0
+  motion: ^12.42.2
   nitro: 3.0.260610-beta
-  oxfmt: ^0.57.0
-  oxlint: ^1.72.0
-  shadcn: ^4.12.0
+  oxfmt: ^0.58.0
+  oxlint: ^1.73.0
+  shadcn: ^4.13.0
   solid-js: 1.9.14
+  solid-motionone: ^1.0.4
   svix: ^1.96.1
   tailwind-merge: ^3.6.0
   tailwindcss: ^4.3.2

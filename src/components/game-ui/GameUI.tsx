@@ -1,14 +1,14 @@
+import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
+import { useStableQuery } from '@/lib/useStableQuery'
 import { SnapModifier } from '@dnd-kit/abstract/modifiers'
 import { Feedback, PointerSensor } from '@dnd-kit/dom'
 import { RestrictToWindow } from '@dnd-kit/dom/modifiers'
 import { DragDropProvider } from '@dnd-kit/solid'
+import { useMutation } from 'convex-solidjs'
 import { For } from 'solid-js'
 import { ActionBar } from './ActionBar'
 import { FloatingPanel } from './FloatingPanel'
-import { useMutation, useQuery } from 'convex-solidjs'
-import { api } from '@/convex/api'
-import { useStableQuery } from '@/lib/hooks/useStableQuery'
 
 export function GameUI() {
   const floatingPanels = useStableQuery(api.users.floatingPanels, {}, { initialData: [] })

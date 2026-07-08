@@ -7,3 +7,6 @@ export const GAME_CONTENT_HEIGHT_RATIO = 0.6666
  */
 export const HAVE_AUDIO_OUTPUT_SELECTOR =
   typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype
+
+/* In "world units", 0 to 100 */
+export const INITIAL_PLAYER_POSITION = { x: 0, y: 85 }

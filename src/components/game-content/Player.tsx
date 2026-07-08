@@ -1,14 +1,13 @@
-import { api } from '@/convex/api'
-import { env } from '@/env'
-import { useQuery } from 'convex-solidjs'
+import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { createEffect, createMemo } from 'solid-js'
-import { useGlobalState } from '../GlobalStateContext'
+import { useGlobalState } from '../global-state/GlobalStateContext'
 
 export function Player() {
-  const { setPlayer, player, keyPressed } = useGlobalState()
+  const { player, keyboard } = useGlobalState()
+  const clerk = useClerk()
   const lastFacingDirection = createMemo((lastDirection) => {
-    if (!keyPressed.a && !keyPressed.d) return lastDirection
-    return keyPressed.a ? 'left' : 'right'
+    if (!keyboard.keyPressed.a && !keyboard.keyPressed.d) return lastDirection
+    return keyboard.keyPressed.a ? 'left' : 'right'
   }, 'right')
 
   createEffect(() => {
@@ -18,19 +17,13 @@ export function Player() {
 
   createEffect(() => {
     if (!player.ref) return
-    player.ref.classList.toggle('player-walk', keyPressed.d || keyPressed.a)
+    player.ref.classList.toggle('player-walk', keyboard.keyPressed.d || keyboard.keyPressed.a)
+    player.ref.classList.toggle('player-idle', !keyboard.keyPressed.d && !keyboard.keyPressed.a)
   })
 
-  if (env.VITE_OFFLINE === false) {
-    let hydrated = false
-    const { data } = useQuery(api.users.current, {})
-    createEffect(() => {
-      const d = data()
-      if (!d || hydrated) return
-      setPlayer({ x: d.x, y: d.y })
-      hydrated = true
-    })
-  }
-
-  return <span ref={(el) => setPlayer('ref', el)} class="player player-idle" />
+  return (
+    <div ref={player.setRef} class="player">
+      <span class="hat" />
+    </div>
+  )
 }

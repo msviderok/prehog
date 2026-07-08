@@ -1,18 +1,25 @@
 import { For, onMount, Show, type ParentProps } from 'solid-js'
-import { useGlobalState } from '../GlobalStateContext'
+import { useGlobalState } from '../global-state/GlobalStateContext'
 import { SceneNodes } from './SceneNodes'
+import { produce } from 'solid-js/store'
 
 export function MainScene(props: ParentProps<{}>) {
-  const { setSceneState, sceneState, debug } = useGlobalState()
+  let ref!: HTMLDivElement
+  const { scene, misc } = useGlobalState()
 
   onMount(() => {
-    const sceneRect = sceneState.ref.getBoundingClientRect()
-    setSceneState({ originalWidth: sceneRect.width, originalHeight: sceneRect.height })
+    const rect = ref.getBoundingClientRect()
+    scene.setState(
+      produce((state) => {
+        state.ref = ref
+        state.originalSize = { width: rect.width, height: rect.height }
+      }),
+    )
   })
 
   return (
     <div
-      ref={(el) => setSceneState('ref', el)}
+      ref={ref}
       class="relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated] brightness-100"
       style={{
         width: '6043px',
@@ -24,7 +31,7 @@ export function MainScene(props: ParentProps<{}>) {
         'background-position': 'top left',
       }}
     >
-      <Show when={debug()}>
+      <Show when={misc.debug()}>
         <XYNodes />
       </Show>
 
@@ -35,13 +42,13 @@ export function MainScene(props: ParentProps<{}>) {
 }
 
 function XYNodes() {
-  const { sceneState } = useGlobalState()
+  const { scene } = useGlobalState()
   return (
-    <For each={sceneState.nodes}>
+    <For each={scene.state.nodes}>
       {(i) => {
-        const x = () => i.x * sceneState.realSceneSize.width
-        const y = () => i.y * sceneState.realSceneSize.height
-        const size = () => sceneState.worldUnit.y * 1.5
+        const x = () => i.x * scene.state.realSceneSize.width
+        const y = () => i.y * scene.state.realSceneSize.height
+        const size = () => scene.state.worldUnit.y * 1.5
         return (
           <span
             class="absolute top-0 left-0 -translate-1/2 rounded-2xl bg-red-500 border-2 border-blue-500 cursor-pointer"

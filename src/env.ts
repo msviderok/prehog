@@ -19,7 +19,6 @@ export const env = createEnv({
   client: {
     VITE_CONVEX_URL: v.pipe(v.string(), v.url()),
     VITE_CLERK_PUBLISHABLE_KEY: v.pipe(v.string(), v.minLength(1)),
-    VITE_OFFLINE: v.optional(v.pipe(v.string(), v.toBoolean())),
   },
 
   /**

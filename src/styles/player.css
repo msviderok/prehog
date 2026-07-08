@@ -1,4 +1,55 @@
 @theme inline {
+  @keyframes hat-idle {
+    0%,
+    89.5% {
+      top: 0;
+    }
+
+    /* duck */
+    89.51%,
+    90.7% {
+      top: 2px;
+    }
+    90.71%,
+    91.8% {
+      top: 0px;
+    }
+
+    /* jump */
+    91.81%,
+    93% {
+      top: 2px;
+    }
+    93.01%,
+    94.15% {
+      top: 0px;
+    }
+    94.16%,
+    95.3% {
+      top: -7px;
+    }
+    95.31%,
+    96.3% {
+      top: -9px;
+    }
+    96.31%,
+    97% {
+      top: -11px;
+    }
+    97.01%,
+    97.7% {
+      top: -9px;
+    }
+    97.71%,
+    98.4% {
+      top: -5px;
+    }
+    98.41%,
+    100% {
+      top: 0px;
+    }
+  }
+
   @keyframes player-idle {
     from {
       background-position-x: 0;
@@ -17,11 +68,28 @@
   }
 }
 
+@utility hat {
+  background-image: url('../assets/sprites/hats/hats.png');
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: content-box;
+  background-position-y: 0;
+  background-position-x: calc(-1 * var(--size) * 6 + var(--hat-offset, 0));
+  image-rendering: pixelated;
+  width: var(--size);
+  height: var(--size);
+  background-repeat: no-repeat;
+  background-size: cover;
+  transform-origin: center bottom;
+}
+
 @utility player {
   --sprite-player-original-size: 300px;
   --size: round(nearest, calc(var(--sprite-player-original-size) * var(--scale)), 1px);
   --running-mod: 1;
   --facing-dir: 1;
+  --hat-offset: 5px;
 
   position: absolute;
   top: 0;
@@ -42,9 +110,18 @@
 
 @utility player-idle {
   background-image: url('../assets/sprites/main/idle.png');
-  animation: player-idle 10000ms steps(86) infinite;
+  animation: player-idle 5000ms steps(86) infinite;
+
+  & > .hat {
+    animation: hat-idle 5000ms steps(86) infinite;
+  }
 }
+
 @utility player-walk {
   background-image: url('../assets/sprites/main/walk.png');
   animation: player-walk calc(900ms / var(--running-mod, 1)) steps(11) infinite;
+
+  & > .hat {
+    --hat-offset: 3px;
+  }
 }

@@ -1,12 +1,10 @@
-import { GameContent } from '@/components/game-content/GameContent'
-import { GameUI } from '@/components/game-ui/GameUI'
-import { GlobalStateProvider } from '@/components/GlobalStateContext'
+import { GlobalStateProvider } from '@/components/global-state/GlobalStateContext'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { env } from '@/env'
-import { ConvexClerkProvider } from '@/lib/integrations/convex-clerk'
+import { ConvexClerkProvider } from '@/lib/convex-clerk'
 import { neobrutalism } from '@clerk/ui/themes'
-import { createFileRoute } from '@tanstack/solid-router'
-import { ClerkProvider, SignedIn, SignedOut, SignIn } from 'clerk-solidjs-tanstack-start'
+import { ClientOnly, createFileRoute } from '@tanstack/solid-router'
+import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 
 export const Route = createFileRoute('/')({
   component() {
@@ -21,19 +19,9 @@ export const Route = createFileRoute('/')({
           }}
         >
           <ConvexClerkProvider>
-            <SignedIn>
-              <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden">
-                <GlobalStateProvider>
-                  <GameContent />
-                  <GameUI />
-                </GlobalStateProvider>
-              </main>
-            </SignedIn>
-            <SignedOut>
-              <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden justify-center">
-                <SignIn />
-              </main>
-            </SignedOut>
+            <ClientOnly>
+              <GlobalStateProvider />
+            </ClientOnly>
           </ConvexClerkProvider>
         </ClerkProvider>
       </TooltipProvider>

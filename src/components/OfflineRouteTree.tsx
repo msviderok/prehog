@@ -11,7 +11,7 @@ import { Suspense } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
 import { GameContent } from './game-content/GameContent'
-import { GlobalStateProvider } from './GlobalStateContext'
+import { GlobalStateProvider } from './global-state/GlobalStateContext'
 import { PosthogJobApplication } from './PosthogJobApplication'
 
 const LayoutRoute = createRootRouteWithContext()({

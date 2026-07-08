@@ -1,9 +1,8 @@
 import { onCleanup, onMount } from 'solid-js'
 import { createStore } from 'solid-js/store'
 
-export type KeyPressedState = ReturnType<typeof createKeyPressedState>
-
-export function createKeyPressedState() {
+export type KeyPressedState = ReturnType<typeof createKeyboardState>
+export function createKeyboardState() {
   const [keyPressed, setKeyPressed] = createStore<{ w: boolean; s: boolean; a: boolean; d: boolean; shift: boolean }>({
     w: false,
     s: false,

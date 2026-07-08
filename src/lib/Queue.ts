@@ -1,29 +1,6 @@
-import { createEffect, on, onMount, type Accessor, type Setter, type Signal } from 'solid-js'
-
 export class Queue<T> {
-  private items: T[]
-  private head: number
-  private processedItems: Set<T>
-  // private reactiveItems: Accessor<T[]>
-
-  constructor(reactiveItemsSignal: Signal<T[]>) {
-    this.items = []
-    this.head = 0
-    this.processedItems = new Set()
-
-    // const [accessor] = reactiveItemsSignal
-
-    // createEffect(
-    //   on(accessor, (newItems) => {
-    //     for (const newItem of newItems) {
-    //       if (this.processedItems.has(newItem)) continue
-
-    //       this.processedItems.add(newItem)
-    //       this.push(newItem)
-    //     }
-    //   }),
-    // )
-  }
+  private items: T[] = []
+  private head = 0
 
   public push(item: T) {
     this.items.push(item)

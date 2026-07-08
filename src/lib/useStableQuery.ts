@@ -12,9 +12,9 @@ interface QueryReturn<T> {
   refetch: () => void
 }
 
-export const useStableQuery: typeof useQuery = <Query extends FunctionReference<'query'>>(
+export const useStableQuery = <Query extends FunctionReference<'query'>>(
   query: Query,
-  args: MaybeAccessor<FunctionArgs<Query>>,
+  args?: MaybeAccessor<FunctionArgs<Query>>,
   options?: MaybeAccessor<QueryOptions<FunctionReturnType<Query>>>,
 ): QueryReturn<FunctionReturnType<Query>> => {
   const [state, setState] = createStore<{ data: FunctionReturnType<Query> | undefined }>({ data: undefined })
