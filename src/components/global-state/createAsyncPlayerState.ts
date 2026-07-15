@@ -1,17 +1,23 @@
 import { api } from '@/convex/api'
-import { useMutation, useQuery } from 'convex-solidjs'
-import { batch, createEffect } from 'solid-js'
+import type { Hat } from '@/lib/constants'
+import { useClerk } from 'clerk-solidjs-tanstack-start'
+import { useQuery } from 'convex-solidjs'
+import { batch, createEffect, createMemo, createSignal, mergeProps, type Accessor } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import type { SceneState } from './createSceneState'
 
 export type PlayerState = ReturnType<typeof createAsyncPlayerState>
 export function createAsyncPlayerState(props: { loaded: boolean; onLoaded: () => void }) {
-  const [position, setPosition] = createStore({ x: 0, y: 0 })
+  let isAdmin!: Accessor<boolean>
+  const clerk = useClerk()
+  const state = { x: 0 }
   const [player, setPlayer] = createStore({
-    position,
-    setPosition,
     ref: null as unknown as HTMLElement,
+    hat: 'baseball' as Hat,
     size: 300,
+    sceneOffsetY: 0,
+    get isAdmin() {
+      return isAdmin()
+    },
     get rect() {
       return this.ref.getBoundingClientRect()
     },
@@ -20,8 +26,9 @@ export function createAsyncPlayerState(props: { loaded: boolean; onLoaded: () =>
     },
   })
 
-  const createGameState = useMutation(api.usersGameState.create)
-  const { data: myInitialPosition } = useQuery(api.usersGameState.findMyInitialPosition, {}, () => ({
+  isAdmin = createMemo(() => !!clerk()?.user?.publicMetadata?.isAdmin)
+
+  const { data: myInitialPosition } = useQuery(api.gameState.findMyPosition, {}, () => ({
     enabled: props.loaded === false,
   }))
 
@@ -34,27 +41,16 @@ export function createAsyncPlayerState(props: { loaded: boolean; onLoaded: () =>
     /* If the initial position is undefined – it hasn't been fetched yet  */
     if (pos === undefined) return
 
-    /**
-     * If the initial position is null – there is no state for the user created yet.
-     * Then we need to create it and wait for this effect to rerun;
-     */
-    if (pos === null) {
-      createGameState.mutate({})
-      return
-    }
-
     batch(() => {
-      setPosition(pos)
+      state.x = pos.x
+      setPlayer('sceneOffsetY', pos.y)
       props.onLoaded()
     })
   })
 
-  return player
-}
+  createEffect(() => {
+    if (player.isAdmin) setPlayer('hat', 'admin' as Hat)
+  })
 
-export function getPlayerRealPosition(position: PlayerState['position'], scene: SceneState['state']) {
-  return {
-    x: position.x * scene.worldUnit.x,
-    y: position.y * scene.worldUnit.y,
-  }
+  return mergeProps(player, { mutableState: state })
 }

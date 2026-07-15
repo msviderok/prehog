@@ -13,16 +13,18 @@ import type * as callParticipants from "../callParticipants.js";
 import type * as calls from "../calls.js";
 import type * as chatMembers from "../chatMembers.js";
 import type * as chats from "../chats.js";
+import type * as clerk from "../clerk.js";
 import type * as floatingPanels from "../floatingPanels.js";
+import type * as gameState from "../gameState.js";
+import type * as heartbeats from "../heartbeats.js";
 import type * as helpers from "../helpers.js";
 import type * as http from "../http.js";
 import type * as model_calls from "../model/calls.js";
 import type * as model_chats from "../model/chats.js";
 import type * as model_floatingPanels from "../model/floatingPanels.js";
 import type * as model_users from "../model/users.js";
-import type * as model_usersGameState from "../model/usersGameState.js";
+import type * as presence from "../presence.js";
 import type * as users from "../users.js";
-import type * as usersGameState from "../usersGameState.js";
 
 import type {
   ApiFromModules,
@@ -36,16 +38,18 @@ declare const fullApi: ApiFromModules<{
   calls: typeof calls;
   chatMembers: typeof chatMembers;
   chats: typeof chats;
+  clerk: typeof clerk;
   floatingPanels: typeof floatingPanels;
+  gameState: typeof gameState;
+  heartbeats: typeof heartbeats;
   helpers: typeof helpers;
   http: typeof http;
   "model/calls": typeof model_calls;
   "model/chats": typeof model_chats;
   "model/floatingPanels": typeof model_floatingPanels;
   "model/users": typeof model_users;
-  "model/usersGameState": typeof model_usersGameState;
+  presence: typeof presence;
   users: typeof users;
-  usersGameState: typeof usersGameState;
 }>;
 
 /**
@@ -74,4 +78,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
+};

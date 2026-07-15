@@ -4,6 +4,6 @@
   "workspaces": {
     ".": {}
   },
-  "include": ["dependencies", "devDependencies", "catalog", "optionalPeerDependencies", "files"],
+  "include": ["dependencies", "devDependencies", "catalog", "optionalPeerDependencies", "files", "exports"],
   "ignore": ["convex/auth.convex.ts", "shadcn-solid.config.ts"]
 }

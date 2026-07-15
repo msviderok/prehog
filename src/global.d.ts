@@ -14,6 +14,8 @@ declare global {
   type CallRtcMessageAnswer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
   type CallRtcMessageIceCandidate = Extract<Doc<'call_rtc_messages'>, { type: 'ice-candidate' }>
 
+  type GameEvent = Doc<'game_event_batches'>['batch'][0]
+
   type KebabToPascal<S extends string> = S extends `${infer Head}-${infer Tail}`
     ? `${Capitalize<Head>}${KebabToPascal<Tail>}`
     : Capitalize<S>

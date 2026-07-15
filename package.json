@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@clerk/ui": "catalog:",
+    "@convex-dev/crons": "catalog:",
     "@dnd-kit/abstract": "catalog:",
     "@dnd-kit/dom": "catalog:",
     "@dnd-kit/solid": "catalog:",
@@ -30,6 +31,7 @@
     "clerk-solidjs-tanstack-start": "catalog:",
     "clsx": "catalog:",
     "convex": "catalog:",
+    "convex-helpers": "catalog:",
     "convex-solidjs": "catalog:",
     "date-fns": "catalog:",
     "howler": "catalog:",

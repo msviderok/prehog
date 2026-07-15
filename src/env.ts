@@ -6,6 +6,7 @@ export const env = createEnv({
   server: {
     CLERK_SECRET_KEY: v.optional(v.pipe(v.string(), v.minLength(1))),
     CLERK_JWT_ISSUER_DOMAIN: v.optional(v.pipe(v.string(), v.url())),
+    ADMIN_ID: v.optional(v.pipe(v.string(), v.minLength(1))),
   },
 
   extends: [vercel()],

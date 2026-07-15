@@ -1,6 +1,7 @@
 import { onCleanup, onMount } from 'solid-js'
 import { defaultProps } from './utils'
 
+// const TICK = 1000 // 60 fps;
 const TICK = 16.66666666 // 60 fps;
 
 export function createGameLoop(options: { autostart?: boolean; fn: (timestamp: number) => void }) {

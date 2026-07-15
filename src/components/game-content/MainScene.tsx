@@ -5,7 +5,7 @@ import { produce } from 'solid-js/store'
 
 export function MainScene(props: ParentProps<{}>) {
   let ref!: HTMLDivElement
-  const { scene, misc } = useGlobalState()
+  const { scene } = useGlobalState()
 
   onMount(() => {
     const rect = ref.getBoundingClientRect()
@@ -31,7 +31,7 @@ export function MainScene(props: ParentProps<{}>) {
         'background-position': 'top left',
       }}
     >
-      <Show when={misc.debug()}>
+      <Show when={false}>
         <XYNodes />
       </Show>
 

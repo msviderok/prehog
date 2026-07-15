@@ -10,6 +10,7 @@ import {
   Match,
   on,
   onCleanup,
+  onMount,
   Show,
   Switch,
   useContext,
@@ -21,17 +22,17 @@ import { GameContent } from '../game-content/GameContent'
 import { GameUI } from '../game-ui/GameUI'
 import { createAsyncPlayerState } from './createAsyncPlayerState'
 import { createKeyboardState } from './createKeyboardState'
-import { createMiscState } from './createMiscState'
 import { createRtcState } from './createRtcState'
 import { createSceneState } from './createSceneState'
+import { createOnlineUsersState } from './createOnlineUsersState'
 
 type LoadStatus = 'signed-out' | 'loading-clerk' | 'loading-game-state' | 'signed-in'
 
 const GlobalStateContext = createContext<{
   keyboard: ReturnType<typeof createKeyboardState>
   player: ReturnType<typeof createAsyncPlayerState>
+  onlineUsers: ReturnType<typeof createOnlineUsersState>
   scene: ReturnType<typeof createSceneState>
-  misc: ReturnType<typeof createMiscState>
   rtc: ReturnType<typeof createRtcState>
   loadStatus: Accessor<LoadStatus>
 }>()
@@ -50,8 +51,8 @@ export function GlobalStateProvider() {
 
   /** Locally managed state that doesn't have to be fetched from Convex. */
   const keyboardState = createKeyboardState()
-  const miscState = createMiscState()
   const rtcState = createRtcState()
+  const onlineUsersState = createOnlineUsersState()
 
   /** Convex-bounded state that is required to show the proper loading screen state. */
   const [loadedState, setLoadedState] = createStore({ player: false, scene: false })
@@ -81,10 +82,6 @@ export function GlobalStateProvider() {
     playerState.ref?.style.setProperty('--running-mod', `${keyboardState.keyPressed.shift ? 2.5 : 1}`)
   })
 
-  createEffect(() => {
-    document.body.classList.toggle('debug', miscState.debug())
-  })
-
   function onWindowResize() {
     sceneState.setState('scale', Math.min(getGameContentHeight() / sceneState.state.originalSize.height, 1))
   }
@@ -101,13 +98,21 @@ export function GlobalStateProvider() {
     }),
   )
 
+  onMount(() => {
+    console.log('GAME MOUNT')
+  })
+
+  onCleanup(() => {
+    console.log('GAME CLEANUP')
+  })
+
   return (
     <GlobalStateContext.Provider
       value={{
         keyboard: keyboardState,
-        misc: miscState,
         scene: sceneState,
         player: playerState,
+        onlineUsers: onlineUsersState,
         rtc: rtcState,
         loadStatus,
       }}

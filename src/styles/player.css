@@ -58,12 +58,22 @@
       background-position-x: calc(-1 * var(--size) * 86);
     }
   }
+
   @keyframes player-walk {
     from {
       background-position-x: 0;
     }
     to {
       background-position-x: calc(-1 * var(--size) * 11);
+    }
+  }
+
+  @keyframes player-admin-hue {
+    from {
+      filter: hue-rotate(0deg);
+    }
+    to {
+      filter: hue-rotate(calc(360deg * var(--is-admin, 0)));
     }
   }
 }
@@ -75,7 +85,7 @@
   left: 0;
   box-sizing: content-box;
   background-position-y: 0;
-  background-position-x: calc(-1 * var(--size) * 6 + var(--hat-offset, 0));
+  background-position-x: calc(-1 * var(--size) * var(--hat-index, 0) + var(--hat-offset, 0));
   image-rendering: pixelated;
   width: var(--size);
   height: var(--size);
@@ -89,7 +99,10 @@
   --size: round(nearest, calc(var(--sprite-player-original-size) * var(--scale)), 1px);
   --running-mod: 1;
   --facing-dir: 1;
-  --hat-offset: 5px;
+  --hat-offset: 3px;
+  --animation-speed: 7000ms;
+  --hue-speed: 500ms;
+  --ty: var(--scene-player-offset-y);
 
   position: absolute;
   top: 0;
@@ -103,25 +116,34 @@
   background-size: cover;
   translate: -50% -50%;
   transform-origin: center bottom;
+  will-change: transform;
   transform: translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0)) rotateX(var(--rx, 0)) rotateY(var(--ry, 0))
     rotateZ(var(--rz, 0)) skewX(calc(var(--skx, 0deg) * var(--running-mod, 1))) skewY(var(--sky, 0deg))
     scale3d(calc(var(--sx, 1) * var(--facing-dir, 1)), var(--sy, 1), var(--sz, 1));
+
+  &[data-is-admin='true'] {
+    --is-admin: 1;
+  }
 }
 
 @utility player-idle {
   background-image: url('../assets/sprites/main/idle.png');
-  animation: player-idle 5000ms steps(86) infinite;
+  animation:
+    player-idle var(--animation-speed) steps(86) infinite,
+    player-admin-hue var(--hue-speed) infinite;
 
   & > .hat {
-    animation: hat-idle 5000ms steps(86) infinite;
+    animation: hat-idle var(--animation-speed) steps(86) infinite;
   }
 }
 
 @utility player-walk {
   background-image: url('../assets/sprites/main/walk.png');
-  animation: player-walk calc(900ms / var(--running-mod, 1)) steps(11) infinite;
+  animation:
+    player-walk calc(900ms / var(--running-mod, 1)) steps(11) infinite,
+    player-admin-hue var(--hue-speed) infinite;
 
   & > .hat {
-    --hat-offset: 3px;
+    --hat-offset: 0px;
   }
 }

@@ -1,7 +1,8 @@
 import type { PopoverContentPositionerProps } from '@/components/ui/popover'
-import { batch, createEffect, onCleanup, onMount } from 'solid-js'
+import { createEffect, onCleanup, onMount } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { createRectFromCoords, getGameContentHeight } from '../../lib/utils'
+import { createRectFromCoords, getGameContentHeight, getPlayerRealPosition } from '../../lib/utils'
+import { SCENE_PLAYER_OFFSET_Y } from '@/lib/constants'
 
 export type SceneState = ReturnType<typeof createSceneState>
 export type SceneNode = SceneState['state']['nodes'][number]
@@ -55,6 +56,12 @@ export function createSceneState(props: { loaded: boolean; onLoaded: () => void 
   createEffect(() => {
     const root = document.documentElement
     root?.style.setProperty('--scale', `${sceneState.scale}`)
+  })
+
+  createEffect(() => {
+    const root = document.documentElement
+    const offsetY = getPlayerRealPosition(SCENE_PLAYER_OFFSET_Y, sceneState.worldUnit.y)
+    root?.style.setProperty('--scene-player-offset-y', `${offsetY}px`)
   })
 
   onMount(() => {

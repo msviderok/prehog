@@ -1,3 +1,4 @@
+import { asyncMap } from 'convex-helpers'
 import { Doc, Id } from '../_generated/dataModel'
 import { type MutationCtx, type QueryCtx } from '../_generated/server'
 import { type PanelTypeChat, type PanelTypeRTC } from '../helpers'
@@ -32,30 +33,26 @@ export async function getMyFloatingPanel(
   }
 }
 
-export async function getFloatingPanel(
-  ctx: QueryCtx | MutationCtx,
-  args: Pick<PanelTypeChat, 'type' | 'chatId' | 'userId'> | Pick<PanelTypeRTC, 'type' | 'callId' | 'userId'>,
-) {
-  switch (args.type) {
-    case 'chat':
-      return ctx.db
-        .query('floating_panels')
-        .withIndex('by_user_chat', (q) => q.eq('userId', args.userId).eq('chatId', args.chatId))
-        .unique()
-    case 'rtc':
-      return ctx.db
-        .query('floating_panels')
-        .withIndex('by_user_call', (q) => q.eq('userId', args.userId).eq('callId', args.callId))
-        .unique()
-  }
-}
-
 export async function createNewPanel(
   ctx: MutationCtx,
   args: Pick<Doc<'floating_panels_position'>, 'x' | 'y'> &
     (Pick<PanelTypeChat, 'type' | 'chatId' | 'userId'> | Pick<PanelTypeRTC, 'type' | 'callId' | 'userId'>),
 ) {
-  await cleanupExistingPanelIfExists(ctx, args)
+  const existingRtcPanel =
+    args.type === 'chat'
+      ? await ctx.db
+          .query('floating_panels')
+          .withIndex('by_user_chat', (q) => q.eq('userId', args.userId).eq('chatId', args.chatId))
+          .unique()
+      : await ctx.db
+          .query('floating_panels')
+          .withIndex('by_user_call', (q) => q.eq('userId', args.userId).eq('callId', args.callId))
+          .unique()
+
+  if (existingRtcPanel) {
+    await ctx.db.delete('floating_panels', existingRtcPanel._id)
+    await ctx.db.delete('floating_panels_position', existingRtcPanel.positionId)
+  }
 
   const zIndex = await getNextHighestLayer(ctx)
   const positionId = await ctx.db.insert('floating_panels_position', { zIndex, x: args.x, y: args.y })
@@ -71,38 +68,36 @@ export async function createNewPanel(
   return panel
 }
 
-export async function deletePanel(ctx: MutationCtx, panel: Doc<'floating_panels'> | Doc<'floating_panels'>[]) {
-  if (Array.isArray(panel)) {
-    for (const p of panel) {
+export async function deletePanelsForCall(ctx: MutationCtx, callId: Id<'calls'>) {
+  await asyncMap(
+    await ctx.db
+      .query('floating_panels')
+      .withIndex('by_call', (q) => q.eq('callId', callId))
+      .collect(),
+    async (p) => {
       await ctx.db.delete(p.positionId)
       await ctx.db.delete(p._id)
-    }
-  } else {
-    await ctx.db.delete(panel.positionId)
-    await ctx.db.delete(panel._id)
-  }
+    },
+  )
 }
 
-export async function deletePanelsForCall(ctx: MutationCtx, callId: Id<'calls'>) {
-  const panels = await ctx.db
-    .query('floating_panels')
-    .withIndex('by_call', (q) => q.eq('callId', callId))
-    .collect()
-  await Promise.all(panels.map((p) => deletePanel(ctx, p)))
+export async function deletePanelsForUser(ctx: MutationCtx, userId: Id<'users'>) {
+  await asyncMap(
+    await ctx.db
+      .query('floating_panels')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .collect(),
+    async (p) => {
+      await ctx.db.delete('floating_panels', p._id)
+      await ctx.db.delete('floating_panels_position', p.positionId)
+    },
+  )
 }
 
 export async function deletePanelById(ctx: MutationCtx, panelId: Id<'floating_panels'>) {
   const panel = await ctx.db.get(panelId)
-  if (panel) await deletePanel(ctx, panel)
-}
-
-export async function cleanupExistingPanelIfExists(
-  ctx: MutationCtx,
-  args: Pick<PanelTypeChat, 'type' | 'chatId' | 'userId'> | Pick<PanelTypeRTC, 'type' | 'callId' | 'userId'>,
-) {
-  const existingRtcPanel = await getFloatingPanel(ctx, args)
-  if (existingRtcPanel) {
-    await ctx.db.delete('floating_panels', existingRtcPanel._id)
-    await ctx.db.delete('floating_panels_position', existingRtcPanel.positionId)
+  if (panel) {
+    await ctx.db.delete(panel.positionId)
+    await ctx.db.delete(panel._id)
   }
 }

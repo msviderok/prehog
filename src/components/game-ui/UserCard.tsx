@@ -66,7 +66,7 @@ function LastActivity(props: { chat: Doc<'chats'>; user: Doc<'users'> } & Varian
       const msg = lastMessage()
       if (!msg) return null
       const days = differenceInCalendarDays(new Date(), msg._creationTime)
-      return formatDate(msg._creationTime, days === 0 ? 'HH:mm' : days < 7 ? 'EEE' : 'dd.MM.YYYY')
+      return formatDate(msg._creationTime, days === 0 ? 'HH:mm' : days < 7 ? 'EEE' : 'dd.MM.yyyy')
     })
     return (
       <Show when={lastMessage()}>

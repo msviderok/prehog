@@ -1,67 +1,98 @@
+import { UserJSON } from '@clerk/backend'
 import { Id } from '../_generated/dataModel'
 import { MutationCtx, QueryCtx } from '../_generated/server'
+import { INITIAL_PLAYER_POSITION } from '../../src/lib/constants'
+import { asyncMap } from 'convex-helpers'
+import * as Calls from './calls'
+import * as FloatingPanels from './floatingPanels'
 
+/** @throws */
 export async function getCurrentUser(ctx: QueryCtx) {
   const identity = await ctx.auth.getUserIdentity()
   if (identity === null) {
     throw new Error('Not authenticated via Clerk')
   }
 
-  const user = await userByExternalId(ctx, identity.subject)
+  const user = await getUserByExternalId(ctx, identity.subject)
   if (!user) throw new Error("Can't get current user")
 
   return user
 }
 
-export async function userByExternalId(ctx: QueryCtx, externalId: string) {
-  return await ctx.db
+export async function findCurrentUser(ctx: QueryCtx) {
+  const identity = await ctx.auth.getUserIdentity()
+  if (identity === null) return null
+
+  const user = await getUserByExternalId(ctx, identity.subject)
+  if (!user) return null
+
+  return user
+}
+
+/** Get a user by their external ID (Clerk subject) */
+export async function getUserByExternalId(ctx: QueryCtx, externalId: string) {
+  const user = await ctx.db
     .query('users')
     .withIndex('by_clerkId', (q) => q.eq('externalId', externalId))
     .unique()
+  if (!user) throw new Error(`User not found by externalId: ${externalId}`)
+  return user
 }
 
-export async function getOnline(ctx: QueryCtx, userId: Id<'users'>) {
+export async function ensureUserExists(ctx: MutationCtx, userData: UserJSON | { clerkUserId: string }) {
+  const hasUserData = 'id' in userData
+  const clerkUserId = hasUserData ? userData.id : userData.clerkUserId
   const user = await ctx.db
     .query('users')
-    .withIndex('by_id', (q) => q.eq('_id', userId))
+    .withIndex('by_clerkId', (q) => q.eq('externalId', clerkUserId))
     .unique()
-  if (!user) throw new Error('User not found')
-  return user.isOnline
+
+  if (user) return
+
+  const newHeartbeatId = await ctx.db.insert('heartbeats', { lastSeen: Date.now() })
+  const newPresenceId = await ctx.db.insert('presence', { isOnline: false, heartbeatId: newHeartbeatId })
+  const newGameEventBatchId = await ctx.db.insert('game_event_batches', { batch: [] })
+  const newGameUserPositionId = await ctx.db.insert('game_user_positions', { x: INITIAL_PLAYER_POSITION.x })
+  const newGameUserStateId = await ctx.db.insert('game_user_state', {
+    isWalking: false,
+    movementDir: 'right',
+    y: INITIAL_PLAYER_POSITION.y,
+  })
+
+  await ctx.db.insert('users', {
+    externalId: clerkUserId,
+    presenceId: newPresenceId,
+    gameEventBatchesId: newGameEventBatchId,
+    gameUserPositionId: newGameUserPositionId,
+    gameUserStateId: newGameUserStateId,
+    fullname: hasUserData ? `${userData.first_name} ${userData.last_name}` : 'Unknown User',
+    avatar: hasUserData ? userData.image_url : undefined,
+  })
 }
 
-export async function cleanupUserActivity(ctx: MutationCtx, userId: Id<'users'>) {
-  const members = await ctx.db
-    .query('chat_members')
-    .withIndex('by_user', (q) => q.eq('userId', userId))
-    .collect()
-  const typingMembers = members.filter((m) => m.isTyping)
-  await Promise.all(typingMembers.map((m) => ctx.db.patch('chat_members', m._id, { isTyping: false })))
+export async function eraseUserFromExistence(ctx: MutationCtx, externalId: string) {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_clerkId', (q) => q.eq('externalId', externalId))
+    .unique()
+  if (!user) return
 
-  const callParticipants = await ctx.db
-    .query('call_participants')
-    .withIndex('by_user', (q) => q.eq('userId', userId))
-    .collect()
+  await ctx.db.delete('users', user._id)
+  await ctx.db.delete('game_event_batches', user.gameEventBatchesId)
+  await ctx.db.delete('game_user_positions', user.gameUserPositionId)
 
-  for (const { callId } of callParticipants) {
-    const allParticipants = await ctx.db
-      .query('call_participants')
-      .withIndex('by_call', (q) => q.eq('callId', callId))
-      .collect()
-    await Promise.all(allParticipants.map((p) => ctx.db.delete('call_participants', p._id)))
+  const presence = (await ctx.db.get('presence', user.presenceId))!
+  await ctx.db.delete('presence', presence._id)
+  await ctx.db.delete('heartbeats', presence.heartbeatId)
 
-    const callRtcMessages = await ctx.db
-      .query('call_rtc_messages')
-      .withIndex('by_call', (q) => q.eq('callId', callId))
-      .collect()
-    await Promise.all(callRtcMessages.map((m) => ctx.db.delete('call_rtc_messages', m._id)))
+  await asyncMap(
+    await ctx.db
+      .query('chat_members')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect(),
+    async (m) => await ctx.db.delete('chat_members', m._id),
+  )
 
-    const floatingPanels = await ctx.db
-      .query('floating_panels')
-      .withIndex('by_call', (q) => q.eq('callId', callId))
-      .collect()
-    await Promise.all(floatingPanels.map((p) => ctx.db.delete('floating_panels', p._id)))
-    await Promise.all(floatingPanels.map((p) => ctx.db.delete('floating_panels_position', p.positionId)))
-
-    await ctx.db.delete('calls', callId)
-  }
+  await Calls.cleanupUserCalls(ctx, { userId: user._id })
+  await FloatingPanels.deletePanelsForUser(ctx, user._id)
 }

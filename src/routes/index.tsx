@@ -7,6 +7,7 @@ import { ClientOnly, createFileRoute } from '@tanstack/solid-router'
 import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
 
 export const Route = createFileRoute('/')({
+  ssr: false,
   component() {
     return (
       <TooltipProvider>

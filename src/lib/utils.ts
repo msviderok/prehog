@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
-import { children, mergeProps, type JSX } from 'solid-js'
+import { children, mergeProps, onMount, type JSX } from 'solid-js'
 import { twMerge } from 'tailwind-merge'
 import { GAME_CONTENT_HEIGHT_RATIO } from './constants'
 
@@ -104,4 +104,12 @@ export function getNewPanelPosition(target: Element | EventTarget | null) {
 
 export function getGameContentHeight() {
   return window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
+}
+
+export function getPlayerRealPosition(n: number, worldUnit: number) {
+  return n * worldUnit
+}
+
+export function fastRound(n: number) {
+  return Math.round((n + Number.EPSILON) * 100) / 100
 }

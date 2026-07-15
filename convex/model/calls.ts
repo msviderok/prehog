@@ -2,6 +2,7 @@ import { Doc, Id } from '../_generated/dataModel'
 import { type MutationCtx, type QueryCtx } from '../_generated/server'
 import * as Users from './users'
 import * as FloatingPanels from './floatingPanels'
+import { asyncMap } from 'convex-helpers'
 
 async function findCall(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
   const call = await ctx.db
@@ -56,12 +57,6 @@ export async function getMyCurrentCall(ctx: QueryCtx | MutationCtx) {
   return { call, user, myParticipant, theirUser, theirParticipant, isHost, isParticipant }
 }
 
-export async function getMyCurrentActiveParticipant(ctx: QueryCtx | MutationCtx) {
-  const user = await Users.getCurrentUser(ctx)
-  const participant = getActiveParticipantByUser(ctx, user._id)
-  return participant
-}
-
 export async function getActiveParticipantByUser(ctx: QueryCtx | MutationCtx, userId: Id<'users'>) {
   const participant = await ctx.db
     .query('call_participants')
@@ -106,19 +101,12 @@ export async function createNewCallWithCleanup(
   const user = await ctx.db.get(args.fromUserId)
   if (!user) throw new Error('User not found')
 
-  const myCallParticipant = await getMyCurrentActiveParticipant(ctx)
+  const myCallParticipant = await getActiveParticipantByUser(ctx, user._id)
   if (myCallParticipant) throw new Error('You are already on call')
 
   const existingCallParticipant = await getActiveParticipantByUser(ctx, args.toUserId)
   if (existingCallParticipant) throw new Error('User is already on call')
 
-  await createNewCall(ctx, args)
-}
-
-export async function createNewCall(
-  ctx: MutationCtx,
-  args: { fromUserId: Id<'users'>; toUserId: Id<'users'>; x: number; y: number },
-) {
   const newCallId = await ctx.db.insert('calls', {
     fromUserId: args.fromUserId,
     toUserId: args.toUserId,
@@ -164,4 +152,48 @@ export async function isCurrentCallEstablished(ctx: QueryCtx | MutationCtx) {
   const offerClaimed = messages.find((message) => message.type === 'offer' && message.claimed)
   const answerClaimed = messages.find((message) => message.type === 'answer' && message.claimed)
   return !!(offerClaimed && answerClaimed)
+}
+
+export async function cleanupUserCalls(ctx: MutationCtx, args: { userId: Id<'users'>; closeFloatingPanels?: boolean }) {
+  const user = await ctx.db.get('users', args.userId)
+  if (!user) return
+
+  await asyncMap(
+    await ctx.db
+      .query('call_participants')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect(),
+    async ({ callId }) => {
+      await ctx.db.delete('calls', callId)
+
+      await asyncMap(
+        await ctx.db
+          .query('call_participants')
+          .withIndex('by_call', (q) => q.eq('callId', callId))
+          .collect(),
+        (p) => ctx.db.delete('call_participants', p._id),
+      )
+
+      await asyncMap(
+        await ctx.db
+          .query('call_rtc_messages')
+          .withIndex('by_call', (q) => q.eq('callId', callId))
+          .collect(),
+        (m) => ctx.db.delete('call_rtc_messages', m._id),
+      )
+
+      if (args.closeFloatingPanels) {
+        await asyncMap(
+          await ctx.db
+            .query('floating_panels')
+            .withIndex('by_call', (q) => q.eq('callId', callId))
+            .collect(),
+          async (p) => {
+            await ctx.db.delete('floating_panels', p._id)
+            await ctx.db.delete('floating_panels_position', p.positionId)
+          },
+        )
+      }
+    },
+  )
 }

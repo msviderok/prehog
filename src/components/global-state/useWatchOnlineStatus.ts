@@ -1,41 +1,37 @@
 import { api } from '@/convex/api'
-import { useConvexClerkAuth } from '@/lib/convex-clerk'
 import { useMutation } from 'convex-solidjs'
-import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
+import { onCleanup, onMount } from 'solid-js'
+
+const HEARTBEAT_MS = 10_000
 
 export function useWatchOnlineStatus() {
-  const [mounted, setMounted] = createSignal(false)
-  const { isAuthenticated } = useConvexClerkAuth()
-  const setMyOnline = useMutation(api.users.setMyOnline)
+  let interval: NodeJS.Timeout | undefined
+  const sendHeartbeat = useMutation(api.heartbeats.updateHeartbeat)
 
-  function onLeave() {
-    setMyOnline.mutate({ isOnline: document.visibilityState === 'visible', reason: 'visibility' })
-  }
-
-  function onBeforeUnload() {
-    setMyOnline.mutate({ isOnline: false, reason: 'unload' })
-  }
-
-  createEffect(() => {
-    if (!mounted()) return
-
-    if (isAuthenticated()) {
-      setMyOnline.mutate({ isOnline: true })
+  function onVisibilityChange() {
+    if (document.hidden) {
+      if (interval) {
+        clearInterval(interval)
+        interval = undefined
+      }
+      return
     }
-  })
+
+    void sendHeartbeat.mutate({})
+    if (interval) clearInterval(interval)
+    interval = setInterval(() => sendHeartbeat.mutate({}), HEARTBEAT_MS)
+  }
 
   onMount(() => {
-    setMounted(true)
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
-    window.addEventListener('beforeunload', onBeforeUnload)
-    window.addEventListener('unload', onBeforeUnload)
-    window.addEventListener('pagehide', onLeave)
-    document.addEventListener('visibilitychange', onLeave)
+    void sendHeartbeat.mutate({})
+    if (interval) clearInterval(interval)
+    interval = setInterval(() => sendHeartbeat.mutate({}), HEARTBEAT_MS)
+
     onCleanup(() => {
-      window.removeEventListener('beforeunload', onBeforeUnload)
-      window.removeEventListener('unload', onBeforeUnload)
-      window.removeEventListener('pagehide', onLeave)
-      document.removeEventListener('visibilitychange', onLeave)
+      if (interval) clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     })
   })
 }

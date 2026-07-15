@@ -14,17 +14,29 @@ http.route({
     if (!event) {
       return new Response('Error occured', { status: 400 })
     }
+
     switch (event.type) {
       case 'user.created': // intentional fallthrough
       case 'user.updated':
-        await ctx.runMutation(internal.users.upsertFromClerk, { data: event.data })
+        await ctx.runMutation(internal.clerk.upsertUserFromClerk, { data: event.data })
         break
-
       case 'user.deleted': {
         const clerkUserId = event.data.id!
-        await ctx.runMutation(internal.users.deleteFromClerk, { clerkUserId })
+        await ctx.runMutation(internal.clerk.deleteUserFromClerk, { clerkUserId })
         break
       }
+
+      case 'session.created': {
+        await ctx.runMutation(internal.clerk.createSession, { data: event.data.user, clerkUserId: event.data.user_id })
+        break
+      }
+      case 'session.ended':
+      case 'session.revoked':
+      case 'session.removed': {
+        await ctx.runMutation(internal.clerk.deleteSession, { clerkUserId: event.data.user_id })
+        break
+      }
+
       default:
         console.log('Ignored Clerk webhook event', event.type)
     }

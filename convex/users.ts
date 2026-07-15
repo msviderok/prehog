@@ -1,9 +1,9 @@
-import { type UserJSON } from '@clerk/backend'
-import { v, Validator } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
-import * as Users from './model/users'
-import * as Chats from './model/chats'
+import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
+import { query } from './_generated/server'
+import * as Chats from './model/chats'
+import * as Users from './model/users'
+import { asyncMap, pruneNull } from 'convex-helpers'
 
 export const current = query({
   handler: async (ctx) => {
@@ -31,6 +31,24 @@ export const usersWithChat = query(async (ctx) => {
   )
 
   return users.filter((u): u is NonNullable<typeof u> => !!u)
+})
+
+export const listOnlineUsers = query({
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const users = await asyncMap(
+      await ctx.db
+        .query('users')
+        .filter((q) => q.neq(q.field('_id'), user._id))
+        .collect(),
+      async (u) => {
+        const presence = (await ctx.db.get('presence', u.presenceId))!
+        return presence.isOnline ? u : null
+      },
+    )
+
+    return pruneNull(users).map((u) => u._id)
+  },
 })
 
 export const unconnectedUsers = query(async (ctx) => {
@@ -103,77 +121,6 @@ export const byChatId = query({
   },
 })
 
-export const upsertFromClerk = internalMutation({
-  args: {
-    data: v.any() as Validator<UserJSON>, // no runtime validation, trust Clerk
-  },
-  async handler(ctx, { data }) {
-    const user = await Users.userByExternalId(ctx, data.id)
-    if (user === null) {
-      await ctx.db.insert('users', {
-        externalId: data.id,
-        fullname: `${data.first_name} ${data.last_name}`,
-        avatar: data.image_url,
-        isOnline: false,
-      })
-    } else {
-      await ctx.db.patch(user._id, {
-        externalId: data.id,
-        fullname: `${data.first_name} ${data.last_name}`,
-        avatar: data.image_url,
-      })
-    }
-  },
-})
-
-export const deleteFromClerk = internalMutation({
-  args: { clerkUserId: v.string() },
-  async handler(ctx, { clerkUserId }) {
-    const user = await Users.userByExternalId(ctx, clerkUserId)
-
-    if (user !== null) {
-      await ctx.db.delete(user._id)
-    } else {
-      console.warn(`Can't delete user, there is none for Clerk user ID: ${clerkUserId}`)
-    }
-  },
-})
-
-export const setMyOnline = mutation({
-  args: {
-    isOnline: v.boolean(),
-    reason: v.optional(v.union(v.literal('unload'), v.literal('visibility'))),
-  },
-  handler: async (ctx, args) => {
-    const user = await Users.getCurrentUser(ctx)
-    if (user.isOnline === args.isOnline) return
-    await ctx.db.patch('users', user._id, { isOnline: args.isOnline })
-
-    if (args.isOnline === false) {
-      const members = await Chats.getChatMembersByUserId(ctx, user._id)
-      const typingMembers = members.filter((m) => m.isTyping)
-      await Promise.all(typingMembers.map((m) => ctx.db.patch('chat_members', m._id, { isTyping: false })))
-    }
-
-    if (args.reason === 'unload') {
-      await Users.cleanupUserActivity(ctx, user._id)
-    }
-  },
-})
-
-export const setOnline = mutation({
-  args: {
-    userId: v.id('users'),
-    isOnline: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get('users', args.userId)
-    if (!user) throw new Error(`User not found: ${args.userId}`)
-    if (user.isOnline === args.isOnline) return
-    await ctx.db.patch('users', user._id, args)
-  },
-})
-
 export const isOnline = query({
   args: {
     userId: v.id('users'),
@@ -181,20 +128,18 @@ export const isOnline = query({
   handler: async (ctx, args) => {
     const user = await ctx.db.get('users', args.userId)
     if (!user) throw new Error(`User not found: ${args.userId}`)
-    return user.isOnline
+    const presence = (await ctx.db.get('presence', user.presenceId))!
+    return presence.isOnline
   },
 })
 
 export const floatingPanels = query({
-  args: {},
   handler: async (ctx) => {
-    try {
-      const user = await Users.getCurrentUser(ctx)
-      const panels = await ctx.db
-        .query('floating_panels')
-        .withIndex('by_user', (q) => q.eq('userId', user._id))
-        .collect()
-      return panels
-    } catch (e) {}
+    const user = await Users.getCurrentUser(ctx)
+    const panels = await ctx.db
+      .query('floating_panels')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect()
+    return panels
   },
 })

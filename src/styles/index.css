@@ -15,7 +15,8 @@
   --primary-foreground: oklch(0.207 0.01 285.49);
   --secondary: oklch(0.793 0.12 185.6);
   --secondary-foreground: oklch(0.207 0.01 285.49);
-  --tertiary: oklch(0.6 0.16 260);
+  --tertiary: oklch(0.478 0.094 251.79);
+  --tertiary-light: oklch(0.478 0.094 251.79);
   --tertiary-foreground: oklch(0.207 0.01 285.49);
   --accent: oklch(0.918 0.243 96.79);
   --accent-foreground: oklch(0.207 0.01 285.49);
@@ -33,6 +34,24 @@
   --shadow-color: oklch(0 0 0);
 
   --scale: 1;
+
+  --ph-pure-black: oklch(0 0 0);
+  --ph-dark-cornflower-blue: oklch(0.481 0.096 252.15);
+  --ph-dark-grey: oklch(0.46 0 0);
+  --ph-cornflower-blue: oklch(0.662 0.13 256.35);
+  --ph-soft-green: oklch(0.723 0.115 130.3);
+  --ph-brown: oklch(0.599 0.08 65.29);
+  --ph-hedgehog-spine: oklch(0.559 0.094 43.74);
+  --ph-background: oklch(0.531 0.14 39.32);
+  --ph-grey: oklch(0.807 0.011 243.69);
+  --ph-light-cornflower-blue: oklch(0.884 0.056 255.89);
+  --ph-beige: oklch(0.728 0.093 64.94);
+  --ph-warm-red: oklch(0.642 0.17 39.11);
+  --ph-mustard-yellow: oklch(0.78 0.141 73.61);
+  --ph-warm-pink: oklch(0.755 0.122 40.75);
+  --ph-hedgehog-body: oklch(0.833 0.099 62.33);
+  --ph-light-beige: oklch(0.905 0.066 67.56);
+  --ph-pure-white: oklch(1 0 0);
 }
 
 @theme inline {
@@ -58,6 +77,24 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-shadow-color: var(--shadow-color);
+
+  --color-ph-pure-black: var(--ph-pure-black);
+  --color-ph-dark-cornflower-blue: var(--ph-dark-cornflower-blue);
+  --color-ph-dark-grey: var(--ph-dark-grey);
+  --color-ph-cornflower-blue: var(--ph-cornflower-blue);
+  --color-ph-soft-green: var(--ph-soft-green);
+  --color-ph-brown: var(--ph-brown);
+  --color-ph-hedgehog-spine: var(--ph-hedgehog-spine);
+  --color-ph-background: var(--ph-background);
+  --color-ph-grey: var(--ph-grey);
+  --color-ph-light-cornflower-blue: var(--ph-light-cornflower-blue);
+  --color-ph-beige: var(--ph-beige);
+  --color-ph-warm-red: var(--ph-warm-red);
+  --color-ph-mustard-yellow: var(--ph-mustard-yellow);
+  --color-ph-warm-pink: var(--ph-warm-pink);
+  --color-ph-hedgehog-body: var(--ph-hedgehog-body);
+  --color-ph-light-beige: var(--ph-light-beige);
+  --color-ph-pure-white: var(--ph-pure-white);
 
   --font-sans: 'Grandstander', sans-serif;
   --spacing-boxShadowY: 4px;

@@ -7,23 +7,42 @@ export default defineSchema({
     externalId: v.string(),
     fullname: v.string(),
     avatar: v.optional(v.string()),
+    presenceId: v.id('presence'),
+    gameUserPositionId: v.id('game_user_positions'),
+    gameEventBatchesId: v.id('game_event_batches'),
+    gameUserStateId: v.id('game_user_state'),
+  })
+    .index('by_clerkId', ['externalId'])
+    .index('by_presence', ['presenceId']),
+  presence: defineTable({
     isOnline: v.boolean(),
-  }).index('by_clerkId', ['externalId']),
-  users_game_state: defineTable({
-    userId: v.id('users'),
+    heartbeatId: v.id('heartbeats'),
+  }).index('by_online', ['isOnline']),
+  heartbeats: defineTable({
+    lastSeen: v.number(),
+  }),
+  game_user_positions: defineTable({
     x: v.number(),
+  }),
+  game_user_state: defineTable({
+    movementDir: v.union(v.literal('left'), v.literal('right')),
+    isWalking: v.boolean(),
     y: v.number(),
-    actions: v.array(
+  }),
+  game_event_batches: defineTable({
+    batch: v.array(
       v.union(
         v.object({
           type: v.literal('move'),
           x: v.number(),
-          y: v.number(),
-          timeSinceBatchStart: v.number(),
+          t: v.number(),
         }),
       ),
     ),
-  }).index('by_user', ['userId']),
+  }),
+  users_online_count: defineTable({
+    count: v.number(),
+  }),
   chats: defineTable({}),
   chat_members: defineTable({
     chatId: v.id('chats'),
