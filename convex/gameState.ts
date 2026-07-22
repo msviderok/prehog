@@ -1,22 +1,34 @@
 import { v } from 'convex/values'
+import { BATCHING_INTERVAL_MS } from '../src/lib/constants'
 import { mutation, query } from './_generated/server'
 import * as Users from './model/users'
-import { BATCHING_INTERVAL_MS, SAMPLING_INTERVAL_MS } from '../src/lib/constants'
 
-export const findMyActions = query({
+export const getMyPosition = query({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
-    const state = (await ctx.db.get('game_event_batches', user.gameEventBatchesId))!
-    return state.batch
+    const pos = (await ctx.db.get('game_user_positions', user.gameUserPositionId))!
+    return { x: pos.x }
   },
 })
 
-export const findMyPosition = query({
+export const getMyInitialState = mutation({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
     const pos = (await ctx.db.get('game_user_positions', user.gameUserPositionId))!
     const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
-    return { x: pos.x, y: state.y }
+    return { x: pos.x, isWalking: state.isWalking, direction: state.movementDir }
+  },
+})
+
+export const getInitialState = mutation({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const user = (await ctx.db.get('users', args.userId))!
+    const pos = (await ctx.db.get('game_user_positions', user.gameUserPositionId))!
+    const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+    return { x: pos.x, isWalking: state.isWalking, direction: state.movementDir }
   },
 })
 
@@ -42,8 +54,12 @@ export const sendMyBatch = mutation({
     const user = await Users.getCurrentUser(ctx)
     const existingBatch = await ctx.db.get('game_event_batches', user.gameEventBatchesId)
     const batch = args.batch.map((i) => ({ ...i, t: now + i.t }))
+
+    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: batch[batch.length - 1].x })
+
     if (existingBatch) {
-      return await ctx.db.patch('game_event_batches', existingBatch._id, { batch })
+      await ctx.db.patch('game_event_batches', existingBatch._id, { batch })
+      return
     }
 
     await ctx.db.insert('game_event_batches', { batch })
@@ -67,7 +83,7 @@ export const getPlayerBatch = query({
   handler: async (ctx, args) => {
     const user = (await ctx.db.get('users', args.userId))!
     const batch = (await ctx.db.get('game_event_batches', user.gameEventBatchesId))!
-    return batch.batch
+    return batch
   },
 })
 
@@ -94,10 +110,22 @@ export const setIsWalking = mutation({
 
 export const setDirection = mutation({
   args: {
-    direction: v.union(v.literal('left'), v.literal('right')),
+    direction: v.union(v.literal(-1), v.literal(1)),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
-    await ctx.db.patch('game_user_state', user.gameUserStateId, { movementDir: args.direction })
+    await ctx.db.patch('game_user_state', user.gameUserStateId, {
+      movementDir: args.direction === -1 ? 'left' : 'right',
+    })
+  },
+})
+
+export const setIsRunning = mutation({
+  args: {
+    isRunning: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const user = await Users.getCurrentUser(ctx)
+    await ctx.db.patch('game_user_state', user.gameUserStateId, { isRunning: args.isRunning })
   },
 })

@@ -1,8 +1,9 @@
 import { useQuery } from 'convex-solidjs'
 import type { QueryOptions } from 'convex/browser'
 import type { FunctionArgs, FunctionReference, FunctionReturnType } from 'convex/server'
-import { createEffect, mergeProps, on, type Accessor } from 'solid-js'
+import { createEffect, createMemo, mergeProps, on, splitProps, type Accessor } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
+import { access } from './utils'
 
 interface QueryReturn<T> {
   data: Accessor<T | undefined>
@@ -14,16 +15,21 @@ interface QueryReturn<T> {
 
 export const useStableQuery = <Query extends FunctionReference<'query'>>(
   query: Query,
-  args?: MaybeAccessor<FunctionArgs<Query>>,
+  args?: MaybeAccessor<FunctionArgs<Query> & { reconcileKey?: string | undefined }>,
   options?: MaybeAccessor<QueryOptions<FunctionReturnType<Query>>>,
 ): QueryReturn<FunctionReturnType<Query>> => {
   const [state, setState] = createStore<{ data: FunctionReturnType<Query> | undefined }>({ data: undefined })
-  const { data: originalData, ...result } = useQuery(query, args ?? {}, options)
+  const splittedArgs = createMemo(() => {
+    const [customArgs, queryArgs] = splitProps(access(args ?? {}), ['reconcileKey'])
+    return { customArgs: customArgs as { reconcileKey?: string | undefined }, queryArgs }
+  })
+
+  const { data: originalData, ...result } = useQuery(query, () => splittedArgs().queryArgs, options)
 
   createEffect(
     on(originalData, (data) => {
       if (data === undefined) return
-      setState('data', reconcile(data, { key: '_id' }))
+      setState('data', reconcile(data, { merge: true, key: splittedArgs().customArgs.reconcileKey }))
     }),
   )
 

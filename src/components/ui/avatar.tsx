@@ -2,10 +2,9 @@ import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
 import { cn } from '@/lib/utils'
 import { Avatar as AvatarPrimitive } from '@msviderok/base-ui-solid/avatar'
-import { ClientOnly } from '@tanstack/solid-router'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { useQuery } from 'convex-solidjs'
-import { createContext, createEffect, createMemo, splitProps, useContext, type ComponentProps } from 'solid-js'
+import { createContext, createMemo, splitProps, useContext, type ComponentProps } from 'solid-js'
 
 const avatarVariants = cva('group/avatar relative flex shrink-0 rounded-full outline items-center select-none', {
   variants: {
@@ -27,25 +26,23 @@ function Avatar(
 ) {
   const [local, rest] = splitProps(props, ['class', 'user', 'variant', 'isLoading'])
   return (
-    <ClientOnly>
-      <AvatarContext.Provider
-        value={{
-          get user() {
-            return local.user
-          },
-        }}
+    <AvatarContext.Provider
+      value={{
+        get user() {
+          return local.user
+        },
+      }}
+    >
+      <AvatarPrimitive.Root
+        data-slot="avatar"
+        data-loading={local.isLoading}
+        data-variant={local.variant}
+        class={avatarVariants({ variant: local.variant, class: local.class })}
+        {...rest}
       >
-        <AvatarPrimitive.Root
-          data-slot="avatar"
-          data-loading={local.isLoading}
-          data-variant={local.variant}
-          class={avatarVariants({ variant: local.variant, class: local.class })}
-          {...rest}
-        >
-          {props.children}
-        </AvatarPrimitive.Root>
-      </AvatarContext.Provider>
-    </ClientOnly>
+        {props.children}
+      </AvatarPrimitive.Root>
+    </AvatarContext.Provider>
   )
 }
 

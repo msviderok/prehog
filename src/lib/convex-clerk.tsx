@@ -1,13 +1,15 @@
 import { api } from '@/convex/api'
 import { env } from '@/env'
-import { useAuth } from 'clerk-solidjs-tanstack-start'
+import { useAuth, useClerk } from 'clerk-solidjs-tanstack-start'
 import { ConvexProvider, setupConvex, useQuery } from 'convex-solidjs'
 import type { ConvexClient } from 'convex/browser'
+import posthog from 'posthog-js'
 import {
   createContext,
   createEffect,
   createMemo,
   createSignal,
+  on,
   onCleanup,
   useContext,
   type Accessor,
@@ -56,18 +58,30 @@ function hasConvexAudience(token: string) {
   return audiences.includes('convex')
 }
 
-export function useConvexClerkAuth() {
+function useConvexClerkAuth() {
   const context = useContext(ConvexClerkAuthContext)
   if (!context) throw new Error('useConvexClerkAuth must be used within ConvexClerkProvider')
   return context
 }
 
 export function useCurrentUser() {
+  const clerk = useClerk()
   const auth = useConvexClerkAuth()
   const { data: currentUser } = useQuery(api.users.current, {}, () => ({
     enabled: auth.isAuthenticated(),
     keepPreviousData: true,
   }))
+
+  createEffect(
+    on(currentUser, (u) => {
+      if (!u) return
+      posthog.identify(u._id, {
+        fullname: u.fullname,
+        email: clerk().user ? (clerk().user!.emailAddresses[0]?.emailAddress ?? 'Unknown email') : 'Clerk not loaded',
+      })
+    }),
+  )
+
   return currentUser
 }
 

@@ -27,6 +27,7 @@ export default defineSchema({
   game_user_state: defineTable({
     movementDir: v.union(v.literal('left'), v.literal('right')),
     isWalking: v.boolean(),
+    isRunning: v.boolean(),
     y: v.number(),
   }),
   game_event_batches: defineTable({

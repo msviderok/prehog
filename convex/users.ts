@@ -1,9 +1,9 @@
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
-import { query } from './_generated/server'
+import { action, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
-import { asyncMap, pruneNull } from 'convex-helpers'
+import { asyncMap, pick, pruneNull } from 'convex-helpers'
 
 export const current = query({
   handler: async (ctx) => {
@@ -36,18 +36,18 @@ export const usersWithChat = query(async (ctx) => {
 export const listOnlineUsers = query({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
-    const users = await asyncMap(
+    const ids = await asyncMap(
       await ctx.db
         .query('users')
         .filter((q) => q.neq(q.field('_id'), user._id))
         .collect(),
       async (u) => {
         const presence = (await ctx.db.get('presence', u.presenceId))!
-        return presence.isOnline ? u : null
+        return presence.isOnline ? u._id : null
       },
     )
 
-    return pruneNull(users).map((u) => u._id)
+    return pruneNull(ids)
   },
 })
 
@@ -141,5 +141,21 @@ export const floatingPanels = query({
       .withIndex('by_user', (q) => q.eq('userId', user._id))
       .collect()
     return panels
+  },
+})
+
+export const pingAdmin = action({
+  handler: async (ctx) => {
+    const data = await fetch(
+      `https://api.telegram.org/bot${encodeURIComponent(process.env.TG_BOT_TOKEN!)}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TG_BOT_CHAT_ID,
+          text: 'Convex msg',
+        }),
+      },
+    )
   },
 })

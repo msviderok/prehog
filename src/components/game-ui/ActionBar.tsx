@@ -1,7 +1,6 @@
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
-import { getLSKey, getNewPanelPosition } from '@/lib/utils'
-import { makePersisted } from '@solid-primitives/storage'
+import { getNewPanelPosition } from '@/lib/utils'
 import { useUser } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { ChevronsLeftIcon, MessageSquarePlusIcon } from 'lucide-solid'
@@ -9,22 +8,20 @@ import { createMemo, createSignal, For, Show } from 'solid-js'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import { Card, CardCloseAction, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Input } from '../ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Toggle } from '../ui/toggle'
 import { UserCard } from './UserCard'
 
 export function ActionBar() {
   const user = useUser()
-  const [open, setOpen] = makePersisted(createSignal(false), { name: getLSKey('users-list') })
-  const [activeTab, setActiveTab] = makePersisted(createSignal<'chats' | 'users'>('chats'), {
-    name: getLSKey('active-tab'),
-  })
+  const [open, setOpen] = createSignal(false)
+  const [activeTab, setActiveTab] = createSignal<'chats' | 'users'>('chats')
   const usersWithChat = useQuery(api.users.usersWithChat, {}, { keepPreviousData: true })
   const unconnectedUsers = useQuery(api.users.unconnectedUsers, {}, { keepPreviousData: true })
 
   return (
     <div data-interactive="true" class="fixed top-0 left-0 p-4 flex z-1 items-start gap-4 w-full">
+      <div id="qwe" class="flex flex-col gap-1 *:border &:border-red-500 whitespace-break-spaces" />
       <Card
         data-open={open()}
         class="w-14 h-14 transition-all ease-out overflow-hidden whitespace-nowrap border-none data-open:size-90 ring-0! bg-transparent data-open:ring-1! data-open:bg-card *:data-[slot=card-content]:opacity-0 data-open:*:data-[slot=card-content]:opacity-100"

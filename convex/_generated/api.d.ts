@@ -23,6 +23,7 @@ import type * as model_calls from "../model/calls.js";
 import type * as model_chats from "../model/chats.js";
 import type * as model_floatingPanels from "../model/floatingPanels.js";
 import type * as model_users from "../model/users.js";
+import type * as posthog from "../posthog.js";
 import type * as presence from "../presence.js";
 import type * as users from "../users.js";
 
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   "model/chats": typeof model_chats;
   "model/floatingPanels": typeof model_floatingPanels;
   "model/users": typeof model_users;
+  posthog: typeof posthog;
   presence: typeof presence;
   users: typeof users;
 }>;
@@ -79,5 +81,6 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  posthog: import("@posthog/convex/_generated/component.js").ComponentApi<"posthog">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
 };

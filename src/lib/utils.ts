@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
-import { children, mergeProps, onMount, type JSX } from 'solid-js'
+import { children, mergeProps, type JSX } from 'solid-js'
 import { twMerge } from 'tailwind-merge'
 import { GAME_CONTENT_HEIGHT_RATIO } from './constants'
 
@@ -25,56 +25,12 @@ export function defaultProps<P, D extends Partial<P>, C extends { [K in Extract<
   return mergeProps(defaults, props) as PropsMergeWithDefault<P, D>
 }
 
-/**
- * Scales the content to fit the container.
- * @param contentHeight - The height of the content.
- * @param containerHeight - The height of the container (_default_: `window.innerHeight`)
- */
-export function scaleToFit(contentHeight: number, containerHeight?: number) {
-  if (containerHeight === undefined) {
-    containerHeight = typeof window !== 'undefined' ? getGameContentHeight() : 0
-  }
-  return containerHeight < contentHeight ? containerHeight / contentHeight : 1
-}
-
 export function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
 
-export function clamp(val: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, val))
-}
-
-export function collisionDetected<T extends { left: number; top: number; right: number; bottom: number }>(a: T, b: T) {
-  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
-}
-
-export function createRectFromCoords({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }): DOMRect {
-  return {
-    x: x1,
-    y: y1,
-    left: x1,
-    top: y1,
-    width: x2 - x1,
-    height: y2 - y1,
-    right: x2,
-    bottom: y2,
-    toJSON() {
-      return JSON.stringify(this)
-    },
-  }
-}
-
-// https://github.com/solidjs/solid/issues/2478#issuecomment-2888503241
-export function childrenLazy(resolver: () => JSX.Element) {
-  const _s = Symbol()
-  let x: any = _s
-  return () => {
-    if (x === _s) {
-      x = children(resolver)
-    }
-    return x
-  }
+export function clamp(min: number, val: number, max: number) {
+  return Math.max(Math.min(max, Math.max(min, val)), 0)
 }
 
 export function callEventHandler<T, E extends Event>(
@@ -102,14 +58,29 @@ export function getNewPanelPosition(target: Element | EventTarget | null) {
   return { x, y }
 }
 
-export function getGameContentHeight() {
-  return window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
-}
-
-export function getPlayerRealPosition(n: number, worldUnit: number) {
-  return n * worldUnit
-}
-
 export function fastRound(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100
 }
+
+export function access<T extends MaybeAccessor<T>>(value: T): T extends Function ? ReturnType<T> : T {
+  return typeof value === 'function' ? value() : value
+}
+
+// function onCreateNode(e: MouseEvent) {
+//   const target = e.target as HTMLElement
+//   if (target.dataset.node) {
+//     // navigator.clipboard.writeText(JSON.stringify(sceneState.nodes))
+//     return
+//   }
+//   // const x = clamp((e.clientX - sceneState.rect.left) / sceneState.realSceneSize.width, 0, 1)
+//   // const y = clamp((e.clientY - sceneState.rect.top) / sceneState.realSceneSize.height, 0, 1)
+//   // setSceneState('nodes', sceneState.nodes.length, { x, y })
+// }
+
+// // onMount(() => {
+// //   document.addEventListener('click', onCreateNode)
+// // })
+
+// // onCleanup(() => {
+// //   document.removeEventListener('click', onCreateNode)
+// // })

@@ -7,6 +7,8 @@ export const env = createEnv({
     CLERK_SECRET_KEY: v.optional(v.pipe(v.string(), v.minLength(1))),
     CLERK_JWT_ISSUER_DOMAIN: v.optional(v.pipe(v.string(), v.url())),
     ADMIN_ID: v.optional(v.pipe(v.string(), v.minLength(1))),
+    TG_BOT_TOKEN: v.optional(v.pipe(v.string(), v.minLength(1))),
+    TG_BOT_CHAT_ID: v.optional(v.pipe(v.string(), v.minLength(1))),
   },
 
   extends: [vercel()],
@@ -20,6 +22,8 @@ export const env = createEnv({
   client: {
     VITE_CONVEX_URL: v.pipe(v.string(), v.url()),
     VITE_CLERK_PUBLISHABLE_KEY: v.pipe(v.string(), v.minLength(1)),
+    VITE_POSTHOG_PROJECT_TOKEN: v.pipe(v.string(), v.minLength(1)),
+    VITE_POSTHOG_HOST: v.pipe(v.string(), v.url()),
   },
 
   /**

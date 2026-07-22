@@ -39,3 +39,11 @@ export const HAT_INDEX = {
 export const SAMPLING_INTERVAL_MS = 33
 export const BATCHING_INTERVAL_MS = 100
 export const INTERPOLATION_DELAY_MS = 200
+
+export const ORIGINAL_SCENE_SIZE = { width: 6043, height: 1080 }
+export const PLAYER_SIZE = { width: 300, height: 300 }
+
+export const PLAYER_BASE_SPEED = 0.2
+export const PLAYER_RUNNING_SPEED_MOD = 2.0
+
+export const HEARTBEAT_MS = 10_000

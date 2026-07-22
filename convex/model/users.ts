@@ -19,16 +19,6 @@ export async function getCurrentUser(ctx: QueryCtx) {
   return user
 }
 
-export async function findCurrentUser(ctx: QueryCtx) {
-  const identity = await ctx.auth.getUserIdentity()
-  if (identity === null) return null
-
-  const user = await getUserByExternalId(ctx, identity.subject)
-  if (!user) return null
-
-  return user
-}
-
 /** Get a user by their external ID (Clerk subject) */
 export async function getUserByExternalId(ctx: QueryCtx, externalId: string) {
   const user = await ctx.db
@@ -55,6 +45,7 @@ export async function ensureUserExists(ctx: MutationCtx, userData: UserJSON | { 
   const newGameUserPositionId = await ctx.db.insert('game_user_positions', { x: INITIAL_PLAYER_POSITION.x })
   const newGameUserStateId = await ctx.db.insert('game_user_state', {
     isWalking: false,
+    isRunning: false,
     movementDir: 'right',
     y: INITIAL_PLAYER_POSITION.y,
   })

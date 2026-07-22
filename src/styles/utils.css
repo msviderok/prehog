@@ -136,3 +136,54 @@
     content: '\2026'; /* ascii code for the ellipsis character */
   }
 }
+
+@utility scene-node-popover-hitbox {
+  --node-hitbox-x2-scaled: calc(var(--node-hitbox-x2, 0) * var(--scene-world-unit-x));
+  --node-hitbox-x1-scaled: calc(var(--node-hitbox-x1, 0) * var(--scene-world-unit-x));
+  --node-hitbox-y2-scaled: calc(var(--node-hitbox-y2, 0) * var(--scene-world-unit-y));
+  --node-hitbox-y1-scaled: calc(var(--node-hitbox-y1, 0) * var(--scene-world-unit-y));
+
+  width: calc(var(--node-hitbox-x2-scaled) - var(--node-hitbox-x1-scaled));
+  height: calc(var(--node-hitbox-y2-scaled) - var(--node-hitbox-y1-scaled));
+  transform: translate3d(var(--node-hitbox-x1-scaled), var(--node-hitbox-y1-scaled), 0);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+@utility scene-node-popover-trigger {
+  --node-anchor-x-scaled: calc(var(--node-anchor-x) * var(--scene-world-unit-x));
+  --node-anchor-y-scaled: calc(var(--node-anchor-y) * var(--scene-world-unit-y));
+
+  transform: translate3d(var(--node-anchor-x-scaled), var(--node-anchor-y-scaled), 0);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+@utility main-scene {
+  width: calc(var(--original-scene-width) * var(--scale, 1));
+  height: min(calc(var(--window-inner-height) * var(--game-content-height-ratio, 1)), var(--original-scene-height));
+  background-color: #111220;
+  background-image: url('https://utfs.io/f/FRHd7GIa8Oy2N1cA4CqQ0oh8I3ZJzj1XcaRn6dE2kKOTlyuS');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: top left;
+  will-change: transform;
+  transform: translate3d(var(--tx, 0), 0, 0);
+}
+
+/*@utility hitbox {
+  @apply border-2 border-red-500;
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 0, 0, calc(0.3 * var(--collided, 0)));
+  }
+}*/
