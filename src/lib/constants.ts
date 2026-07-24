@@ -41,7 +41,17 @@ export const BATCHING_INTERVAL_MS = 100
 export const INTERPOLATION_DELAY_MS = 200
 
 export const ORIGINAL_SCENE_SIZE = { width: 6043, height: 1080 }
+
 export const PLAYER_SIZE = { width: 300, height: 300 }
+export const PLAYER_SIZE_IN_WORLD_UNITS = {
+  width: (PLAYER_SIZE.width / ORIGINAL_SCENE_SIZE.width) * 100,
+  height: (PLAYER_SIZE.height / ORIGINAL_SCENE_SIZE.height) * 100,
+}
+
+export const SCENE_WALKABLE_X_IN_WORLD_UNITS = {
+  min: PLAYER_SIZE_IN_WORLD_UNITS.width / 2,
+  max: 100 - PLAYER_SIZE_IN_WORLD_UNITS.width / 2,
+}
 
 export const PLAYER_BASE_SPEED = 0.2
 export const PLAYER_RUNNING_SPEED_MOD = 2.0

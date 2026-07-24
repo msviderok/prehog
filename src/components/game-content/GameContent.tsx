@@ -11,7 +11,7 @@ import { OtherPlayer } from './OtherPlayer'
 import { SceneryNodes } from './SceneryNodes'
 
 export function GameContent() {
-  const { scene, player, nodes, otherPlayers } = useGlobalState()
+  const { scene, player, misc, nodes, otherPlayers } = useGlobalState()
   const sendBatch = useMutation(api.gameState.sendMyBatch)
   let eventBatch: Doc<'game_event_batches'>['batch'] = []
 
@@ -22,8 +22,8 @@ export function GameContent() {
       const distanceThisFrame = velocity * dt
       const distanceThisFrameInPX = distanceThisFrame * scene.worldUnit.x
 
+      /** Scene/camera movement */
       const shouldLockPlayerInPlace = player.realX > scene.cameraStartMovingX && player.realX < scene.cameraEndMovingX
-
       const shouldMoveSceneCamera =
         shouldLockPlayerInPlace && player.realX > scene.s50 && player.realX < scene.scaled.width
 
@@ -32,13 +32,17 @@ export function GameContent() {
         scene.cameraX + (shouldMoveSceneCamera ? distanceThisFrameInPX : 0),
         scene.cameraViewportWidth,
       )
-
       scene.ref?.style.setProperty('--tx', `${-scene.cameraX}px`)
 
+      /** My player movement */
       player.x = clamp(scene.walkableMinX, player.x + distanceThisFrame, scene.walkableMaxX)
       player.realX = player.x * scene.worldUnit.x
-      player.hitboxScaled.x1 = player.realX - player.scaledHalf.width
-      player.hitboxScaled.x2 = player.realX + player.scaledHalf.width
+
+      player.hitbox.inWorldUnits.x1 = player.x - misc.player.size.inWorldUnits.halfWidth
+      player.hitbox.inWorldUnits.x2 = player.x + misc.player.size.inWorldUnits.halfWidth
+      player.hitbox.inPX.x1 = player.realX - misc.player.size.inPX.halfWidth
+      player.hitbox.inPX.x2 = player.realX + misc.player.size.inPX.halfWidth
+
       player.cameraX = clamp(
         player.cameraMinX,
         player.cameraX + (shouldLockPlayerInPlace ? 0 : distanceThisFrameInPX),
@@ -46,20 +50,25 @@ export function GameContent() {
       )
       player.ref?.style.setProperty('--tx', `${player.cameraX}px`)
 
-      let collided = false
-      for (const node of nodes) {
-        const nodeCollided = collisionDetected(player.hitboxScaled, node.hitboxScaled)
-        if (node.type === 'player') {
-          node.ref?.style.setProperty('--collided', nodeCollided)
-        } else {
-          node.rootRef?.style.setProperty('--collided', nodeCollided)
-          node.popupRef?.style.setProperty('--is-open', nodeCollided)
-        }
+      /** Other players' movement */
+      const renderTime = Date.now() - INTERPOLATION_DELAY_MS
+      for (const [, otherPlayer] of otherPlayers.hashmap) {
+        const batch = otherPlayer.batchQueue
+        if (batch.length < 2) continue
 
-        if (nodeCollided === '1') collided = true
+        while (batch.length > 2 && batch[1]!.t <= renderTime) batch.shift()
+
+        const a = batch[0]!
+        const b = batch[1]!
+        const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
+        otherPlayer.x = lerp(a.x, b.x, alpha)
+        otherPlayer.realX = otherPlayer.x * scene.worldUnit.x
+        otherPlayer.hitbox.inWorldUnits.x1 = otherPlayer.x - misc.player.size.inWorldUnits.halfWidth
+        otherPlayer.hitbox.inWorldUnits.x2 = otherPlayer.hitbox.inWorldUnits.x1 + misc.player.size.inWorldUnits.width
+        otherPlayer.hitbox.inPX.x1 = otherPlayer.realX - misc.player.size.inPX.halfWidth
+        otherPlayer.hitbox.inPX.x2 = otherPlayer.hitbox.inPX.x1 + misc.player.size.inPX.width
+        otherPlayer.ref?.style.setProperty('--tx', `${otherPlayer.realX}px`)
       }
-
-      player.ref?.style.setProperty('--collided', collided ? '1' : '0')
 
       /** SAMPLING */
       if (samplingTick) {
@@ -76,25 +85,20 @@ export function GameContent() {
         eventBatch = []
       }
 
-      /** PROCESS OTHER USERS MOVEMENT */
-      const renderTime = Date.now() - INTERPOLATION_DELAY_MS
-      for (const [, otherPlayer] of otherPlayers.hashmap) {
-        const batch = otherPlayer.batchQueue
-        if (batch.length < 2) continue
+      let collided = false
+      for (const node of nodes) {
+        const nodeCollided = collisionDetected(player.hitbox.inWorldUnits, node.hitbox.inWorldUnits)
+        if (node.type === 'player') {
+          node.ref?.style.setProperty('--collided', nodeCollided)
+        } else {
+          node.rootRef?.style.setProperty('--collided', nodeCollided)
+          node.popupRef?.style.setProperty('--is-open', nodeCollided)
+        }
 
-        while (batch.length > 2 && batch[1]!.t <= renderTime) batch.shift()
-
-        const a = batch[0]!
-        const b = batch[1]!
-        const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
-        otherPlayer.x = lerp(a.x, b.x, alpha)
-        otherPlayer.realX = otherPlayer.x * scene.worldUnit.x
-        otherPlayer.hitbox.x1 = otherPlayer.x
-        otherPlayer.hitbox.x2 = otherPlayer.x + otherPlayer.scaled.width
-        otherPlayer.hitboxScaled.x1 = otherPlayer.realX - otherPlayer.scaledHalf.width
-        otherPlayer.hitboxScaled.x2 = otherPlayer.realX + otherPlayer.scaledHalf.width
-        otherPlayer.ref?.style.setProperty('--tx', `${otherPlayer.realX}px`)
+        if (nodeCollided === '1') collided = true
       }
+
+      player.ref?.style.setProperty('--collided', collided ? '1' : '0')
     },
   })
 

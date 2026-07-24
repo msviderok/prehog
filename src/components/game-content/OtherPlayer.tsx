@@ -8,7 +8,7 @@ import { Hat } from './Hat'
 export function OtherPlayer(props: { id: Id<'users'> }) {
   let ref!: HTMLDivElement
   let sceneNode: SceneNodePlayer | undefined
-  const { scene, nodes, player, otherPlayers } = useGlobalState()
+  const { scene, nodes, misc, otherPlayers } = useGlobalState()
   const { data: isAdmin } = useQuery(
     api.gameState.isUserAdmin,
     { userId: props.id },
@@ -25,13 +25,23 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
       get ref() {
         return ref
       },
-      batchQueue: [],
-      scaled: { width: 0, height: 0 },
-      scaledHalf: { width: 0, height: 0 },
-      hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
-      hitboxScaled: { x1: 0, x2: 0, y1: 0, y2: 0 },
       x: 0,
       realX: 0,
+      batchQueue: [],
+      hitbox: {
+        inPX: {
+          x1: 0,
+          x2: 0,
+          y1: 0,
+          y2: 0,
+        },
+        inWorldUnits: {
+          x1: 0,
+          x2: 0,
+          y1: 0,
+          y2: 0,
+        },
+      },
     }
 
     otherPlayers.hashmap.set(props.id, newOtherPlayer)
@@ -39,14 +49,9 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
     sceneNode = {
       type: 'player',
       open: false,
+      hitbox: newOtherPlayer.hitbox,
       get ref() {
         return newOtherPlayer.ref
-      },
-      get hitbox() {
-        return newOtherPlayer.hitbox
-      },
-      get hitboxScaled() {
-        return newOtherPlayer.hitboxScaled
       },
     }
     nodes.add(sceneNode)
@@ -91,12 +96,16 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
     getInitialState.mutate({ userId: props.id }).then((s) => {
       otherPlayer().x = s.x
       otherPlayer().realX = s.x * scene.worldUnit.x
-      otherPlayer().hitbox.x1 = s.x
-      otherPlayer().hitbox.x2 = s.x + otherPlayer().scaled.width
-      otherPlayer().hitboxScaled.x1 = otherPlayer().realX - otherPlayer().scaledHalf.width
-      otherPlayer().hitboxScaled.x2 = otherPlayer().realX + otherPlayer().scaledHalf.width
-      otherPlayer().hitboxScaled.y1 = player.hitboxScaled.y1
-      otherPlayer().hitboxScaled.y2 = player.hitboxScaled.y2
+
+      otherPlayer().hitbox.inWorldUnits.x1 = s.x
+      otherPlayer().hitbox.inWorldUnits.x2 = s.x + misc.player.size.inWorldUnits.width
+      otherPlayer().hitbox.inWorldUnits.y1 = misc.player.hitbox.inWorldUnits.y1
+      otherPlayer().hitbox.inWorldUnits.y2 = misc.player.hitbox.inWorldUnits.y2
+
+      otherPlayer().hitbox.inPX.x1 = otherPlayer().realX
+      otherPlayer().hitbox.inPX.x2 = otherPlayer().hitbox.inPX.x1 + misc.player.size.inPX.width
+      otherPlayer().hitbox.inPX.y1 = misc.player.hitbox.inPX.y1
+      otherPlayer().hitbox.inPX.y2 = misc.player.hitbox.inPX.y2
       ref?.style.setProperty('--tx', `${otherPlayer().realX}px`)
     })
   })

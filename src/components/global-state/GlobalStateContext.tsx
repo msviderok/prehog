@@ -7,7 +7,9 @@ import {
   PLAYER_BASE_SPEED,
   PLAYER_RUNNING_SPEED_MOD,
   PLAYER_SIZE,
+  PLAYER_SIZE_IN_WORLD_UNITS,
   SCENE_PLAYER_OFFSET_Y,
+  SCENE_WALKABLE_X_IN_WORLD_UNITS,
   type Hat,
 } from '@/lib/constants'
 import { clamp } from '@/lib/utils'
@@ -63,10 +65,10 @@ interface GlobalState {
   }
   readonly player: {
     ref: HTMLElement | undefined
-    scaled: Size
-    scaledHalf: Size
-    widthInWorldUnits: number
-    hitboxScaled: Hitbox
+    hitbox: {
+      inWorldUnits: Hitbox
+      inPX: Hitbox
+    }
     x: number
     realX: number
     cameraX: number
@@ -81,6 +83,18 @@ interface GlobalState {
     hat: Accessor<Hat>
     setHat: Setter<Hat>
     isAdmin: Accessor<boolean>
+  }
+  readonly misc: {
+    player: {
+      size: {
+        inWorldUnits: { width: number; height: number; halfWidth: number; halfHeight: number }
+        inPX: { width: number; height: number; halfWidth: number; halfHeight: number }
+      }
+      hitbox: {
+        inWorldUnits: { y1: number; y2: number }
+        inPX: { y1: number; y2: number }
+      }
+    }
   }
 }
 
@@ -101,13 +115,33 @@ export function GlobalStateProvider() {
 
   const nodes: GlobalState['nodes'] = new Set()
   const keypressed: GlobalState['keypressed'] = {}
+  const misc: GlobalState['misc'] = {
+    player: {
+      size: {
+        inWorldUnits: {
+          width: PLAYER_SIZE_IN_WORLD_UNITS.width,
+          height: PLAYER_SIZE_IN_WORLD_UNITS.height,
+          halfWidth: PLAYER_SIZE_IN_WORLD_UNITS.width / 2,
+          halfHeight: PLAYER_SIZE_IN_WORLD_UNITS.height / 2,
+        },
+        inPX: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
+      },
+      hitbox: {
+        inWorldUnits: {
+          y1: SCENE_PLAYER_OFFSET_Y,
+          y2: SCENE_PLAYER_OFFSET_Y + PLAYER_SIZE_IN_WORLD_UNITS.height,
+        },
+        inPX: { y1: 0, y2: 0 },
+      },
+    },
+  }
   const scene: GlobalState['scene'] = {
     ref: null as unknown as HTMLElement,
     scale: 1,
-    worldUnit: { x: 0, y: 0 }, // 0 to 100
+    worldUnit: { x: 0, y: 0 }, // 0 to 100 but in px
     scaled: { width: 0, height: 0 },
-    walkableMinX: 0,
-    walkableMaxX: 0,
+    walkableMinX: SCENE_WALKABLE_X_IN_WORLD_UNITS.min,
+    walkableMaxX: SCENE_WALKABLE_X_IN_WORLD_UNITS.max,
     cameraX: 0,
     cameraStartMovingX: 0,
     cameraEndMovingX: 0,
@@ -126,10 +160,24 @@ export function GlobalStateProvider() {
     cameraX: 0,
     cameraMinX: 0,
     cameraMaxX: 0,
-    scaled: { width: 0, height: 0 },
-    scaledHalf: { width: 0, height: 0 },
-    widthInWorldUnits: 0,
-    hitboxScaled: { x1: 0, x2: 0, y1: 0, y2: 0 },
+    hitbox: {
+      inWorldUnits: {
+        x1: 0,
+        x2: 0,
+        y1: misc.player.hitbox.inWorldUnits.y1,
+        y2: misc.player.hitbox.inWorldUnits.y2,
+      },
+      inPX: {
+        x1: 0,
+        x2: 0,
+        get y1() {
+          return misc.player.hitbox.inPX.y1
+        },
+        get y2() {
+          return misc.player.hitbox.inPX.y2
+        },
+      },
+    },
     direction: 0,
     isWalking: false,
     isRunning: false,
@@ -185,28 +233,25 @@ export function GlobalStateProvider() {
     scene.worldUnit.y = scene.scaled.height / 100 // --scene-world-unit-y
 
     const playableWidth = Math.min(window.innerWidth, scene.scaled.width)
-    scene.s50 = playableWidth * 0.5 // 50% of the screen width
+    scene.s50 = playableWidth / 2 // 50% of the screen width
     scene.cameraViewportWidth = scene.scaled.width - playableWidth
     scene.cameraStartMovingX = scene.s50
     scene.cameraEndMovingX = scene.scaled.width - scene.s50
 
-    player.scaled.width = PLAYER_SIZE.width * scene.scale // --player-width-scaled
-    player.scaled.height = PLAYER_SIZE.height * scene.scale // --player-height-scaled
-    player.scaledHalf.width = player.scaled.width / 2
-    player.scaledHalf.height = player.scaled.height / 2
-    player.widthInWorldUnits = (player.scaledHalf.width / scene.scaled.width) * 100
-    player.realX = player.x * scene.worldUnit.x
-    player.hitboxScaled.x1 = player.realX - player.scaledHalf.width
-    player.hitboxScaled.x2 = player.realX + player.scaled.width
-    player.hitboxScaled.y1 = SCENE_PLAYER_OFFSET_Y * scene.worldUnit.y // --player-offset-y-scaled
-    player.hitboxScaled.y2 = player.hitboxScaled.y1 + player.scaled.height
+    misc.player.size.inPX.width = misc.player.size.inWorldUnits.width * scene.worldUnit.x // --player-width-scaled
+    misc.player.size.inPX.height = misc.player.size.inWorldUnits.height * scene.worldUnit.y // --player-height-scaled
+    misc.player.size.inPX.halfWidth = misc.player.size.inPX.width / 2
+    misc.player.size.inPX.halfHeight = misc.player.size.inPX.height / 2
+    misc.player.hitbox.inPX.y1 = misc.player.hitbox.inWorldUnits.y1 * scene.worldUnit.y // --player-offset-y-scaled
+    misc.player.hitbox.inPX.y2 = misc.player.hitbox.inPX.y1 + misc.player.size.inPX.height
 
-    scene.walkableMinX = player.widthInWorldUnits
-    scene.walkableMaxX = 100 - player.widthInWorldUnits
+    player.realX = player.x * scene.worldUnit.x
+    player.hitbox.inPX.x1 = player.realX - misc.player.size.inPX.halfWidth
+    player.hitbox.inPX.x2 = player.realX + misc.player.size.inPX.halfWidth
     scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
 
     player.cameraMinX = scene.walkableMinX * scene.worldUnit.x
-    player.cameraMaxX = playableWidth - player.scaledHalf.width
+    player.cameraMaxX = playableWidth - misc.player.size.inPX.halfWidth
 
     const atStart = player.realX < scene.s50
     const playerViewportX = player.realX - scene.cameraViewportWidth
@@ -218,24 +263,16 @@ export function GlobalStateProvider() {
     )
 
     for (const [, otherPlayer] of otherPlayers.hashmap) {
-      otherPlayer.scaled.width = player.scaled.width
-      otherPlayer.scaled.height = player.scaled.height
-      otherPlayer.scaledHalf.width = player.scaledHalf.width
-      otherPlayer.scaledHalf.height = player.scaledHalf.height
       otherPlayer.realX = otherPlayer.x * scene.worldUnit.x
-      otherPlayer.hitboxScaled.x1 = otherPlayer.realX - otherPlayer.scaledHalf.width
-      otherPlayer.hitboxScaled.x2 = otherPlayer.realX + otherPlayer.scaledHalf.width
-      otherPlayer.hitboxScaled.y1 = player.hitboxScaled.y1
-      otherPlayer.hitboxScaled.y2 = player.hitboxScaled.y2
     }
 
     for (const node of nodes) {
-      node.hitboxScaled.x1 = node.hitbox.x1 * scene.worldUnit.x
-      node.hitboxScaled.x2 = node.hitbox.x2 * scene.worldUnit.x
-      node.hitboxScaled.y1 = node.hitbox.y1 * scene.worldUnit.y
-      node.hitboxScaled.y2 = node.hitbox.y2 * scene.worldUnit.y
+      node.hitbox.inPX.x1 = node.hitbox.inWorldUnits.x1 * scene.worldUnit.x
+      node.hitbox.inPX.x2 = node.hitbox.inWorldUnits.x2 * scene.worldUnit.x
+      node.hitbox.inPX.y1 = node.hitbox.inWorldUnits.y1 * scene.worldUnit.y
+      node.hitbox.inPX.y2 = node.hitbox.inWorldUnits.y2 * scene.worldUnit.y
     }
-
+    console.log({ scene, player })
     updatePlayerAnimations()
   }
 
@@ -374,6 +411,7 @@ export function GlobalStateProvider() {
         rtc,
         player,
         loadingStatus,
+        misc,
       }}
     >
       <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden">

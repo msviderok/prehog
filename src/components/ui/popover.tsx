@@ -64,8 +64,10 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
       open: false,
       popupRef: undefined,
       position: local.sceneryProps.position,
-      hitbox: local.sceneryProps.hitbox,
-      hitboxScaled: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      hitbox: {
+        inWorldUnits: local.sceneryProps.hitbox,
+        inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
+      },
     }
 
     nodes.add(node)
