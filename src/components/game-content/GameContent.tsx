@@ -46,10 +46,20 @@ export function GameContent() {
       )
       player.ref?.style.setProperty('--tx', `${player.cameraX}px`)
 
+      let collided = false
       for (const node of nodes) {
-        node.rootRef?.style.setProperty('--collided', collisionDetected(player.hitboxScaled, node.hitboxScaled))
-        node.popupRef?.style.setProperty('--is-open', collisionDetected(player.hitboxScaled, node.hitboxScaled))
+        const nodeCollided = collisionDetected(player.hitboxScaled, node.hitboxScaled)
+        if (node.type === 'player') {
+          node.ref?.style.setProperty('--collided', nodeCollided)
+        } else {
+          node.rootRef?.style.setProperty('--collided', nodeCollided)
+          node.popupRef?.style.setProperty('--is-open', nodeCollided)
+        }
+
+        if (nodeCollided === '1') collided = true
       }
+
+      player.ref?.style.setProperty('--collided', collided ? '1' : '0')
 
       /** SAMPLING */
       if (samplingTick) {
@@ -79,6 +89,10 @@ export function GameContent() {
         const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
         otherPlayer.x = lerp(a.x, b.x, alpha)
         otherPlayer.realX = otherPlayer.x * scene.worldUnit.x
+        otherPlayer.hitbox.x1 = otherPlayer.x
+        otherPlayer.hitbox.x2 = otherPlayer.x + otherPlayer.scaled.width
+        otherPlayer.hitboxScaled.x1 = otherPlayer.realX - otherPlayer.scaledHalf.width
+        otherPlayer.hitboxScaled.x2 = otherPlayer.realX + otherPlayer.scaledHalf.width
         otherPlayer.ref?.style.setProperty('--tx', `${otherPlayer.realX}px`)
       }
     },
@@ -94,7 +108,12 @@ export function GameContent() {
         <For each={otherPlayers.list()}>{(userId) => <OtherPlayer id={userId} />}</For>
       </div>
 
-      <div ref={(el) => (player.ref = el)} class="player player-idle hitbox" data-is-admin={player.isAdmin()}>
+      <div
+        ref={(el) => (player.ref = el)}
+        class="player player-idle hitbox"
+        data-me={true}
+        data-is-admin={player.isAdmin()}
+      >
         <Hat hat={player.isAdmin() ? 'admin' : 'baseball'} />
       </div>
     </div>

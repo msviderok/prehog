@@ -175,9 +175,10 @@
   transform: translate3d(var(--tx, 0), 0, 0);
 }
 
-/*@utility hitbox {
+@utility hitbox {
   @apply border-2 border-red-500;
   &:after {
+    filter: unset;
     content: '';
     position: absolute;
     top: 0;
@@ -186,4 +187,11 @@
     bottom: 0;
     background-color: rgba(255, 0, 0, calc(0.3 * var(--collided, 0)));
   }
-}*/
+
+  &[data-me='true'] {
+    @apply border-2 border-green-500;
+    &:after {
+      background-color: rgba(0, 255, 0, calc(0.3 * var(--collided, 0)));
+    }
+  }
+}

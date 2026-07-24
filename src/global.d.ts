@@ -42,14 +42,36 @@ declare global {
     y: number
   }
 
-  interface SceneNode {
+  type SceneNode = SceneNodePopover | SceneNodePlayer
+
+  interface BaseSceneNodeProps {
+    hitbox: Hitbox
+    hitboxScaled: Hitbox
+  }
+
+  interface SceneNodePopover extends BaseSceneNodeProps {
     type: 'popover'
     open: boolean
     rootRef: HTMLElement | undefined
     popupRef: HTMLElement | undefined
     position: Coords
+  }
+
+  interface SceneNodePlayer extends BaseSceneNodeProps {
+    type: 'player'
+    open: boolean
+    ref: HTMLElement | undefined
+  }
+
+  interface OtherPlayer {
+    ref: HTMLDivElement | undefined
+    batchQueue: GameEventBatch
+    scaled: Size
+    scaledHalf: Size
     hitbox: Hitbox
     hitboxScaled: Hitbox
+    x: number
+    realX: number
   }
 }
 

@@ -59,18 +59,7 @@ interface GlobalState {
   }
   readonly otherPlayers: {
     list: Accessor<Id<'users'>[]>
-    hashmap: Map<
-      Id<'users'>,
-      {
-        ref: HTMLDivElement | undefined
-        batchQueue: GameEventBatch
-        scaled: Size
-        scaledHalf: Size
-        hitboxScaled: Hitbox
-        x: number
-        realX: number
-      }
-    >
+    hashmap: Map<Id<'users'>, OtherPlayer>
   }
   readonly player: {
     ref: HTMLElement | undefined
