@@ -8,8 +8,8 @@ export default defineSchema({
     fullname: v.string(),
     avatar: v.optional(v.string()),
     presenceId: v.id('presence'),
-    gameUserPositionId: v.id('game_user_positions'),
     gameEventBatchesId: v.id('game_event_batches'),
+    gameUserPositionId: v.id('game_user_positions'),
     gameUserStateId: v.id('game_user_state'),
   })
     .index('by_clerkId', ['externalId'])
@@ -25,6 +25,7 @@ export default defineSchema({
     x: v.number(),
   }),
   game_user_state: defineTable({
+    scene: v.union(v.literal('main'), v.literal('tour')),
     movementDir: v.union(v.literal('left'), v.literal('right')),
     isWalking: v.boolean(),
     isRunning: v.boolean(),

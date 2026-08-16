@@ -1,51 +1,46 @@
 import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
 import {
+  COMMON_SCENE_HEIGHT,
   GAME_CONTENT_HEIGHT_RATIO,
   HEARTBEAT_MS,
-  ORIGINAL_SCENE_SIZE,
   PLAYER_BASE_SPEED,
   PLAYER_RUNNING_SPEED_MOD,
   PLAYER_SIZE,
-  PLAYER_SIZE_IN_WORLD_UNITS,
-  SCENE_PLAYER_OFFSET_Y,
-  SCENE_WALKABLE_X_IN_WORLD_UNITS,
+  SCENE,
   type Hat,
 } from '@/lib/constants'
 import { clamp } from '@/lib/utils'
-import { SignIn, useAuth, useClerk } from 'clerk-solidjs-tanstack-start'
+import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
+import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
 import {
-  createContext,
   createEffect,
   createMemo,
   createSignal,
-  Match,
   on,
   onCleanup,
   onMount,
-  Show,
-  Switch,
-  useContext,
   type Accessor,
+  type ParentProps,
   type Setter,
 } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { GameContent } from '../game-content/GameContent'
-import { GameUI } from '../game-ui/GameUI'
+import { GlobalStateContext } from './context'
 import { createRtcState } from './createRtcState'
+import { useStableQuery } from '@/lib/useStableQuery'
+import { useNavigate } from '@tanstack/solid-router'
 
-type LoadingStatus = 'signed-out' | 'loading-clerk' | 'loading-game-state' | 'signed-in'
+export interface GlobalState {
+  recalculate: () => void
 
-interface GlobalState {
   readonly nodes: Set<SceneNode>
-  readonly keypressed: Record<string, boolean | undefined>
   readonly rtc: ReturnType<typeof createRtcState>
-  readonly loadingStatus: Accessor<LoadingStatus>
   readonly scene: {
     ref: HTMLElement | undefined
     scale: number
     worldUnit: Coords
+    originalSize: Size
     scaled: Size
     walkableMinX: number
     walkableMaxX: number
@@ -58,6 +53,7 @@ interface GlobalState {
      * of the viewport width at the start/end of the scene
      */
     cameraViewportWidth: number
+    currentScene: CurrentScene
   }
   readonly otherPlayers: {
     list: Accessor<Id<'users'>[]>
@@ -98,56 +94,72 @@ interface GlobalState {
   }
 }
 
-const GlobalStateContext = createContext<GlobalState>()
-
-export function useGlobalState() {
-  const context = useContext(GlobalStateContext)
-  if (!context) throw new Error('useGlobalState must be used inside GlobalState.Provider')
-  return context
-}
-
-export function GlobalStateProvider() {
-  useWatchOnlineStatus()
+export function GlobalStateProvider(props: ParentProps) {
+  useWatchPresence()
 
   const clerk = useClerk()
-  const auth = useAuth()
   const rtc = createRtcState()
+  const navigate = useNavigate()
 
   const nodes: GlobalState['nodes'] = new Set()
-  const keypressed: GlobalState['keypressed'] = {}
   const misc: GlobalState['misc'] = {
     player: {
       size: {
-        inWorldUnits: {
-          width: PLAYER_SIZE_IN_WORLD_UNITS.width,
-          height: PLAYER_SIZE_IN_WORLD_UNITS.height,
-          halfWidth: PLAYER_SIZE_IN_WORLD_UNITS.width / 2,
-          halfHeight: PLAYER_SIZE_IN_WORLD_UNITS.height / 2,
-        },
+        inWorldUnits: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
         inPX: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
       },
       hitbox: {
-        inWorldUnits: {
-          y1: SCENE_PLAYER_OFFSET_Y,
-          y2: SCENE_PLAYER_OFFSET_Y + PLAYER_SIZE_IN_WORLD_UNITS.height,
-        },
+        inWorldUnits: { y1: 0, y2: 0 },
         inPX: { y1: 0, y2: 0 },
       },
     },
   }
+
+  const { data: currentScene } = useStableQuery(api.gameState.currentScene)
   const scene: GlobalState['scene'] = {
     ref: null as unknown as HTMLElement,
     scale: 1,
     worldUnit: { x: 0, y: 0 }, // 0 to 100 but in px
+    originalSize: { width: 0, height: 0 },
     scaled: { width: 0, height: 0 },
-    walkableMinX: SCENE_WALKABLE_X_IN_WORLD_UNITS.min,
-    walkableMaxX: SCENE_WALKABLE_X_IN_WORLD_UNITS.max,
+    walkableMinX: 0,
+    walkableMaxX: 0,
     cameraX: 0,
     cameraStartMovingX: 0,
     cameraEndMovingX: 0,
     s50: 0,
     cameraViewportWidth: 0,
+    currentScene: 'main',
   }
+  createEffect(
+    on(currentScene, (sceneValue) => {
+      if (sceneValue == null) return
+      const sceneInitialState = SCENE[sceneValue]
+
+      misc.player.size.inWorldUnits.width = (PLAYER_SIZE.width / sceneInitialState.width) * 100
+      misc.player.size.inWorldUnits.height = (PLAYER_SIZE.height / sceneInitialState.height) * 100
+      misc.player.size.inWorldUnits.halfWidth = misc.player.size.inWorldUnits.width / 2
+      misc.player.size.inWorldUnits.halfHeight = misc.player.size.inWorldUnits.height / 2
+      misc.player.hitbox.inWorldUnits.y1 = sceneInitialState.playerInitialY
+      misc.player.hitbox.inWorldUnits.y2 = sceneInitialState.playerInitialY + misc.player.size.inWorldUnits.height
+
+      scene.originalSize.width = sceneInitialState.width
+      scene.originalSize.height = sceneInitialState.height
+      scene.walkableMinX = misc.player.size.inWorldUnits.halfWidth
+      scene.walkableMaxX = 100 - misc.player.size.inWorldUnits.halfWidth
+
+      player.hitbox.inWorldUnits.y1 = misc.player.hitbox.inWorldUnits.y1
+      player.hitbox.inWorldUnits.y2 = misc.player.hitbox.inWorldUnits.y2
+
+      const root = document.documentElement
+      root.style.setProperty('--original-scene-width', `${scene.originalSize.width}px`)
+      root.style.setProperty('--original-scene-height', `${scene.originalSize.height}px`)
+      root.style.setProperty('--player-offset-y', `${sceneInitialState.playerInitialY}`)
+
+      calculate()
+      navigate({ to: `/${sceneValue}` })
+    }),
+  )
 
   const [hat, setHat] = createSignal<Hat>('baseball')
   const isAdmin = createMemo(() => !!clerk()?.user?.publicMetadata?.isAdmin)
@@ -161,22 +173,8 @@ export function GlobalStateProvider() {
     cameraMinX: 0,
     cameraMaxX: 0,
     hitbox: {
-      inWorldUnits: {
-        x1: 0,
-        x2: 0,
-        y1: misc.player.hitbox.inWorldUnits.y1,
-        y2: misc.player.hitbox.inWorldUnits.y2,
-      },
-      inPX: {
-        x1: 0,
-        x2: 0,
-        get y1() {
-          return misc.player.hitbox.inPX.y1
-        },
-        get y2() {
-          return misc.player.hitbox.inPX.y2
-        },
-      },
+      inWorldUnits: { x1: 0, x2: 0, y1: 0, y2: 0 },
+      inPX: { x1: 0, x2: 0, y1: 0, y2: 0 },
     },
     direction: 0,
     isWalking: false,
@@ -210,25 +208,16 @@ export function GlobalStateProvider() {
     ),
   )
 
-  /** Convex-bounded state that is required to show the proper loading screen state. */
-  const getMyInitialState = useMutation(api.gameState.getMyInitialState)
-  const allStatesLoaded = createMemo(() => getMyInitialState.data() !== undefined)
-  const loadingStatus = createMemo<LoadingStatus>(() => {
-    if (auth.userId() === null) return 'signed-out'
-    if (allStatesLoaded()) return 'signed-in'
-    return clerk().loaded ? 'loading-game-state' : 'loading-clerk'
-  })
-
-  function onWindowResize() {
+  function calculate() {
     const root = document.documentElement
     const gameContentHeight = window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
     root.style.setProperty('--window-inner-height', `${window.innerHeight}px`)
 
-    scene.scale = Math.min(gameContentHeight / ORIGINAL_SCENE_SIZE.height, 1) // --scale
+    scene.scale = Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1) // --scale
     root?.style.setProperty('--scale', `${scene.scale}`)
 
-    scene.scaled.width = ORIGINAL_SCENE_SIZE.width * scene.scale // --scene-width-scaled
-    scene.scaled.height = Math.min(gameContentHeight, ORIGINAL_SCENE_SIZE.height) // --scene-height-scaled
+    scene.scaled.width = scene.originalSize.width * scene.scale // --scene-width-scaled
+    scene.scaled.height = Math.min(gameContentHeight, scene.originalSize.height) // --scene-height-scaled
     scene.worldUnit.x = scene.scaled.width / 100 // --scene-world-unit-x
     scene.worldUnit.y = scene.scaled.height / 100 // --scene-world-unit-y
 
@@ -248,6 +237,7 @@ export function GlobalStateProvider() {
     player.realX = player.x * scene.worldUnit.x
     player.hitbox.inPX.x1 = player.realX - misc.player.size.inPX.halfWidth
     player.hitbox.inPX.x2 = player.realX + misc.player.size.inPX.halfWidth
+
     scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
 
     player.cameraMinX = scene.walkableMinX * scene.worldUnit.x
@@ -272,8 +262,9 @@ export function GlobalStateProvider() {
       node.hitbox.inPX.y1 = node.hitbox.inWorldUnits.y1 * scene.worldUnit.y
       node.hitbox.inPX.y2 = node.hitbox.inWorldUnits.y2 * scene.worldUnit.y
     }
-    console.log({ scene, player })
     updatePlayerAnimations()
+
+    console.log({ misc, player, scene })
   }
 
   function updatePlayerAnimations() {
@@ -285,172 +276,113 @@ export function GlobalStateProvider() {
   const setIsWalking = useMutation(api.gameState.setIsWalking)
   const setIsRunning = useMutation(api.gameState.setIsRunning)
   const setDirection = useMutation(api.gameState.setDirection)
+  const isShiftHeld = createKeyHold('Shift')
+  const keytracker = getKeyStateTracker()
 
-  function onKeyDown(e: KeyboardEvent) {
-    if (isInteractiveElement() || keypressed[e.code]) return
+  function updateGameStateIfChanged(cb: () => void) {
+    return () => {
+      const prevIsRunning = player.isRunning
+      const prevIsWalking = player.isWalking
+      const prevDirection = player.direction
 
-    keypressed[e.code] = true
-    const prevIsRunning = player.isRunning
-    const prevIsWalking = player.isWalking
-    const prevDirection = player.direction
+      cb()
+      updatePlayerAnimations()
 
-    switch (true) {
-      /* Move left */
-      case e.code === 'KeyA' || e.code === 'ArrowLeft': {
-        player.isWalking = true
-        player.facing = 'left'
-        player.direction = -1
-        break
+      if (prevIsWalking !== player.isWalking) {
+        void setIsWalking.mutate({ isWalking: player.isWalking })
       }
+      if (prevIsRunning !== player.isRunning) {
+        void setIsRunning.mutate({ isRunning: player.isRunning })
+      }
+      if (player.direction !== 0 && prevDirection !== player.direction) {
+        void setDirection.mutate({ direction: player.direction })
+      }
+    }
+  }
+
+  const startMovingLeft = updateGameStateIfChanged(() => {
+    player.isWalking = true
+    player.facing = 'left'
+    player.direction = -1
+  })
+
+  const stopMovingLeft = updateGameStateIfChanged(() => {
+    player.isWalking = keytracker.isKeyHeld('D') || keytracker.isKeyHeld('ArrowRight') ? true : false
+    if (player.isWalking === false) player.direction = 0
+  })
+
+  const startMovingRight = updateGameStateIfChanged(() => {
+    player.isWalking = true
+    player.facing = 'right'
+    player.direction = 1
+  })
+
+  const stopMovingRight = updateGameStateIfChanged(() => {
+    player.isWalking = keytracker.isKeyHeld('A') || keytracker.isKeyHeld('ArrowLeft') ? true : false
+    if (player.isWalking === false) player.direction = 0
+  })
+
+  createHotkeys(
+    [
+      { hotkey: 'A', callback: startMovingLeft, options: { eventType: 'keydown' } },
+      { hotkey: 'Shift+A', callback: startMovingLeft, options: { eventType: 'keydown' } },
+      { hotkey: 'ArrowLeft', callback: startMovingLeft, options: { eventType: 'keydown' } },
+      { hotkey: 'Shift+ArrowLeft', callback: startMovingLeft, options: { eventType: 'keydown' } },
+
+      { hotkey: 'A', callback: stopMovingLeft, options: { eventType: 'keyup' } },
+      { hotkey: 'Shift+A', callback: stopMovingLeft, options: { eventType: 'keyup' } },
+      { hotkey: 'ArrowLeft', callback: stopMovingLeft, options: { eventType: 'keyup' } },
+      { hotkey: 'Shift+ArrowLeft', callback: stopMovingLeft, options: { eventType: 'keyup' } },
 
       /* Move right */
-      case e.code === 'KeyD' || e.code === 'ArrowRight': {
-        player.isWalking = true
-        player.facing = 'right'
-        player.direction = 1
-        break
-      }
+      { hotkey: 'D', callback: startMovingRight, options: { eventType: 'keydown' } },
+      { hotkey: 'Shift+D', callback: startMovingRight, options: { eventType: 'keydown' } },
+      { hotkey: 'ArrowRight', callback: startMovingRight, options: { eventType: 'keydown' } },
+      { hotkey: 'Shift+ArrowRight', callback: startMovingRight, options: { eventType: 'keydown' } },
 
-      /* Start running */
-      case e.key === 'Shift': {
-        player.isRunning = true
-        player.speed = PLAYER_BASE_SPEED * PLAYER_RUNNING_SPEED_MOD
-        player.ref?.style.setProperty('--is-running', '1')
-        break
-      }
-    }
-
-    if (prevIsWalking !== player.isWalking) void setIsWalking.mutate({ isWalking: player.isWalking })
-    if (prevIsRunning !== player.isRunning) void setIsRunning.mutate({ isRunning: player.isRunning })
-
-    if (player.direction !== 0 && prevDirection !== player.direction) {
-      void setDirection.mutate({ direction: player.direction })
-    }
-
-    updatePlayerAnimations()
-  }
-
-  function onKeyUp(e: KeyboardEvent) {
-    if (isInteractiveElement()) return
-
-    delete keypressed[e.code]
-    const prevDirection = player.direction
-    const prevIsRunning = player.isRunning
-
-    switch (true) {
-      /* Stop moving left */
-      case e.code === 'KeyA' || e.code === 'ArrowLeft': {
-        player.isWalking = keypressed['KeyD'] || keypressed['ArrowRight'] ? true : false
-        if (player.isWalking === false) player.direction = 0
-        break
-      }
-
-      /* Stop moving right */
-      case e.code === 'KeyD' || e.code === 'ArrowRight': {
-        player.isWalking = keypressed['KeyA'] || keypressed['ArrowLeft'] ? true : false
-        if (player.isWalking === false) player.direction = 0
-        break
-      }
-
-      /* Stop running */
-      case e.key === 'Shift': {
-        player.isRunning = false
-        player.speed = PLAYER_BASE_SPEED
-        player.ref?.style.setProperty('--is-running', '0')
-        break
-      }
-    }
-
-    if (prevDirection !== 0 && player.isWalking === false) void setIsWalking.mutate({ isWalking: false })
-    if (prevIsRunning !== player.isRunning) void setIsRunning.mutate({ isRunning: player.isRunning })
-
-    updatePlayerAnimations()
-  }
+      { hotkey: 'D', callback: stopMovingRight, options: { eventType: 'keyup' } },
+      { hotkey: 'Shift+D', callback: stopMovingRight, options: { eventType: 'keyup' } },
+      { hotkey: 'ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
+      { hotkey: 'Shift+ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
+    ],
+    { requireReset: true, conflictBehavior: 'allow' },
+  )
 
   createEffect(
-    on(allStatesLoaded, (shouldRunCalcs) => {
-      if (shouldRunCalcs === false) return
-      queueMicrotask(() => onWindowResize())
-      window.addEventListener('resize', onWindowResize)
-      onCleanup(() => window.removeEventListener('resize', onWindowResize))
+    on(isShiftHeld, (shift) => {
+      player.isRunning = shift
+      player.speed = PLAYER_BASE_SPEED * (shift ? PLAYER_RUNNING_SPEED_MOD : 1)
+      player.ref?.style.setProperty('--is-running', shift ? '1' : '0')
     }),
+    void 0,
+    { name: 'player-running' },
   )
 
   onMount(() => {
-    void getMyInitialState.mutate({}).then((s) => {
-      player.isWalking = false
-      player.direction = 0
-      player.facing = s.direction
-      player.x = s.x
-      onWindowResize()
-    })
-
     const root = document.documentElement
     root.style.setProperty('--game-content-height-ratio', `${GAME_CONTENT_HEIGHT_RATIO}`)
-    root.style.setProperty('--original-scene-width', `${ORIGINAL_SCENE_SIZE.width}px`)
-    root.style.setProperty('--original-scene-height', `${ORIGINAL_SCENE_SIZE.height}px`)
     root.style.setProperty('--original-player-width', `${PLAYER_SIZE.width}px`)
     root.style.setProperty('--original-player-height', `${PLAYER_SIZE.height}px`)
-    root.style.setProperty('--player-offset-y', `${SCENE_PLAYER_OFFSET_Y}`)
-
-    document.addEventListener('keydown', onKeyDown)
-    document.addEventListener('keyup', onKeyUp)
-    onCleanup(() => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.removeEventListener('keyup', onKeyUp)
-    })
   })
 
   return (
     <GlobalStateContext.Provider
       value={{
+        recalculate: calculate,
         nodes,
         scene,
-        keypressed,
         otherPlayers,
         rtc,
         player,
-        loadingStatus,
         misc,
       }}
     >
-      <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden">
-        <Show
-          when={loadingStatus() !== 'signed-in'}
-          fallback={
-            <>
-              <GameContent />
-              <GameUI />
-            </>
-          }
-        >
-          <div class="flex items-center justify-center size-full">
-            <Switch>
-              <Match when={loadingStatus() === 'signed-out'}>
-                <SignIn />
-              </Match>
-
-              <Match when={loadingStatus() === 'loading-clerk' || loadingStatus() === 'loading-game-state'}>
-                <div class="flex flex-col items-center justify-center relative bg-tertiary rounded-full size-75 animate-pulse [--player-width-scaled:150px] [--player-height-scaled:150px]">
-                  <div class="relative player player-walk [--tx:calc(50%+0.5em)] [--ty:calc(50%-1em)]" />
-                  <span class="text-accent tracking-wide typing">
-                    Loading {loadingStatus() === 'loading-clerk' ? 'Clerk' : 'Game State'}
-                  </span>
-                </div>
-              </Match>
-            </Switch>
-          </div>
-        </Show>
-      </main>
+      {props.children}
     </GlobalStateContext.Provider>
   )
 }
 
-function isInteractiveElement() {
-  return document.activeElement?.closest('[data-interactive="true"]') != null
-}
-
-function useWatchOnlineStatus() {
+function useWatchPresence() {
   let interval: NodeJS.Timeout | undefined
   const sendHeartbeat = useMutation(api.heartbeats.updateHeartbeat)
 

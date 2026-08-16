@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import {
   createContext,
   createRenderEffect,
+  createSignal,
   onCleanup,
   onMount,
   Show,
@@ -11,15 +12,16 @@ import {
   useContext,
   type ComponentProps,
 } from 'solid-js'
-import { useGlobalState } from '../global-state/GlobalStateContext'
+import { useGlobalState } from '../global-state/context'
 
 const popoverVariants = cva(
-  'z-50 w-72 rounded-base border-2 border-border p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all',
+  'group z-50 w-72 rounded-base border-2 border-border bg-ph-mustard-yellow p-4  outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all [--arrow-offset:2px]',
   {
     variants: {
       variant: {
-        default: 'bg-yellow-200 text-yellow-800',
-        scenery: 'bg-yellow-500 text-yellow-800 pointer-events-none',
+        default: 'bg-ph-mustard-yellow',
+        scenery:
+          'bg-ph-mustard-yellow text-border pointer-events-none [--arrow-offset:0px]! scale-[calc(100%*var(--is-open))] opacity-[calc(100%*var(--is-open))] duration-200 delay-100 ease-out',
       },
     },
     defaultVariants: {
@@ -48,6 +50,10 @@ type PopoverExtraProps = VariantOther | VariantScenery
 type PopoverContextState = (VariantOther & { node?: never }) | (VariantScenery & { node: SceneNodePopover })
 const PopoverContext = createContext<PopoverContextState>({ variant: 'default' })
 
+export function usePopoverContext() {
+  return useContext(PopoverContext)
+}
+
 function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps) {
   let ref!: HTMLDivElement
   let node: SceneNodePopover | undefined
@@ -56,21 +62,30 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
   const [local, misc, rest] = splitProps(props, ['variant', 'sceneryProps'], ['open'])
 
   createRenderEffect(() => {
-    node = {
-      get rootRef() {
-        return ref
-      },
-      type: 'popover',
-      open: false,
-      popupRef: undefined,
-      position: local.sceneryProps.position,
-      hitbox: {
-        inWorldUnits: local.sceneryProps.hitbox,
-        inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
-      },
-    }
+    if (local.variant === 'scenery') {
+      const [open, setOpen] = createSignal(false)
+      node = {
+        get rootRef() {
+          return ref
+        },
+        type: 'popover',
+        popupRef: undefined,
+        position: local.sceneryProps.position,
+        hitbox: {
+          inWorldUnits: local.sceneryProps.hitbox,
+          inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
+        },
+        actions: {
+          open: {
+            value: false,
+            get: open,
+            set: setOpen,
+          },
+        },
+      }
 
-    nodes.add(node)
+      nodes.add(node)
+    }
   })
 
   onMount(() => {
@@ -137,12 +152,7 @@ function PopoverPopup(props: PopoverPrimitive.Popup.Props) {
     <PopoverPrimitive.Popup
       data-slot="popover-content"
       data-variant={ctx.variant}
-      class={cn(
-        'group z-50 w-72 rounded-base border-2 border-border bg-ph-mustard-yellow p-4 text-border outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all [--arrow-offset:2px]',
-        ctx.variant === 'scenery' &&
-          '[--arrow-offset:0px]! scale-[calc(100%*var(--is-open))] opacity-[calc(100%*var(--is-open))] duration-200 delay-100 ease-out',
-        local.class,
-      )}
+      class={popoverVariants({ class: local.class, variant: ctx.variant })}
       ref={(el) => {
         if (ctx.variant === 'scenery') {
           ctx.node.popupRef = el
@@ -172,7 +182,7 @@ function PopoverArrow(props: ComponentProps<'div'>) {
       <svg width="20" height="10" viewBox="0 0 20 10" fill="none">
         <path
           d="M9.66437 2.60207L4.80758 6.97318C4.07308 7.63423 3.11989 8 2.13172 8H0V10H20V8H18.5349C17.5468 8 16.5936 7.63423 15.8591 6.97318L11.0023 2.60207C10.622 2.2598 10.0447 2.25979 9.66437 2.60207Z"
-          class="group-data-[variant=scenery]:fill-ph-mustard-yellow fill-yellow-200"
+          class="group-data-[variant=scenery]:fill-ph-mustard-yellow fill-ph-mustard-yellow"
         />
         <path
           d="M8.99542 1.85876C9.75604 1.17425 10.9106 1.17422 11.6713 1.85878L16.5281 6.22989C17.0789 6.72568 17.7938 7.00001 18.5349 7.00001L15.89 7L11.0023 2.60207C10.622 2.2598 10.0447 2.2598 9.66436 2.60207L4.77734 7L2.13171 7.00001C2.87284 7.00001 3.58774 6.72568 4.13861 6.22989L8.99542 1.85876Z"
@@ -201,6 +211,7 @@ function PopoverPortal(props: PopoverPrimitive.Portal.Props) {
 
 function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
   const ctx = useContext(PopoverContext)
+  const [local, rest] = splitProps(props, ['class'])
 
   onMount(() => {
     if (ctx.variant !== 'scenery') return
@@ -235,7 +246,7 @@ function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
 
   return (
     <PopoverPrimitive.Positioner
-      class="isolate z-50"
+      class={cn('isolate z-50', local.class)}
       arrowPadding={15}
       align={ctx.variant === 'scenery' ? 'end' : 'start'}
       alignOffset={ctx.variant === 'scenery' ? 0 : 10}
@@ -245,30 +256,40 @@ function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
       collisionAvoidance={
         ctx.variant === 'scenery' ? { align: 'none', side: 'none', fallbackAxisSide: 'none' } : undefined
       }
-      {...props}
+      {...rest}
     />
   )
 }
 
 function PopoverHeader(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
-  return <div data-slot="popover-header" class={cn('flex flex-col gap-1 text-xs', local.class)} {...rest} />
+  return <div data-slot="popover-header" class={cn('flex flex-col gap-1 text-base', local.class)} {...rest} />
+}
+
+function PopoverFooter(props: ComponentProps<'div'>) {
+  const [local, rest] = splitProps(props, ['class'])
+  return (
+    <div
+      data-slot="popover-footer"
+      class={cn('flex items-center justify-between gap-1 text-base', local.class)}
+      {...rest}
+    />
+  )
+}
+
+function PopoverAction(props: ComponentProps<'div'>) {
+  const [local, rest] = splitProps(props, ['class'])
+  return <div data-slot="popover-action" class={cn('text-base', local.class)} {...rest} />
 }
 
 function PopoverTitle(props: PopoverPrimitive.Title.Props) {
   const [local, rest] = splitProps(props, ['class'])
-  return <PopoverPrimitive.Title data-slot="popover-title" class={cn('text-sm font-medium', local.class)} {...rest} />
+  return <PopoverPrimitive.Title data-slot="popover-title" class={cn('text-lg font-medium', local.class)} {...rest} />
 }
 
 function PopoverDescription(props: PopoverPrimitive.Description.Props) {
   const [local, rest] = splitProps(props, ['class'])
-  return (
-    <PopoverPrimitive.Description
-      data-slot="popover-description"
-      class={cn('text-muted-foreground', local.class)}
-      {...rest}
-    />
-  )
+  return <PopoverPrimitive.Description data-slot="popover-description" class={cn('', local.class)} {...rest} />
 }
 
 export {
@@ -281,4 +302,6 @@ export {
   PopoverPositioner,
   PopoverTitle,
   PopoverTrigger,
+  PopoverFooter,
+  PopoverAction,
 }

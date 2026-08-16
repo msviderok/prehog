@@ -1,9 +1,14 @@
 import { useQuery } from 'convex-solidjs'
-import type { QueryOptions } from 'convex/browser'
 import type { FunctionArgs, FunctionReference, FunctionReturnType } from 'convex/server'
 import { createEffect, createMemo, mergeProps, on, splitProps, type Accessor } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
-import { access } from './utils'
+import { access, defaultProps } from './utils'
+
+interface QueryOptions<T> {
+  enabled?: boolean
+  initialData?: T
+  keepPreviousData?: boolean
+}
 
 interface QueryReturn<T> {
   data: Accessor<T | undefined>
@@ -15,21 +20,18 @@ interface QueryReturn<T> {
 
 export const useStableQuery = <Query extends FunctionReference<'query'>>(
   query: Query,
-  args?: MaybeAccessor<FunctionArgs<Query> & { reconcileKey?: string | undefined }>,
-  options?: MaybeAccessor<QueryOptions<FunctionReturnType<Query>>>,
+  args?: FunctionArgs<Query> & { reconcileKey?: string | undefined },
+  options?: QueryOptions<FunctionReturnType<Query>>,
 ): QueryReturn<FunctionReturnType<Query>> => {
   const [state, setState] = createStore<{ data: FunctionReturnType<Query> | undefined }>({ data: undefined })
-  const splittedArgs = createMemo(() => {
-    const [customArgs, queryArgs] = splitProps(access(args ?? {}), ['reconcileKey'])
-    return { customArgs: customArgs as { reconcileKey?: string | undefined }, queryArgs }
-  })
-
-  const { data: originalData, ...result } = useQuery(query, () => splittedArgs().queryArgs, options)
+  const mergedOptions = defaultProps(options ?? {}, { keepPreviousData: true })
+  const [customArgs, queryArgs] = splitProps(args ?? ({} as NonNullable<typeof args>), ['reconcileKey'])
+  const { data: originalData, ...result } = useQuery(query, () => queryArgs, mergedOptions)
 
   createEffect(
     on(originalData, (data) => {
       if (data === undefined) return
-      setState('data', reconcile(data, { merge: true, key: splittedArgs().customArgs.reconcileKey }))
+      setState('data', reconcile(data, { merge: true, key: customArgs.reconcileKey }))
     }),
   )
 

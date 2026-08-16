@@ -1,4 +1,7 @@
+import type { Accessor } from 'solid-js'
 import type { Doc } from '../convex/_generated/dataModel'
+import type { api } from '../convex/_generated/api'
+import type { FunctionReturnType } from 'convex/server'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -13,6 +16,8 @@ declare global {
   type CallRtcMessageOffer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
   type CallRtcMessageAnswer = Extract<Doc<'call_rtc_messages'>, { type: 'offer' | 'answer' }>
   type CallRtcMessageIceCandidate = Extract<Doc<'call_rtc_messages'>, { type: 'ice-candidate' }>
+
+  type UserData = FunctionReturnType<typeof api.users.current>
 
   type GameEventBatch = Doc<'game_event_batches'>['batch']
   type GameEvent = GameEventBatch[0]
@@ -42,6 +47,12 @@ declare global {
     y: number
   }
 
+  interface NodeAction<T> {
+    value: T
+    get: Accessor<T>
+    set: Setter<T>
+  }
+
   type SceneNode = SceneNodePopover | SceneNodePlayer
 
   interface BaseSceneNodeProps {
@@ -49,11 +60,13 @@ declare global {
       inWorldUnits: Hitbox
       inPX: Hitbox
     }
+    actions: {
+      open: NodeAction<boolean>
+    }
   }
 
   interface SceneNodePopover extends BaseSceneNodeProps {
     type: 'popover'
-    open: boolean
     rootRef: HTMLElement | undefined
     popupRef: HTMLElement | undefined
     position: Coords
@@ -61,7 +74,6 @@ declare global {
 
   interface SceneNodePlayer extends BaseSceneNodeProps {
     type: 'player'
-    open: boolean
     ref: HTMLElement | undefined
   }
 
@@ -72,6 +84,10 @@ declare global {
     batchQueue: GameEventBatch
     hitbox: BaseSceneNodeProps['hitbox']
   }
+
+  type CurrentScene = Doc<'game_user_state'>['scene']
+
+  type LoadingStatus = 'not-initiated' | 'signed-out' | 'loading-clerk' | 'loading-game-state' | UserData
 }
 
 export {}

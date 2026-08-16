@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { BATCHING_INTERVAL_MS } from '../src/lib/constants'
+import { BATCHING_INTERVAL_MS, SCENE } from '../src/lib/constants'
 import { mutation, query } from './_generated/server'
 import * as Users from './model/users'
 
@@ -127,5 +127,32 @@ export const setIsRunning = mutation({
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
     await ctx.db.patch('game_user_state', user.gameUserStateId, { isRunning: args.isRunning })
+  },
+})
+
+export const setScene = mutation({
+  args: {
+    scene: v.union(v.literal('main'), v.literal('tour')),
+  },
+  handler: async (ctx, args) => {
+    const user = await Users.getCurrentUser(ctx)
+    const sceneInitialData = SCENE[args.scene]
+    await ctx.db.patch('game_user_state', user.gameUserStateId, {
+      scene: args.scene,
+      isRunning: false,
+      isWalking: false,
+      movementDir: 'right',
+      y: sceneInitialData.playerInitialY,
+    })
+    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: sceneInitialData.playerInitialX })
+    await ctx.db.patch('game_event_batches', user.gameEventBatchesId, { batch: [] })
+  },
+})
+
+export const currentScene = query({
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+    return state.scene
   },
 })

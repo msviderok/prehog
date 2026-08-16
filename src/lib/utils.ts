@@ -1,7 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
-import { children, mergeProps, type JSX } from 'solid-js'
+import { mergeProps, type JSX } from 'solid-js'
 import { twMerge } from 'tailwind-merge'
-import { GAME_CONTENT_HEIGHT_RATIO } from './constants'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -64,6 +63,10 @@ export function fastRound(n: number) {
 
 export function access<T extends MaybeAccessor<T>>(value: T): T extends Function ? ReturnType<T> : T {
   return typeof value === 'function' ? value() : value
+}
+
+export function isUserDate(value: LoadingStatus): value is UserData {
+  return typeof value !== 'string'
 }
 
 // function onCreateNode(e: MouseEvent) {

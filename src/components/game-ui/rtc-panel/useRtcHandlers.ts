@@ -1,4 +1,4 @@
-import { useGlobalState } from '@/components/global-state/GlobalStateContext'
+import { useGlobalState } from '@/components/global-state/context'
 import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
 import { SOUNDS } from '@/lib/sounds'

@@ -1,8 +1,7 @@
 import { UserJSON } from '@clerk/backend'
-import { Id } from '../_generated/dataModel'
-import { MutationCtx, QueryCtx } from '../_generated/server'
-import { INITIAL_PLAYER_POSITION } from '../../src/lib/constants'
 import { asyncMap } from 'convex-helpers'
+import { SCENE } from '../../src/lib/constants'
+import { MutationCtx, QueryCtx } from '../_generated/server'
 import * as Calls from './calls'
 import * as FloatingPanels from './floatingPanels'
 
@@ -42,12 +41,13 @@ export async function ensureUserExists(ctx: MutationCtx, userData: UserJSON | { 
   const newHeartbeatId = await ctx.db.insert('heartbeats', { lastSeen: Date.now() })
   const newPresenceId = await ctx.db.insert('presence', { isOnline: false, heartbeatId: newHeartbeatId })
   const newGameEventBatchId = await ctx.db.insert('game_event_batches', { batch: [] })
-  const newGameUserPositionId = await ctx.db.insert('game_user_positions', { x: INITIAL_PLAYER_POSITION.x })
+  const newGameUserPositionId = await ctx.db.insert('game_user_positions', { x: SCENE.main.playerInitialX })
   const newGameUserStateId = await ctx.db.insert('game_user_state', {
     isWalking: false,
     isRunning: false,
     movementDir: 'right',
-    y: INITIAL_PLAYER_POSITION.y,
+    scene: 'main',
+    y: SCENE.main.playerInitialY,
   })
 
   await ctx.db.insert('users', {

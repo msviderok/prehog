@@ -1,3 +1,5 @@
+import type { Doc } from '../../convex/_generated/dataModel'
+
 /* The ratio of the game content height to the window height. */
 export const GAME_CONTENT_HEIGHT_RATIO = 0.6666
 
@@ -7,12 +9,6 @@ export const GAME_CONTENT_HEIGHT_RATIO = 0.6666
  */
 export const HAVE_AUDIO_OUTPUT_SELECTOR =
   typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype
-
-/* In "world units", 0 to 100 */
-export const SCENE_PLAYER_OFFSET_Y = 85
-
-/* In "world units", 0 to 100 */
-export const INITIAL_PLAYER_POSITION = { x: 5, y: 85 }
 
 /* `x` offset on the hats.png sprite for the hog */
 export type Hat = keyof typeof HAT_INDEX
@@ -39,21 +35,26 @@ export const HAT_INDEX = {
 export const SAMPLING_INTERVAL_MS = 33
 export const BATCHING_INTERVAL_MS = 100
 export const INTERPOLATION_DELAY_MS = 200
-
-export const ORIGINAL_SCENE_SIZE = { width: 6043, height: 1080 }
-
-export const PLAYER_SIZE = { width: 300, height: 300 }
-export const PLAYER_SIZE_IN_WORLD_UNITS = {
-  width: (PLAYER_SIZE.width / ORIGINAL_SCENE_SIZE.width) * 100,
-  height: (PLAYER_SIZE.height / ORIGINAL_SCENE_SIZE.height) * 100,
-}
-
-export const SCENE_WALKABLE_X_IN_WORLD_UNITS = {
-  min: PLAYER_SIZE_IN_WORLD_UNITS.width / 2,
-  max: 100 - PLAYER_SIZE_IN_WORLD_UNITS.width / 2,
-}
+export const HEARTBEAT_MS = 10_000
 
 export const PLAYER_BASE_SPEED = 0.2
 export const PLAYER_RUNNING_SPEED_MOD = 2.0
+export const PLAYER_SIZE = { width: 300, height: 300 }
 
-export const HEARTBEAT_MS = 10_000
+export const COMMON_SCENE_HEIGHT = 1080
+export const SCENE: Record<
+  Doc<'game_user_state'>['scene'],
+  {
+    /** @description In px */
+    width: number
+    /** @description In px */
+    height: number
+    /** @description In "world units", 0 to 100 */
+    playerInitialX: number
+    /** @description In "world units", 0 to 100 */
+    playerInitialY: number
+  }
+> = {
+  main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
+  tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
+}

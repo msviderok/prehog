@@ -94,8 +94,8 @@
 
   --font-sans: 'Grandstander', sans-serif;
   --spacing-boxShadowY: 4px;
-  --shadow-shadow: 0px var(--boxShadowY-dynamic, var(--spacing-boxShadowY)) 0px 0px
-    color-mix(in oklch, var(--v-color, var(--border)), black 45%);
+  --shadow-button: 0px var(--boxShadowY-dynamic, var(--spacing-boxShadowY)) 0px 0px
+    color-mix(in oklch, var(--v-color, var(--border)), black var(--v-shade, 45%));
   --radius-base: 6px;
   --font-weight-base: 500;
   --font-weight-heading: 800;
@@ -123,7 +123,7 @@
     @apply font-base text-foreground bg-background;
     height: 100%;
     width: 100%;
-    background-image: url('https://res.cloudinary.com/dmukukwp6/image/upload/keyboard_garden_bg_light_03a349af5c.png');
+    background-image: url('../assets/sprites/scenes/bg_pattern.png');
     background-size: 100px 100px;
     background-repeat: repeat;
   }

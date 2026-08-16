@@ -163,16 +163,27 @@
   left: 0;
 }
 
-@utility main-scene {
+@utility scene {
   width: calc(var(--original-scene-width) * var(--scale, 1));
   height: min(calc(var(--window-inner-height) * var(--game-content-height-ratio, 1)), var(--original-scene-height));
   background-color: #111220;
-  background-image: url('https://utfs.io/f/FRHd7GIa8Oy2N1cA4CqQ0oh8I3ZJzj1XcaRn6dE2kKOTlyuS');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: top left;
   will-change: transform;
   transform: translate3d(var(--tx, 0), 0, 0);
+  position: relative;
+  overflow: hidden;
+  transform-origin: top left;
+  image-rendering: pixelated;
+
+  &[data-scene='main'] {
+    background-image: url('../assets/sprites/scenes/main.png');
+  }
+
+  &[data-scene='tour'] {
+    background-image: url('../assets/sprites/scenes/evolution.png');
+  }
 }
 
 @utility hitbox {

@@ -1,33 +1,22 @@
-import { GlobalStateProvider } from '@/components/global-state/GlobalStateContext'
-import { TooltipProvider } from '@/components/ui/tooltip'
 import { env } from '@/env'
-import { ConvexClerkProvider } from '@/lib/convex-clerk'
 import { neobrutalism } from '@clerk/ui/themes'
-import { ClientOnly, createFileRoute } from '@tanstack/solid-router'
-import { ClerkProvider } from 'clerk-solidjs-tanstack-start'
+import { ClerkProvider as BaseClerkProvider } from 'clerk-solidjs-tanstack-start'
+import type { ParentProps } from 'solid-js'
 
-export const Route = createFileRoute('/')({
-  component() {
-    return (
-      <TooltipProvider>
-        <ClerkProvider
-          publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}
-          appearance={{
-            theme: neobrutalism,
-            layout: { unsafe_disableDevelopmentModeWarnings: true },
-            ...elements,
-          }}
-        >
-          <ConvexClerkProvider>
-            <ClientOnly>
-              <GlobalStateProvider />
-            </ClientOnly>
-          </ConvexClerkProvider>
-        </ClerkProvider>
-      </TooltipProvider>
-    )
-  },
-})
+export function ClerkProvider(props: ParentProps) {
+  return (
+    <BaseClerkProvider
+      publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        theme: neobrutalism,
+        layout: { unsafe_disableDevelopmentModeWarnings: true },
+        ...elements,
+      }}
+    >
+      {props.children}
+    </BaseClerkProvider>
+  )
+}
 
 const elements: any = {
   // elements: {

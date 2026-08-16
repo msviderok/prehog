@@ -101,6 +101,16 @@ export const byId = query({
   },
 })
 
+export const getProfile = query({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const user = (await ctx.db.get('users', args.userId))!
+    return pick(user, ['avatar', 'fullname'])
+  },
+})
+
 export const byChatId = query({
   args: {
     chatId: v.id('chats'),

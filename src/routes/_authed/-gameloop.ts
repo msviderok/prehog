@@ -1,16 +1,12 @@
-import { useGlobalState } from '@/components/global-state/GlobalStateContext'
+import { useGlobalState } from '@/components/global-state/context'
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
 import { INTERPOLATION_DELAY_MS } from '@/lib/constants'
 import { createRAFLoop } from '@/lib/createRAFLoop'
 import { clamp, lerp } from '@/lib/utils'
 import { useMutation } from 'convex-solidjs'
-import { For } from 'solid-js'
-import { Hat } from './Hat'
-import { OtherPlayer } from './OtherPlayer'
-import { SceneryNodes } from './SceneryNodes'
 
-export function GameContent() {
+export function runGameLoop() {
   const { scene, player, misc, nodes, otherPlayers } = useGlobalState()
   const sendBatch = useMutation(api.gameState.sendMyBatch)
   let eventBatch: Doc<'game_event_batches'>['batch'] = []
@@ -88,42 +84,27 @@ export function GameContent() {
       let collided = false
       for (const node of nodes) {
         const nodeCollided = collisionDetected(player.hitbox.inWorldUnits, node.hitbox.inWorldUnits)
+        const v = nodeCollided ? '1' : '0'
         if (node.type === 'player') {
-          node.ref?.style.setProperty('--collided', nodeCollided)
+          node.ref?.style.setProperty('--collided', v)
         } else {
-          node.rootRef?.style.setProperty('--collided', nodeCollided)
-          node.popupRef?.style.setProperty('--is-open', nodeCollided)
+          node.rootRef?.style.setProperty('--collided', v)
+          node.popupRef?.style.setProperty('--is-open', v)
         }
 
-        if (nodeCollided === '1') collided = true
+        if (node.actions.open.value !== nodeCollided) {
+          node.actions.open.value = nodeCollided
+          node.actions.open.set(nodeCollided)
+        }
+
+        if (nodeCollided) collided = true
       }
 
       player.ref?.style.setProperty('--collided', collided ? '1' : '0')
     },
   })
-
-  return (
-    <div class="w-min h-min relative">
-      <div
-        ref={(el) => (scene.ref = el)}
-        class="main-scene relative shrink-0 overflow-hidden origin-top-left [image-rendering:pixelated] brightness-100"
-      >
-        <SceneryNodes />
-        <For each={otherPlayers.list()}>{(userId) => <OtherPlayer id={userId} />}</For>
-      </div>
-
-      <div
-        ref={(el) => (player.ref = el)}
-        class="player player-idle hitbox"
-        data-me={true}
-        data-is-admin={player.isAdmin()}
-      >
-        <Hat hat={player.isAdmin() ? 'admin' : 'baseball'} />
-      </div>
-    </div>
-  )
 }
 
 function collisionDetected(a: Hitbox, b: Hitbox) {
-  return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1 ? '1' : '0'
+  return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1
 }

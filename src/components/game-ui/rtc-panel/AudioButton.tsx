@@ -1,4 +1,4 @@
-import { useGlobalState } from '@/components/global-state/GlobalStateContext'
+import { useGlobalState } from '@/components/global-state/context'
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import {
   DropdownMenu,

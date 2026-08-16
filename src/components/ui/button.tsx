@@ -1,17 +1,18 @@
 import { UIAudio } from '@/lib/ui-audio'
-import { cn, defaultProps } from '@/lib/utils'
+import { callEventHandler, cn, defaultProps } from '@/lib/utils'
+import { createHotkey, createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { createEffect, splitProps } from 'solid-js'
+import { batch, createEffect, createSignal, onMount, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
+import { SOUNDS } from '@/lib/sounds'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
   {
     variants: {
       variant: {
-        default:
-          'shadow-shadow translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] contrast-color-(--v-color) aria-expanded:[--boxShadowY-dynamic:0px] aria-expanded:bg-shade-(--v-color)/20 aria-expanded:text-tint-(--v-color)/60 aria-expanded:border-tint-(--v-color)/60',
+        default: '',
         // plain:
         //   '[--boxShadowY-dynamic:0px] translate-y-0 hover:[--boxShadowY-dynamic:0] border-shade-white/50 bg-gray-100/10 active:shadow-primary text-shade-white/20  hover:border-shade-white/30 hover:text-shade-white/10 focus:border-shade-white/30 focus:text-shade-white/10',
         outline:
@@ -19,6 +20,9 @@ const buttonVariants = cva(
         toggle:
           'aria-expanded:bg-(--v-color) not-aria-expanded:bg-muted aria-expanded:opacity-100 not-aria-expanded:opacity-50 aria-expanded:border-tint-(--v-color)/50 not-aria-expanded:border-tint-muted/30',
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
+
+        'game-action':
+          'shadow-button v-ph-background translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-3 bg-ph-warm-pink border-ph-background text-shade-ph-background/20 font-bold',
       },
       animate: {
         default: '',
@@ -36,66 +40,122 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: 'default',
+      variant: 'outline',
       animate: 'default',
       size: 'default',
     },
+    compoundVariants: [
+      {
+        variant: 'game-action',
+        animate: 'scale',
+        size: 'default',
+        class: 'text-2xl size-12 p-0',
+      },
+    ],
   },
 )
 
-type ExtraButtonProps = VariantProps<typeof buttonVariants> & {
-  sound?:
-    | {
-        click?: UIAudio.SoundKey
-        tap?: UIAudio.SoundKey
-      }
-    | 'off'
+type InferredButtonVariantProps = VariantProps<typeof buttonVariants>
+
+interface VariantOther extends Omit<InferredButtonVariantProps, 'variant'> {
+  variant?: Exclude<InferredButtonVariantProps['variant'], 'game-action'>
+  hotkey?: never
+  onHotkeyPress?: never
 }
+
+interface VariantGameAction extends Omit<InferredButtonVariantProps, 'variant'> {
+  variant: Extract<InferredButtonVariantProps['variant'], 'game-action'>
+  hotkey: Hotkey
+  onHotkeyPress: HotkeyCallback
+}
+
+interface SoundProps {
+  sound?: 'off' | { click?: UIAudio.SoundKey; tap?: UIAudio.SoundKey }
+}
+
+type ConfigurableSound = keyof Extract<SoundProps['sound'], object>
+
+type ExtraButtonProps = (VariantOther | VariantGameAction) & SoundProps
 
 function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   let ref!: HTMLButtonElement
-  const props = defaultProps(componentProps, { variant: 'default', size: 'default', animate: 'default' })
-  const [local, rest] = splitProps(props, ['class', 'size', 'variant', 'animate', 'ref', 'sound'])
+  const [pressed, setPressed] = createSignal(false)
+  const props = defaultProps(componentProps, { variant: 'outline', size: 'default', animate: 'default' })
+  const [local, rest] = splitProps(props, [
+    'class',
+    'size',
+    'variant',
+    'animate',
+    'ref',
+    'sound',
+    'hotkey',
+    'onHotkeyPress',
+  ])
 
-  async function onClick() {
+  async function handleSound(soundKey: ConfigurableSound | UIAudio.SoundKey) {
     if (local.sound === 'off') return
     await ensureReady()
-    UIAudio.play(local.sound?.click ?? 'click')
+    const sound = local.sound?.[soundKey as ConfigurableSound] ?? (UIAudio.get(soundKey) ? soundKey : 'click')
+    return UIAudio.play(sound)
   }
 
-  async function onTap() {
-    if (local.sound === 'off') return
-    await ensureReady()
-    UIAudio.play(local.sound?.tap ?? 'click')
-  }
-
-  async function onMouseOver() {
-    if (local.sound === 'off') return
-    await ensureReady()
-    UIAudio.play('hover')
-  }
+  const onSoundHandleClick = () => handleSound('click')
+  const onSoundHandleTap = () => handleSound('tap')
+  const onSoundHandleMouseOver = () => handleSound('hover')
 
   createEffect(() => {
     if (local.sound === 'off') return
 
-    ref.addEventListener('click', onClick)
-    ref.addEventListener('touchstart', onTap)
-    ref.addEventListener('mouseover', onMouseOver)
+    ref.addEventListener('click', onSoundHandleClick)
+    ref.addEventListener('touchstart', onSoundHandleTap)
+    ref.addEventListener('mouseover', onSoundHandleMouseOver)
+
     return () => {
-      ref.removeEventListener('click', onClick)
-      ref.removeEventListener('touchstart', onTap)
-      ref.removeEventListener('mouseover', onMouseOver)
+      ref.removeEventListener('click', onSoundHandleClick)
+      ref.removeEventListener('touchstart', onSoundHandleTap)
+      ref.removeEventListener('mouseover', onSoundHandleMouseOver)
+    }
+  })
+
+  createEffect(() => {
+    if (pressed()) ref.style.setProperty('--boxShadowY-dynamic', '0px')
+    else ref.style.removeProperty('--boxShadowY-dynamic')
+  })
+
+  onMount(() => {
+    if (local.variant === 'game-action') {
+      createHotkeys(
+        [
+          {
+            hotkey: local.hotkey,
+            options: { eventType: 'keydown' },
+            callback: (e, ctx) => {
+              if (rest.disabled) return
+              batch(() => {
+                setPressed(true)
+                onSoundHandleClick()
+                local.onHotkeyPress(e, ctx)
+              })
+            },
+          },
+          {
+            hotkey: local.hotkey,
+            options: { eventType: 'keyup' },
+            callback: () => setPressed(false),
+          },
+        ],
+        { requireReset: true, conflictBehavior: 'allow' },
+      )
     }
   })
 
   return (
     <ButtonPrimitive
       data-slot="button"
-      class={cn(buttonVariants(local))}
+      class={buttonVariants(local)}
       ref={(el) => {
-        if (props.ref) {
-          ;(props.ref as any)(el)
-        }
+        if (typeof props.ref === 'function') props.ref(el)
+        else props.ref = el
         ref = el
       }}
       {...rest}

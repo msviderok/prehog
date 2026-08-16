@@ -1,14 +1,18 @@
-import { createRouter as createTanStackRouter, ErrorComponent } from '@tanstack/solid-router'
+import { createRouter, ErrorComponent } from '@tanstack/solid-router'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
-  const router = createTanStackRouter({
+  const router = createRouter({
     routeTree,
+    defaultStructuralSharing: true,
+    defaultPendingMs: 0,
     defaultErrorComponent(props) {
       console.trace(props.error)
       return <ErrorComponent {...props} />
     },
-    defaultNotFoundComponent: () => <p>Not Found!</p>,
+    defaultNotFoundComponent() {
+      return <p>Not Found</p>
+    },
   })
 
   return router
@@ -17,5 +21,13 @@ export function getRouter() {
 declare module '@tanstack/solid-router' {
   interface Register {
     router: ReturnType<typeof getRouter>
+  }
+
+  interface HistoryState {
+    clerkToken?: string | null // add your custom property here
+  }
+
+  interface StaticDataRouteOption {
+    scene?: CurrentScene
   }
 }
