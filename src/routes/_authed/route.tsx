@@ -4,13 +4,12 @@ import { useGlobalState } from '@/components/global-state/context'
 import { Loading } from '@/components/Loading'
 import { api } from '@/convex/api'
 import { authServerFn } from '@/lib/server.functions'
-import { createFileRoute, Outlet, redirect, useMatches } from '@tanstack/solid-router'
+import { createFileRoute, Outlet, redirect, useBlocker, useMatches } from '@tanstack/solid-router'
 import { useMutation } from 'convex-solidjs'
 import { onCleanup, onMount, Show } from 'solid-js'
 import { runGameLoop } from './-gameloop'
 import { OtherPlayer } from '@/components/game-content/OtherPlayer'
 import { For } from 'solid-js'
-import { parse as valibotParse } from 'valibot'
 
 export const Route = createFileRoute('/_authed')({
   async beforeLoad() {
@@ -41,6 +40,14 @@ export const Route = createFileRoute('/_authed')({
         player.x = s.x
         recalculate()
       })
+    })
+
+    useBlocker({
+      enableBeforeUnload: false,
+      shouldBlockFn: ({ action }) => {
+        if (action === 'BACK' || action === 'FORWARD') return true
+        return false
+      },
     })
 
     return (

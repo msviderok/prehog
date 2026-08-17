@@ -263,8 +263,6 @@ export function GlobalStateProvider(props: ParentProps) {
       node.hitbox.inPX.y2 = node.hitbox.inWorldUnits.y2 * scene.worldUnit.y
     }
     updatePlayerAnimations()
-
-    console.log({ misc, player, scene })
   }
 
   function updatePlayerAnimations() {
