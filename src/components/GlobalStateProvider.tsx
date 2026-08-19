@@ -4,7 +4,7 @@ import {
   COMMON_SCENE_HEIGHT,
   GAME_CONTENT_HEIGHT_RATIO,
   HEARTBEAT_MS,
-  PLAYER_BASE_SPEED,
+  PLAYER_BASE_SPEED_PX_PER_SEC,
   PLAYER_RUNNING_SPEED_MOD,
   PLAYER_SIZE,
   SCENE,
@@ -26,8 +26,8 @@ import {
   type Setter,
 } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import { GlobalStateContext } from './context'
-import { createRtcState } from './createRtcState'
+import { GlobalStateContext } from './GlobalStateContext'
+import { createRtcState } from '../lib/createRtcState'
 import { useStableQuery } from '@/lib/useStableQuery'
 import { useNavigate } from '@tanstack/solid-router'
 
@@ -180,7 +180,7 @@ export function GlobalStateProvider(props: ParentProps) {
     isWalking: false,
     isRunning: false,
     facing: 'right',
-    speed: PLAYER_BASE_SPEED,
+    speed: PLAYER_BASE_SPEED_PX_PER_SEC,
     shouldSendBatches: false,
     hat,
     setHat,
@@ -349,7 +349,7 @@ export function GlobalStateProvider(props: ParentProps) {
   createEffect(
     on(isShiftHeld, (shift) => {
       player.isRunning = shift
-      player.speed = PLAYER_BASE_SPEED * (shift ? PLAYER_RUNNING_SPEED_MOD : 1)
+      player.speed = PLAYER_BASE_SPEED_PX_PER_SEC * (shift ? PLAYER_RUNNING_SPEED_MOD : 1)
       player.ref?.style.setProperty('--is-running', shift ? '1' : '0')
     }),
     void 0,

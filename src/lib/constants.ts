@@ -37,7 +37,8 @@ export const BATCHING_INTERVAL_MS = 100
 export const INTERPOLATION_DELAY_MS = 200
 export const HEARTBEAT_MS = 10_000
 
-export const PLAYER_BASE_SPEED = 0.2
+/** @description in "world units" per every frame, 0 to 100 */
+export const PLAYER_BASE_SPEED_PX_PER_SEC = 4
 export const PLAYER_RUNNING_SPEED_MOD = 2.0
 export const PLAYER_SIZE = { width: 300, height: 300 }
 

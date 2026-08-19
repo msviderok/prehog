@@ -13,8 +13,8 @@ allowBuilds:
   utf-8-validate: false
   'convex-solidjs@https://codeload.github.com/msviderok/convex-solidjs/tar.gz/b21f6332498bcac8b2b2a18bfe2ae78a0402bcc2': true
 catalog:
-  '@clerk/backend': ^3.16.6
-  '@clerk/ui': ^1.30.3
+  '@clerk/backend': ^3.16.7
+  '@clerk/ui': ^1.30.4
   '@convex-dev/crons': ^0.2.2
   '@dnd-kit/abstract': 0.5.0
   '@dnd-kit/dom': 0.5.0
@@ -41,14 +41,14 @@ catalog:
   date-fns: ^4.4.0
   howler: ^2.2.4
   knip: ^6.32.2
-  lucide-solid: ^1.31.0
+  lucide-solid: ^1.32.0
   motion: ^13.1.0
   nitro: npm:nitro-nightly@3.0.1-20260810-113911-16ff2809
   oxfmt: ^0.63.0
   oxlint: ^1.78.0
-  posthog-js: ^1.417.1
+  posthog-js: ^1.418.0
   shadcn: ^4.18.0
-  solid-js: 1.9.14
+  solid-js: 1.9.15
   solid-motionone: ^1.0.4
   svix: ^1.99.1
   tailwind-merge: ^3.6.0

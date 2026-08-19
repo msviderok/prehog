@@ -3,9 +3,9 @@ import type { Id } from '@/convex/dataModel'
 import { useStableQuery } from '@/lib/useStableQuery'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { createEffect, createRenderEffect, createSignal, on, onCleanup, onMount } from 'solid-js'
-import { useGlobalState } from '../global-state/context'
-import { Button } from '../ui/button'
-import { Tooltip, TooltipPopup, TooltipPortal, TooltipPositioner } from '../ui/tooltip'
+import { useGlobalState } from './GlobalStateContext'
+import { Button } from './ui/button'
+import { Tooltip, TooltipPopup, TooltipPortal, TooltipPositioner } from './ui/tooltip'
 import { Hat } from './Hat'
 
 export function OtherPlayer(props: { id: Id<'users'> }) {

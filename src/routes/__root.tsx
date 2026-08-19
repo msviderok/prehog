@@ -1,6 +1,6 @@
 import { ClerkProvider } from '@/components/ClerkProvider'
 import { ConvexClerkProvider } from '@/components/ConvexClerkProvider'
-import { GlobalStateProvider } from '@/components/global-state/GlobalStateProvider'
+import { GlobalStateProvider } from '@/components/GlobalStateProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { env } from '@/env'
 import { ClientOnly, createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/solid-router'

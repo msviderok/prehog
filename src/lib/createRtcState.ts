@@ -1,8 +1,8 @@
 import { api } from '@/convex/api'
+import { HAVE_AUDIO_OUTPUT_SELECTOR } from '@/lib/constants'
+import { createMediaDevices } from '@/lib/createMediaDevices'
 import { useMutation } from 'convex-solidjs'
 import { createSignal, onCleanup } from 'solid-js'
-import { HAVE_AUDIO_OUTPUT_SELECTOR } from '../../lib/constants'
-import { createMediaDevices } from '../../lib/createMediaDevices'
 
 type OptionalDevice = { deviceId: string; device?: never } | { deviceId?: never; device: MediaDeviceInfo }
 

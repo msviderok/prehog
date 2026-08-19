@@ -1,4 +1,4 @@
-import { useGlobalState } from '@/components/global-state/context'
+import { useGlobalState } from '@/components/GlobalStateContext'
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
 import { INTERPOLATION_DELAY_MS } from '@/lib/constants'
@@ -15,20 +15,20 @@ export function runGameLoop() {
     autostart: true,
     fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart) => {
       const velocity = player.direction * player.speed
-      const distanceThisFrame = velocity * dt
-      const distanceThisFrameInPX = distanceThisFrame * scene.worldUnit.x
+      const distanceThisFrameInPX = velocity * dt
+      const distanceThisFrame = distanceThisFrameInPX / scene.worldUnit.x
 
       /** Scene/camera movement */
       const shouldLockPlayerInPlace = player.realX > scene.cameraStartMovingX && player.realX < scene.cameraEndMovingX
       const shouldMoveSceneCamera =
         shouldLockPlayerInPlace && player.realX > scene.s50 && player.realX < scene.scaled.width
 
-      scene.cameraX = clamp(
-        0,
-        scene.cameraX + (shouldMoveSceneCamera ? distanceThisFrameInPX : 0),
-        scene.cameraViewportWidth,
-      )
-      scene.ref?.style.setProperty('--tx', `${-scene.cameraX}px`)
+      const smoothing = 1 - Math.exp(-10 * dt)
+      const targetCameraX = shouldMoveSceneCamera
+        ? clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
+        : scene.cameraX
+      scene.cameraX += (targetCameraX - scene.cameraX) * smoothing
+      scene.ref?.style.setProperty('--tx', `${-Math.round(scene.cameraX)}px`)
 
       /** My player movement */
       player.x = clamp(scene.walkableMinX, player.x + distanceThisFrame, scene.walkableMaxX)
