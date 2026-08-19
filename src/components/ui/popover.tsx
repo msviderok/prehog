@@ -21,7 +21,7 @@ const popoverVariants = cva(
       variant: {
         default: 'bg-ph-mustard-yellow',
         scenery:
-          'bg-ph-mustard-yellow text-border pointer-events-none [--arrow-offset:0px]! scale-[calc(100%*var(--is-open))] opacity-[calc(100%*var(--is-open))] duration-200 delay-100 ease-out',
+          'bg-white text-black [--arrow-offset:0px]! scale-[calc(100%*var(--is-open))] opacity-[calc(100%*var(--is-open))] duration-200 delay-100 ease-out border-4',
       },
     },
     defaultVariants: {

@@ -12,8 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
-import { Route as AuthedMainRouteImport } from './routes/_authed/main'
-import { Route as AuthedTourRouteImport } from './routes/_authed/tour'
+import { Route as AuthedMainIndexRouteImport } from './routes/_authed/main/index'
+import { Route as AuthedTourIndexRouteImport } from './routes/_authed/tour/index'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -29,49 +29,49 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
-const AuthedMainRoute = AuthedMainRouteImport.update({
-  id: '/main',
-  path: '/main',
+const AuthedMainIndexRoute = AuthedMainIndexRouteImport.update({
+  id: '/main/',
+  path: '/main/',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
-const AuthedTourRoute = AuthedTourRouteImport.update({
-  id: '/tour',
-  path: '/tour',
+const AuthedTourIndexRoute = AuthedTourIndexRouteImport.update({
+  id: '/tour/',
+  path: '/tour/',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
-  '/main': typeof AuthedMainRoute
-  '/tour': typeof AuthedTourRoute
+  '/main/': typeof AuthedMainIndexRoute
+  '/tour/': typeof AuthedTourIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/main': typeof AuthedMainRoute
-  '/tour': typeof AuthedTourRoute
   '/': typeof AuthedIndexRoute
+  '/main': typeof AuthedMainIndexRoute
+  '/tour': typeof AuthedTourIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authed/main': typeof AuthedMainRoute
-  '/_authed/tour': typeof AuthedTourRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/main/': typeof AuthedMainIndexRoute
+  '/_authed/tour/': typeof AuthedTourIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/main' | '/tour'
+  fullPaths: '/' | '/login' | '/main/' | '/tour/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/main' | '/tour' | '/'
+  to: '/login' | '/' | '/main' | '/tour'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
-    | '/_authed/main'
-    | '/_authed/tour'
     | '/_authed/'
+    | '/_authed/main/'
+    | '/_authed/tour/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -102,33 +102,33 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
-    '/_authed/main': {
-      id: '/_authed/main'
+    '/_authed/main/': {
+      id: '/_authed/main/'
       path: '/main'
-      fullPath: '/main'
-      preLoaderRoute: typeof AuthedMainRouteImport
+      fullPath: '/main/'
+      preLoaderRoute: typeof AuthedMainIndexRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
-    '/_authed/tour': {
-      id: '/_authed/tour'
+    '/_authed/tour/': {
+      id: '/_authed/tour/'
       path: '/tour'
-      fullPath: '/tour'
-      preLoaderRoute: typeof AuthedTourRouteImport
+      fullPath: '/tour/'
+      preLoaderRoute: typeof AuthedTourIndexRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
   }
 }
 
 interface AuthedRouteRouteChildren {
-  AuthedMainRoute: typeof AuthedMainRoute
-  AuthedTourRoute: typeof AuthedTourRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedMainIndexRoute: typeof AuthedMainIndexRoute
+  AuthedTourIndexRoute: typeof AuthedTourIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
-  AuthedMainRoute: AuthedMainRoute,
-  AuthedTourRoute: AuthedTourRoute,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedMainIndexRoute: AuthedMainIndexRoute,
+  AuthedTourIndexRoute: AuthedTourIndexRoute,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(

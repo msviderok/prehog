@@ -3,9 +3,10 @@ import { callEventHandler, cn, defaultProps } from '@/lib/utils'
 import { createHotkey, createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { batch, createEffect, createSignal, onMount, splitProps } from 'solid-js'
+import { batch, createEffect, createMemo, createSignal, onMount, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 import { SOUNDS } from '@/lib/sounds'
+import { usePopoverContext } from './popover'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
@@ -79,6 +80,7 @@ type ExtraButtonProps = (VariantOther | VariantGameAction) & SoundProps
 
 function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   let ref!: HTMLButtonElement
+  const popoverCtx = usePopoverContext()
   const [pressed, setPressed] = createSignal(false)
   const props = defaultProps(componentProps, { variant: 'outline', size: 'default', animate: 'default' })
   const [local, rest] = splitProps(props, [
@@ -90,7 +92,12 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
     'sound',
     'hotkey',
     'onHotkeyPress',
+    'disabled',
   ])
+
+  const disabled = createMemo(() =>
+    popoverCtx != null ? popoverCtx.node?.actions.open.get() !== true : local.disabled,
+  )
 
   async function handleSound(soundKey: ConfigurableSound | UIAudio.SoundKey) {
     if (local.sound === 'off') return
@@ -130,7 +137,7 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
             hotkey: local.hotkey,
             options: { eventType: 'keydown' },
             callback: (e, ctx) => {
-              if (rest.disabled) return
+              if (disabled()) return
               batch(() => {
                 setPressed(true)
                 onSoundHandleClick()
@@ -158,6 +165,7 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
         else props.ref = el
         ref = el
       }}
+      disabled={disabled()}
       {...rest}
     />
   )
