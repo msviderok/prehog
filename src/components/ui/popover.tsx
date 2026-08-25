@@ -15,6 +15,7 @@ import {
 } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
 import { Button, type VariantGameAction } from './button'
+import { EventMarker } from '../EventMarker'
 
 const popoverVariants = cva(
   'group z-50 w-72 rounded-base border-2 border-border bg-ph-mustard-yellow p-4  outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all [--arrow-offset:2px]',
@@ -113,7 +114,7 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
       }
     >
       <Show when={props.variant === 'scenery'}>
-        <div ref={(el) => (ref = el)} class="scene-node-popover-hitbox hitbox" />
+        <EventMarker ref={(el) => (ref = el)} />
       </Show>
       <PopoverPrimitive.Root data-slot="popover" open={props.variant === 'scenery' ? true : misc.open} {...rest} />
     </PopoverContext.Provider>

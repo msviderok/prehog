@@ -1,3 +1,59 @@
+@property --rx {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --ry {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --rz {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --tx {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --ty {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tz {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --sx {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+@property --sy {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+@property --sz {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+@property --skx {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --sky {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 @utility text-tint-* {
   color: color-mix(in oklch, --value(--color-*, [*]), white calc(--modifier(integer) * 1%));
   color: color-mix(in oklch, black, white calc(--value(integer) * 1%));
@@ -137,19 +193,11 @@
   }
 }
 
-@utility scene-node-popover-hitbox {
-  --node-hitbox-x2-scaled: calc(var(--node-hitbox-x2, 0) * var(--scene-world-unit-x));
-  --node-hitbox-x1-scaled: calc(var(--node-hitbox-x1, 0) * var(--scene-world-unit-x));
-  --node-hitbox-y2-scaled: calc(var(--node-hitbox-y2, 0) * var(--scene-world-unit-y));
-  --node-hitbox-y1-scaled: calc(var(--node-hitbox-y1, 0) * var(--scene-world-unit-y));
-
-  width: calc(var(--node-hitbox-x2-scaled) - var(--node-hitbox-x1-scaled));
-  height: calc(var(--node-hitbox-y2-scaled) - var(--node-hitbox-y1-scaled));
-  transform: translate3d(var(--node-hitbox-x1-scaled), var(--node-hitbox-y1-scaled), 0);
-
-  position: absolute;
-  top: 0;
-  left: 0;
+@utility game-transform {
+  @apply will-change-transform;
+  transform: translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
+    rotateZ(var(--rz, 0deg)) skewX(var(--skx, 0deg)) skewY(var(--sky, 0deg))
+    scale3d(var(--sx, 1), var(--sy, 1), var(--sz, 1));
 }
 
 @utility scene-node-popover-trigger {
@@ -187,22 +235,76 @@
 }
 
 @utility hitbox {
-  @apply border-2 border-red-500;
   &:after {
+    @apply border-2 border-red-500;
     filter: unset;
     content: '';
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(255, 0, 0, calc(0.3 * var(--collided, 0)));
   }
 
-  &[data-me='true'] {
-    @apply border-2 border-green-500;
+  &.player {
     &:after {
+      --phw: var(--player-hitbox-width-scaled, 100%);
+      --phh: var(--player-hitbox-height-scaled, 100%);
+      top: calc((var(--player-height-scaled) - var(--phh)) / 2);
+      left: calc((var(--player-width-scaled) - var(--phw)) / 2);
+      width: var(--phw);
+      height: var(--phh);
+    }
+
+    &[data-me='true']:after {
+      @apply border-2 border-green-500;
       background-color: rgba(0, 255, 0, calc(0.3 * var(--collided, 0)));
+    }
+  }
+}
+
+@utility marker {
+  @apply absolute perspective-midrange origin-center top-0 left-0;
+
+  --node-hitbox-x1-scaled: calc(var(--node-hitbox-x1, 0) * var(--scene-world-unit-x));
+  --node-hitbox-x2-scaled: calc(var(--node-hitbox-x2, 0) * var(--scene-world-unit-x));
+  --node-hitbox-y1-scaled: calc(var(--node-hitbox-y1, 0) * var(--scene-world-unit-y));
+  --node-hitbox-y2-scaled: calc(var(--node-hitbox-y2, 0) * var(--scene-world-unit-y));
+  --node-width: calc(var(--node-hitbox-x2-scaled) - var(--node-hitbox-x1-scaled));
+  --node-height: calc(var(--node-hitbox-y2-scaled) - var(--node-hitbox-y1-scaled));
+
+  width: var(--node-width);
+  height: var(--node-height);
+  transform: translate3d(var(--node-hitbox-x1-scaled), var(--node-hitbox-y1-scaled), 0);
+
+  & > * {
+    @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform animate-spinY;
+
+    --rx: -20deg;
+    --side-angle: calc(360deg / var(--len, 1));
+    --side-width: calc(var(--node-width) * sin(180deg / var(--len, 1)));
+    --radius: calc(var(--node-width) / 2);
+    --apothem: calc(var(--radius) * cos(180deg / var(--len, 1)));
+
+    /* Prism side */
+    & > * {
+      @apply absolute will-change-transform bg-ph-mustard-yellow border border-tint-ph-mustard-yellow/50;
+      width: var(--side-width);
+      height: var(--node-height);
+      transform: translateX(calc(var(--radius) / 2)) rotateY(calc(var(--i) * var(--side-angle)))
+        translateZ(calc(var(--apothem) - 1px));
+    }
+
+    /* Bottom polygon */
+    &:after {
+      @apply absolute top-1/2 left-1/2 bg-green-500 border;
+      content: '';
+      width: var(--node-width);
+      height: var(--node-width);
+      overflow: hidden;
+      transform: translate(-50%, -50%) translateY(calc(var(--node-height) / 2)) rotateX(90deg);
+      clip-path: var(--bottom-clip-path);
     }
   }
 }

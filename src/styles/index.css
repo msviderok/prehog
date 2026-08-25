@@ -3,9 +3,9 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@clerk/ui/themes/shadcn.css';
+@import './animations.css';
 @import './utils.css';
 @import './player.css';
-@import './animations.css';
 @plugin "@tailwindcss/typography";
 
 :root {
@@ -116,6 +116,9 @@
 
     --player-width-scaled: round(nearest, calc(var(--original-player-width) * var(--scale)), 1px);
     --player-height-scaled: round(nearest, calc(var(--original-player-height) * var(--scale)), 1px);
+    --player-hitbox-width-scaled: round(nearest, calc(var(--original-player-hitbox-width) * var(--scale)), 1px);
+    --player-hitbox-height-scaled: round(nearest, calc(var(--original-player-hitbox-height) * var(--scale)), 1px);
+
     --player-offset-y-scaled: calc(var(--player-offset-y) * var(--scene-world-unit-y));
   }
 
@@ -135,12 +138,6 @@
   h5,
   h6 {
     @apply font-heading;
-  }
-}
-
-@keyframes ellipsis {
-  to {
-    width: 1rem;
   }
 }
 

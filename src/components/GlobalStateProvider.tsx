@@ -5,6 +5,7 @@ import {
   GAME_CONTENT_HEIGHT_RATIO,
   HEARTBEAT_MS,
   PLAYER_BASE_SPEED_PX_PER_SEC,
+  PLAYER_HITBOX_SIZE,
   PLAYER_RUNNING_SPEED_MOD,
   PLAYER_SIZE,
   SCENE,
@@ -136,8 +137,8 @@ export function GlobalStateProvider(props: ParentProps) {
       if (sceneValue == null) return
       const sceneInitialState = SCENE[sceneValue]
 
-      misc.player.size.inWorldUnits.width = (PLAYER_SIZE.width / sceneInitialState.width) * 100
-      misc.player.size.inWorldUnits.height = (PLAYER_SIZE.height / sceneInitialState.height) * 100
+      misc.player.size.inWorldUnits.width = (PLAYER_HITBOX_SIZE.width / sceneInitialState.width) * 100
+      misc.player.size.inWorldUnits.height = (PLAYER_HITBOX_SIZE.height / sceneInitialState.height) * 100
       misc.player.size.inWorldUnits.halfWidth = misc.player.size.inWorldUnits.width / 2
       misc.player.size.inWorldUnits.halfHeight = misc.player.size.inWorldUnits.height / 2
       misc.player.hitbox.inWorldUnits.y1 = sceneInitialState.playerInitialY
@@ -361,6 +362,8 @@ export function GlobalStateProvider(props: ParentProps) {
     root.style.setProperty('--game-content-height-ratio', `${GAME_CONTENT_HEIGHT_RATIO}`)
     root.style.setProperty('--original-player-width', `${PLAYER_SIZE.width}px`)
     root.style.setProperty('--original-player-height', `${PLAYER_SIZE.height}px`)
+    root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)
+    root.style.setProperty('--original-player-hitbox-height', `${PLAYER_HITBOX_SIZE.height}px`)
   })
 
   return (

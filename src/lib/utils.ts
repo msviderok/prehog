@@ -69,6 +69,23 @@ export function isUserDate(value: LoadingStatus): value is UserData {
   return typeof value !== 'string'
 }
 
+export function createPolygonClipPath(sides: number): JSX.CSSProperties['clip-path'] {
+  const radius = 50 // 50%
+  const points = []
+
+  for (let i = 0; i < sides; i++) {
+    const angle = (i * 360) / sides
+    const radians = (angle * Math.PI) / 180
+    const x = radius * Math.cos(radians)
+    const y = radius * Math.sin(radians)
+    const xPercent = fastRound(50 + x)
+    const yPercent = fastRound(50 + y)
+    points.push(`${xPercent}% ${yPercent}%`)
+  }
+
+  return `polygon(${points.join(', ')})`
+}
+
 // function onCreateNode(e: MouseEvent) {
 //   const target = e.target as HTMLElement
 //   if (target.dataset.node) {

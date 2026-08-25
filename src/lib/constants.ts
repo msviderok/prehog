@@ -41,6 +41,7 @@ export const HEARTBEAT_MS = 10_000
 export const PLAYER_BASE_SPEED_PX_PER_SEC = 4
 export const PLAYER_RUNNING_SPEED_MOD = 2.0
 export const PLAYER_SIZE = { width: 300, height: 300 }
+export const PLAYER_HITBOX_SIZE = { width: 200, height: 300 }
 
 export const COMMON_SCENE_HEIGHT = 1080
 export const SCENE: Record<
@@ -56,6 +57,6 @@ export const SCENE: Record<
     playerInitialY: number
   }
 > = {
-  main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
+  main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 80 },
   tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
 }

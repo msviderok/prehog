@@ -23,13 +23,19 @@ import { api } from '@/convex/api'
 import { useMutation } from 'convex-solidjs'
 import { InfoIcon } from 'lucide-solid'
 
+const y1 = 78
+const y2 = 92
+function xy(x1: number) {
+  return { x1, x2: x1 + 2.5, y1, y2 }
+}
+
 export function Intro() {
   return (
     <Popover
       variant="scenery"
       sceneryProps={{
         position: { x: 19.99, y: 48 },
-        hitbox: { x1: 10, y1: 75, x2: 15, y2: 100 },
+        hitbox: xy(10),
       }}
     >
       <PopoverTrigger />
@@ -57,7 +63,7 @@ export function Experience() {
       variant="scenery"
       sceneryProps={{
         position: { x: 22.58, y: 70.1 },
-        hitbox: { x1: 20, y1: 75, x2: 25, y2: 100 },
+        hitbox: xy(19),
       }}
     >
       <PopoverTrigger />
@@ -109,7 +115,7 @@ export function WhyAmIGoodForARole() {
       variant="scenery"
       sceneryProps={{
         position: { x: 52.34, y: 45.49 },
-        hitbox: { x1: 48, y1: 75, x2: 58, y2: 100 },
+        hitbox: xy(48),
       }}
     >
       <PopoverTrigger />
@@ -138,7 +144,7 @@ export function MyProjects() {
       variant="scenery"
       sceneryProps={{
         position: { x: 50.64, y: 70.39 },
-        hitbox: { x1: 44, y1: 75, x2: 53, y2: 100 },
+        hitbox: xy(44),
       }}
     >
       <PopoverTrigger />
@@ -167,7 +173,7 @@ export function PersonalStuff() {
       variant="scenery"
       sceneryProps={{
         position: { x: 82.64, y: 42.12 },
-        hitbox: { x1: 76, y1: 75, x2: 86, y2: 100 },
+        hitbox: xy(76),
       }}
     >
       <PopoverTrigger />
@@ -194,7 +200,7 @@ export function Temp1() {
       variant="scenery"
       sceneryProps={{
         position: { x: 84.31, y: 58.58 },
-        hitbox: { x1: 82, y1: 75, x2: 88, y2: 100 },
+        hitbox: xy(82),
       }}
     >
       <PopoverTrigger />
@@ -216,7 +222,7 @@ export function Temp2() {
       variant="scenery"
       sceneryProps={{
         position: { x: 92.47, y: 64.63 },
-        hitbox: { x1: 90, y1: 75, x2: 100, y2: 100 },
+        hitbox: xy(90),
       }}
     >
       <PopoverTrigger />

@@ -1,5 +1,5 @@
 @theme {
-  --animate-shakeX: shakeX 1.5s
+  --animate-shakeX: shakeX 1.5
     linear(
       0,
       0.451 2.4%,
@@ -54,14 +54,52 @@
       0
     )
     infinite;
+
+  --default-spin-speed: 5s;
+  --animate-spinX: spinX var(--default-spin-speed) linear infinite;
+  --animate-spinY: spinY var(--default-spin-speed) linear infinite;
+  --animate-spinZ: spinZ var(--default-spin-speed) linear infinite;
+}
+
+@keyframes ellipsis {
+  to {
+    width: 1rem;
+  }
 }
 
 @keyframes shakeX {
   0%,
   25% {
-    transform: translateX(0);
+    --tx: 0;
   }
   100% {
-    transform: translateX(-20%);
+    --tx: -20%;
+  }
+}
+
+@keyframes spinX {
+  0% {
+    --rx: 0deg;
+  }
+  100% {
+    --rx: 360deg;
+  }
+}
+
+@keyframes spinY {
+  0% {
+    --ry: 0deg;
+  }
+  100% {
+    --ry: 360deg;
+  }
+}
+
+@keyframes spinZ {
+  0% {
+    --rz: 0deg;
+  }
+  100% {
+    --rz: 360deg;
   }
 }

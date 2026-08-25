@@ -95,7 +95,8 @@
 }
 
 @utility player {
-  @apply hitbox;
+  @apply hitbox game-transform;
+
   --base-movement-speed: 1;
   --movement-speed: calc(var(--base-movement-speed) + (var(--is-running, 0) * 1.5));
   --facing-dir: 1;
@@ -103,6 +104,8 @@
   --animation-speed: 7000ms;
   --hue-speed: 500ms;
   --ty: var(--player-offset-y-scaled);
+  --skx: calc(var(--skx, 0deg) * var(--movement-speed));
+  --sx: var(--facing-dir, 1);
 
   position: absolute;
   top: 0;
@@ -116,10 +119,6 @@
   background-size: cover;
   translate: -50% -50%;
   transform-origin: center bottom;
-  will-change: transform;
-  transform: translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0)) rotateX(var(--rx, 0)) rotateY(var(--ry, 0))
-    rotateZ(var(--rz, 0)) skewX(calc(var(--skx, 0deg) * var(--movement-speed))) skewY(var(--sky, 0deg))
-    scale3d(calc(var(--sx, 1) * var(--facing-dir, 1)), var(--sy, 1), var(--sz, 1));
 
   &[data-is-admin='true'] {
     --is-admin: 1;
