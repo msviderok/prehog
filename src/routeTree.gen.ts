@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedApplicationIndexRouteImport } from './routes/_authed/application/index'
 import { Route as AuthedMainIndexRouteImport } from './routes/_authed/main/index'
 import { Route as AuthedTourIndexRouteImport } from './routes/_authed/tour/index'
 
@@ -29,6 +30,11 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const AuthedApplicationIndexRoute = AuthedApplicationIndexRouteImport.update({
+  id: '/application/',
+  path: '/application/',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 const AuthedMainIndexRoute = AuthedMainIndexRouteImport.update({
   id: '/main/',
   path: '/main/',
@@ -43,12 +49,14 @@ const AuthedTourIndexRoute = AuthedTourIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
+  '/application/': typeof AuthedApplicationIndexRoute
   '/main/': typeof AuthedMainIndexRoute
   '/tour/': typeof AuthedTourIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof AuthedIndexRoute
+  '/application': typeof AuthedApplicationIndexRoute
   '/main': typeof AuthedMainIndexRoute
   '/tour': typeof AuthedTourIndexRoute
 }
@@ -57,19 +65,21 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/application/': typeof AuthedApplicationIndexRoute
   '/_authed/main/': typeof AuthedMainIndexRoute
   '/_authed/tour/': typeof AuthedTourIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/main/' | '/tour/'
+  fullPaths: '/' | '/login' | '/application/' | '/main/' | '/tour/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/' | '/main' | '/tour'
+  to: '/login' | '/' | '/application' | '/main' | '/tour'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/_authed/'
+    | '/_authed/application/'
     | '/_authed/main/'
     | '/_authed/tour/'
   fileRoutesById: FileRoutesById
@@ -102,6 +112,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/application/': {
+      id: '/_authed/application/'
+      path: '/application'
+      fullPath: '/application/'
+      preLoaderRoute: typeof AuthedApplicationIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
     '/_authed/main/': {
       id: '/_authed/main/'
       path: '/main'
@@ -121,12 +138,14 @@ declare module '@tanstack/solid-router' {
 
 interface AuthedRouteRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedApplicationIndexRoute: typeof AuthedApplicationIndexRoute
   AuthedMainIndexRoute: typeof AuthedMainIndexRoute
   AuthedTourIndexRoute: typeof AuthedTourIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedApplicationIndexRoute: AuthedApplicationIndexRoute,
   AuthedMainIndexRoute: AuthedMainIndexRoute,
   AuthedTourIndexRoute: AuthedTourIndexRoute,
 }

@@ -1,11 +1,10 @@
 import { UIAudio } from '@/lib/ui-audio'
-import { callEventHandler, cn, defaultProps } from '@/lib/utils'
-import { createHotkey, createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
+import { defaultProps } from '@/lib/utils'
+import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { batch, createEffect, createMemo, createSignal, onMount, splitProps } from 'solid-js'
+import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
-import { SOUNDS } from '@/lib/sounds'
 import { usePopoverContext } from './popover'
 
 const buttonVariants = cva(
@@ -64,7 +63,7 @@ interface VariantOther extends Omit<InferredButtonVariantProps, 'variant'> {
   onHotkeyPress?: never
 }
 
-interface VariantGameAction extends Omit<InferredButtonVariantProps, 'variant'> {
+export interface VariantGameAction extends Omit<InferredButtonVariantProps, 'variant'> {
   variant: Extract<InferredButtonVariantProps['variant'], 'game-action'>
   hotkey: Hotkey
   onHotkeyPress: HotkeyCallback
@@ -129,26 +128,42 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
     else ref.style.removeProperty('--boxShadowY-dynamic')
   })
 
+  createEffect(() => {
+    if (disabled() && pressed()) {
+      setPressed(false)
+    }
+  })
+
   onMount(() => {
     if (local.variant === 'game-action') {
       createHotkeys(
         [
           {
             hotkey: local.hotkey,
-            options: { eventType: 'keydown' },
-            callback: (e, ctx) => {
+            options: {
+              eventType: 'keydown',
+              get enabled() {
+                return !disabled()
+              },
+            },
+            callback: () => {
               if (disabled()) return
-              batch(() => {
-                setPressed(true)
-                onSoundHandleClick()
-                local.onHotkeyPress(e, ctx)
-              })
+              setPressed(true)
+              onSoundHandleClick()
             },
           },
           {
             hotkey: local.hotkey,
-            options: { eventType: 'keyup' },
-            callback: () => setPressed(false),
+            options: {
+              eventType: 'keyup',
+              get enabled() {
+                return !disabled()
+              },
+            },
+            callback: (e, ctx) => {
+              setPressed(false)
+              local.onHotkeyPress(e, ctx)
+            },
           },
         ],
         { requireReset: true, conflictBehavior: 'allow' },

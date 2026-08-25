@@ -11,8 +11,10 @@ import {
   splitProps,
   useContext,
   type ComponentProps,
+  type ParentProps,
 } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
+import { Button, type VariantGameAction } from './button'
 
 const popoverVariants = cva(
   'group z-50 w-72 rounded-base border-2 border-border bg-ph-mustard-yellow p-4  outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all [--arrow-offset:2px]',
@@ -271,7 +273,7 @@ function PopoverFooter(props: ComponentProps<'div'>) {
   return (
     <div
       data-slot="popover-footer"
-      class={cn('flex items-center justify-between gap-1 text-base', local.class)}
+      class={cn('flex items-center justify-between gap-1 text-base mt-3', local.class)}
       {...rest}
     />
   )
@@ -292,16 +294,34 @@ function PopoverDescription(props: PopoverPrimitive.Description.Props) {
   return <PopoverPrimitive.Description data-slot="popover-description" class={cn('', local.class)} {...rest} />
 }
 
+function PopoverActionDoor(props: ParentProps<Pick<VariantGameAction, 'hotkey' | 'onHotkeyPress'>>) {
+  return (
+    <PopoverAction class="flex items-center gap-2 text-shade-ph-warm-pink/40">
+      <Button
+        variant="game-action"
+        animate="scale"
+        size="icon"
+        hotkey={props.hotkey}
+        onHotkeyPress={props.onHotkeyPress}
+      >
+        {props.hotkey}
+      </Button>
+      <span>{props.children}</span>
+    </PopoverAction>
+  )
+}
+
 export {
   Popover,
+  PopoverAction,
+  PopoverActionDoor,
   PopoverArrow,
   PopoverDescription,
+  PopoverFooter,
   PopoverHeader,
   PopoverPopup,
   PopoverPortal,
   PopoverPositioner,
   PopoverTitle,
   PopoverTrigger,
-  PopoverFooter,
-  PopoverAction,
 }

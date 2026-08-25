@@ -95,6 +95,7 @@
 }
 
 @utility player {
+  @apply hitbox;
   --base-movement-speed: 1;
   --movement-speed: calc(var(--base-movement-speed) + (var(--is-running, 0) * 1.5));
   --facing-dir: 1;

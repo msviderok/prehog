@@ -657,7 +657,7 @@ function Template() {
                               width="100%"
                               fill="currentColor"
                               xmlns="http://www.w3.org/2000/svg"
-                              viewbox="0 0 24 24"
+                              viewBox="0 0 24 24"
                               aria-hidden="true"
                             >
                               <path
