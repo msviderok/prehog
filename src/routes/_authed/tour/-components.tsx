@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/popover'
 import { api } from '@/convex/api'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
+import { xy } from '@/lib/utils'
 
 export function DoorPopover() {
   const setScene = useSingleFlightMutation(api.gameState.setScene)
@@ -21,7 +22,7 @@ export function DoorPopover() {
       variant="scenery"
       sceneryProps={{
         position: { x: 1, y: 73 },
-        hitbox: { x1: 0, y1: 75, x2: 1, y2: 100 },
+        hitbox: xy(0, 97),
       }}
     >
       <PopoverTrigger />
@@ -52,7 +53,7 @@ export function Stage1() {
       variant="scenery"
       sceneryProps={{
         position: { x: 12.5, y: 71.5 },
-        hitbox: { x1: 9.4, x2: 15.5, y1: 75, y2: 100 },
+        hitbox: xy(9.4, 97),
       }}
     >
       <PopoverTrigger />
@@ -82,7 +83,7 @@ export function Stage2() {
       variant="scenery"
       sceneryProps={{
         position: { x: 30.5, y: 71.5 },
-        hitbox: { x1: 27.3, x2: 33.4, y1: 75, y2: 100 },
+        hitbox: xy(27.3, 97),
       }}
     >
       <PopoverTrigger />
@@ -111,7 +112,7 @@ export function Stage3() {
       variant="scenery"
       sceneryProps={{
         position: { x: 50, y: 71.5 },
-        hitbox: { x1: 46.8, x2: 52.9, y1: 75, y2: 100 },
+        hitbox: xy(46.8, 97),
       }}
     >
       <PopoverTrigger />
@@ -140,7 +141,7 @@ export function Stage4() {
       variant="scenery"
       sceneryProps={{
         position: { x: 69.6, y: 71.5 },
-        hitbox: { x1: 66.6, x2: 72.7, y1: 75, y2: 100 },
+        hitbox: xy(66.6, 97),
       }}
     >
       <PopoverTrigger />
@@ -169,7 +170,7 @@ export function Stage5() {
       variant="scenery"
       sceneryProps={{
         position: { x: 89.6, y: 71.5 },
-        hitbox: { x1: 86.6, x2: 92.7, y1: 75, y2: 100 },
+        hitbox: xy(86.6, 97),
       }}
     >
       <PopoverTrigger />

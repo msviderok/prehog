@@ -20,14 +20,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { api } from '@/convex/api'
+import { xy } from '@/lib/utils'
 import { useMutation } from 'convex-solidjs'
 import { InfoIcon } from 'lucide-solid'
-
-const y1 = 87
-const y2 = 92
-function xy(x1: number) {
-  return { x1, x2: x1 + 3, y1, y2 }
-}
 
 export function Intro() {
   return (
@@ -115,7 +110,7 @@ export function WhyAmIGoodForARole() {
       variant="scenery"
       sceneryProps={{
         position: { x: 52.34, y: 45.49 },
-        hitbox: xy(48),
+        hitbox: xy(53),
       }}
     >
       <PopoverTrigger />
@@ -144,7 +139,7 @@ export function MyProjects() {
       variant="scenery"
       sceneryProps={{
         position: { x: 50.64, y: 70.39 },
-        hitbox: xy(44),
+        hitbox: xy(41),
       }}
     >
       <PopoverTrigger />
@@ -173,7 +168,7 @@ export function PersonalStuff() {
       variant="scenery"
       sceneryProps={{
         position: { x: 82.64, y: 42.12 },
-        hitbox: xy(76),
+        hitbox: xy(74),
       }}
     >
       <PopoverTrigger />

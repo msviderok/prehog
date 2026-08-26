@@ -87,6 +87,19 @@ export function createPolygonClipPath(sides: number): JSX.CSSProperties['clip-pa
   return `polygon(${points.join(', ')})`
 }
 
+export function xy(x1: number, y1: number = 92) {
+  return {
+    x1,
+    x2: x1 + 2.5,
+    y1: y1 - 5,
+    y2: y1,
+  }
+}
+
+export function random(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 // function onCreateNode(e: MouseEvent) {
 //   const target = e.target as HTMLElement
 //   if (target.dataset.node) {
