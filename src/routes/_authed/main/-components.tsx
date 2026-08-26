@@ -23,10 +23,10 @@ import { api } from '@/convex/api'
 import { useMutation } from 'convex-solidjs'
 import { InfoIcon } from 'lucide-solid'
 
-const y1 = 78
+const y1 = 87
 const y2 = 92
 function xy(x1: number) {
-  return { x1, x2: x1 + 2.5, y1, y2 }
+  return { x1, x2: x1 + 3, y1, y2 }
 }
 
 export function Intro() {

@@ -95,7 +95,7 @@
 }
 
 @utility player {
-  @apply hitbox game-transform;
+  @apply game-transform;
 
   --base-movement-speed: 1;
   --movement-speed: calc(var(--base-movement-speed) + (var(--is-running, 0) * 1.5));

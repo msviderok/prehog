@@ -52,19 +52,23 @@ export const Route = createFileRoute('/_authed')({
 
     return (
       <Show when={getMyInitialState.data() != undefined} fallback={<Loading type="convex" />}>
-        <div class="w-min h-min relative">
+        <div class="w-min h-min relative z-1">
           <div ref={(el) => (scene.ref = el)} class="scene" data-scene={sceneMatch()}>
-            <Outlet />
             <For each={otherPlayers.list()}>{(userId) => <OtherPlayer id={userId} />}</For>
           </div>
 
-          <div
-            ref={(el) => (player.ref = el)}
-            class="player player-idle"
-            data-me={true}
-            data-is-admin={player.isAdmin()}
-          >
-            <Hat hat={player.isAdmin() ? 'admin' : 'baseball'} />
+          <div class="absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) z-2 transform-3d">
+            <div class="absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) transform-3d scene-elements">
+              <Outlet />
+            </div>
+            <div
+              ref={(el) => (player.ref = el)}
+              class="player player-idle"
+              data-me={true}
+              data-is-admin={player.isAdmin()}
+            >
+              <Hat hat={player.isAdmin() ? 'admin' : 'baseball'} />
+            </div>
           </div>
         </div>
         <GameUI />

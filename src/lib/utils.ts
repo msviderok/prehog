@@ -72,9 +72,10 @@ export function isUserDate(value: LoadingStatus): value is UserData {
 export function createPolygonClipPath(sides: number): JSX.CSSProperties['clip-path'] {
   const radius = 50 // 50%
   const points = []
+  const offset = 90 - 180 / sides
 
   for (let i = 0; i < sides; i++) {
-    const angle = (i * 360) / sides
+    const angle = offset + (i * 360) / sides
     const radians = (angle * Math.PI) / 180
     const x = radius * Math.cos(radians)
     const y = radius * Math.sin(radians)

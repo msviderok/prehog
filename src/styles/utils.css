@@ -53,6 +53,11 @@
   inherits: false;
   initial-value: 0deg;
 }
+@property --side-height {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
 
 @utility text-tint-* {
   color: color-mix(in oklch, --value(--color-*, [*]), white calc(--modifier(integer) * 1%));
@@ -212,14 +217,14 @@
 }
 
 @utility scene {
-  width: calc(var(--original-scene-width) * var(--scale, 1));
-  height: min(calc(var(--window-inner-height) * var(--game-content-height-ratio, 1)), var(--original-scene-height));
+  width: var(--scene-width-scaled);
+  height: var(--scene-height-scaled);
   background-color: #111220;
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: top left;
   will-change: transform;
-  transform: translate3d(var(--tx, 0), 0, 0);
+  transform: translate3d(var(--scene-tx, 0), 0, 0);
   position: relative;
   overflow: hidden;
   transform-origin: top left;
@@ -232,6 +237,11 @@
   &[data-scene='tour'] {
     background-image: url('../assets/sprites/scenes/evolution.png');
   }
+}
+
+@utility scene-elements {
+  will-change: transform;
+  transform: translate3d(var(--scene-tx, 0), 0, 0);
 }
 
 @utility hitbox {
@@ -265,7 +275,7 @@
 }
 
 @utility marker {
-  @apply absolute perspective-midrange origin-center top-0 left-0;
+  @apply absolute perspective-midrange origin-center top-0 left-0 transform-3d;
 
   --node-hitbox-x1-scaled: calc(var(--node-hitbox-x1, 0) * var(--scene-world-unit-x));
   --node-hitbox-x2-scaled: calc(var(--node-hitbox-x2, 0) * var(--scene-world-unit-x));
@@ -277,34 +287,53 @@
   width: var(--node-width);
   height: var(--node-height);
   transform: translate3d(var(--node-hitbox-x1-scaled), var(--node-hitbox-y1-scaled), 0);
+  counter-reset: marker;
 
   & > * {
-    @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform animate-spinY;
+    @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform transition-[scale] ease-in-out duration-300;
+    @apply animate-spinY;
 
     --rx: -20deg;
+    --prism-radius: calc(var(--node-width) / 2);
     --side-angle: calc(360deg / var(--len, 1));
     --side-width: calc(var(--node-width) * sin(180deg / var(--len, 1)));
-    --radius: calc(var(--node-width) / 2);
-    --apothem: calc(var(--radius) * cos(180deg / var(--len, 1)));
+    --side-offset: calc((var(--node-width) - var(--side-width)) / 2);
+    --side-apothem: calc(var(--prism-radius) * cos(180deg / var(--len, 1)) - 1px);
+    --side-static-h-fraction: 0.7;
+    --side-static-h: var(--node-height) * var(--side-static-h-fraction);
+    --side-flactuation-step: calc((1 - var(--side-static-h-fraction)) / var(--len));
+
+    scale: calc(1 + var(--collided, 0) * 0.3);
+    animation-delay: calc(counter(marker) * 1000ms);
 
     /* Prism side */
     & > * {
-      @apply absolute will-change-transform bg-ph-mustard-yellow border border-tint-ph-mustard-yellow/50;
+      @apply absolute will-change-transform bg-ph-mustard-yellow border-shade-ph-mustard-yellow/10;
+      /*@apply shadow-[0px_0px_10px_10px_var(--ph-mustard-yellow)];*/
+      @apply animate-flactuate-height;
+
       width: var(--side-width);
       height: var(--node-height);
-      transform: translateX(calc(var(--radius) / 2)) rotateY(calc(var(--i) * var(--side-angle)))
-        translateZ(calc(var(--apothem) - 1px));
+      transform-origin: bottom center;
+      transform: translateX(var(--side-offset)) scaleY(calc(var(--side-static-h-fraction) + var(--sy)))
+        rotateY(calc(var(--i) * var(--side-angle))) translateZ(var(--side-apothem));
+      border-radius: 6px 6px 0 0;
+      border-width: 1px 1px 0 0;
+      animation-delay: calc(var(--i) * (1s / var(--len)));
+      box-shadow: 0px 0px calc(10px + var(--collided, 0) * 10px) 1px var(--ph-mustard-yellow);
+      text-shadow: 0px 0px calc(10px + var(--collided, 0) * 10px) 1px var(--ph-mustard-yellow);
     }
 
     /* Bottom polygon */
     &:after {
-      @apply absolute top-1/2 left-1/2 bg-green-500 border;
+      @apply absolute top-1/2 left-1/2 bg-ph-mustard-yellow;
       content: '';
-      width: var(--node-width);
-      height: var(--node-width);
+      width: calc(var(--node-width) * 1);
+      height: calc(var(--node-width) * 1);
       overflow: hidden;
       transform: translate(-50%, -50%) translateY(calc(var(--node-height) / 2)) rotateX(90deg);
       clip-path: var(--bottom-clip-path);
+      filter: brightness(calc(120% + var(--collided, 0) * 20%));
     }
   }
 }

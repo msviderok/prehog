@@ -28,7 +28,8 @@ export function runGameLoop() {
         ? clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
         : scene.cameraX
       scene.cameraX += (targetCameraX - scene.cameraX) * smoothing
-      scene.ref?.style.setProperty('--tx', `${-Math.round(scene.cameraX)}px`)
+      scene.cameraXNormalized = -Math.round(scene.cameraX)
+      document.documentElement.style.setProperty('--scene-tx', `${scene.cameraXNormalized}px`)
 
       /** My player movement */
       player.x = clamp(scene.walkableMinX, player.x + distanceThisFrame, scene.walkableMaxX)

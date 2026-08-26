@@ -46,6 +46,7 @@ export interface GlobalState {
     walkableMinX: number
     walkableMaxX: number
     cameraX: number
+    cameraXNormalized: number
     cameraStartMovingX: number
     cameraEndMovingX: number
     s50: number // 50% of the screen width
@@ -126,6 +127,7 @@ export function GlobalStateProvider(props: ParentProps) {
     walkableMinX: 0,
     walkableMaxX: 0,
     cameraX: 0,
+    cameraXNormalized: 0,
     cameraStartMovingX: 0,
     cameraEndMovingX: 0,
     s50: 0,
