@@ -20,17 +20,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { api } from '@/convex/api'
-import { xy } from '@/lib/utils'
+import { useRouter } from '@tanstack/solid-router'
 import { useMutation } from 'convex-solidjs'
 import { InfoIcon } from 'lucide-solid'
+import { createEffect, on, type Accessor } from 'solid-js'
 
 export function Intro() {
   return (
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 19.99, y: 48 },
-        hitbox: xy(10),
+        anchorPosition: { x: 19.99, y: 48 },
+        hitboxPosition: { x: 11, y: 91 },
       }}
     >
       <PopoverTrigger />
@@ -57,8 +58,8 @@ export function Experience() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 22.58, y: 70.1 },
-        hitbox: xy(19),
+        anchorPosition: { x: 22.58, y: 70.1 },
+        hitboxPosition: { x: 19, y: 91 },
       }}
     >
       <PopoverTrigger />
@@ -105,12 +106,22 @@ export function Experience() {
 }
 
 export function WhyAmIGoodForARole() {
+  const router = useRouter()
+  let open: Accessor<boolean> = () => false
+
   return (
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 52.34, y: 45.49 },
-        hitbox: xy(53),
+        anchorPosition: { x: 52.34, y: 45.49 },
+        hitboxPosition: { x: 53, y: 91 },
+        onNodeRegistered: (node) => {
+          createEffect(
+            on(node.actions.open.get, (popoverOpen) => {
+              if(popoverOpen) void router.preloadRoute({ to: '/application' })
+            },
+          )
+        },
       }}
     >
       <PopoverTrigger />
@@ -138,8 +149,8 @@ export function MyProjects() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 50.64, y: 70.39 },
-        hitbox: xy(41),
+        anchorPosition: { x: 50.64, y: 70.39 },
+        hitboxPosition: { x: 41, y: 91 },
       }}
     >
       <PopoverTrigger />
@@ -167,8 +178,8 @@ export function PersonalStuff() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 82.64, y: 42.12 },
-        hitbox: xy(74),
+        anchorPosition: { x: 82.64, y: 42.12 },
+        hitboxPosition: { x: 74, y: 91 },
       }}
     >
       <PopoverTrigger />
@@ -194,8 +205,8 @@ export function Temp1() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 84.31, y: 58.58 },
-        hitbox: xy(82),
+        anchorPosition: { x: 84.31, y: 58.58 },
+        hitboxPosition: { x: 82, y: 91 },
       }}
     >
       <PopoverTrigger />
@@ -216,8 +227,8 @@ export function Temp2() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 92.47, y: 64.63 },
-        hitbox: xy(90),
+        anchorPosition: { x: 92.47, y: 64.63 },
+        hitboxPosition: { x: 90, y: 91 },
       }}
     >
       <PopoverTrigger />

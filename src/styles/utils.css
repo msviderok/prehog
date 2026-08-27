@@ -58,6 +58,11 @@
   inherits: false;
   initial-value: 0px;
 }
+@property --wave-phase {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
 
 @utility text-tint-* {
   color: color-mix(in oklch, --value(--color-*, [*]), white calc(--modifier(integer) * 1%));
@@ -294,16 +299,19 @@
 
     --rx: -20deg;
     --prism-radius: calc(var(--node-width) / 2);
-    --side-angle: calc(360deg / var(--len, 1));
+    --wave-phase: 0deg;
+    --single-side-angle: calc(360deg / var(--len, 1));
+
     --side-width: calc(var(--node-width) * sin(180deg / var(--len, 1)));
     --side-offset: calc((var(--node-width) - var(--side-width)) / 2);
     --side-apothem: calc(var(--prism-radius) * cos(180deg / var(--len, 1)) - 1px);
     --side-static-h-fraction: 0.7;
     --side-static-h: var(--node-height) * var(--side-static-h-fraction);
-    --side-flactuation-step: calc((1 - var(--side-static-h-fraction)) / var(--len));
+    --side-wave-amplitude: calc(1 - var(--side-static-h-fraction));
 
     scale: calc(1 + var(--collided, 0) * 0.3);
-    animation-delay: calc(var(--delay) * 100ms);
+    animation-delay: calc(var(--delay) * -500ms);
+    animation-duration: calc(10s - (var(--collided, 0) * 5s));
 
     /* Prism side */
     & > * {
@@ -311,16 +319,20 @@
       /*@apply shadow-[0px_0px_10px_10px_var(--ph-mustard-yellow)];*/
       @apply animate-flactuate-height;
 
+      --angle: calc(var(--i) * var(--single-side-angle));
+      --wave-angle: calc((var(--i) + 0.5) * var(--single-side-angle));
+      --wave: calc((cos(var(--wave-angle) + var(--wave-phase)) + 1) / 2);
+      --sy: calc(var(--side-static-h-fraction) + var(--wave) * var(--side-wave-amplitude));
+      filter: brightness(110%);
       width: var(--side-width);
       height: var(--node-height);
       transform-origin: bottom center;
-      transform: translateX(var(--side-offset)) scaleY(calc(var(--side-static-h-fraction) + var(--sy)))
-        rotateY(calc(var(--i) * var(--side-angle))) translateZ(var(--side-apothem));
-      border-radius: 6px 6px 0 0;
+      transform: translateX(var(--side-offset)) scaleY(var(--sy)) rotateY(var(--angle)) translateZ(var(--side-apothem));
+      border-radius: 26px 26px 0 0;
       border-width: 1px 1px 0 0;
-      animation-delay: calc(var(--i) * (1s / var(--len)));
       box-shadow: 0px 0px calc(10px + var(--collided, 0) * 10px) 1px var(--ph-mustard-yellow);
       text-shadow: 0px 0px calc(10px + var(--collided, 0) * 10px) 1px var(--ph-mustard-yellow);
+      animation-delay: calc(var(--i) * -300ms);
     }
 
     /* Bottom polygon */
@@ -335,4 +347,20 @@
       filter: brightness(calc(120% + var(--collided, 0) * 20%));
     }
   }
+}
+
+@utility comic {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-shadow:
+    0.01em 0.01em 0 color-mix(in oklch, currentColor, black 51%),
+    0.02em 0.02em 0 color-mix(in oklch, currentColor, black 52%),
+    0.03em 0.03em 0 color-mix(in oklch, currentColor, black 53%),
+    0.04em 0.04em 0 color-mix(in oklch, currentColor, black 54%),
+    0.05em 0.05em 0 color-mix(in oklch, currentColor, black 55%),
+    0.06em 0.06em 0 color-mix(in oklch, currentColor, black 56%),
+    0.07em 0.07em 0 color-mix(in oklch, currentColor, black 57%),
+    0.08em 0.08em 0 color-mix(in oklch, currentColor, black 58%),
+    0.09em 0.09em 0 color-mix(in oklch, currentColor, black 59%),
+    0.1em 0.1em 0 color-mix(in oklch, currentColor, black 60%);
 }

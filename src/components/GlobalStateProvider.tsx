@@ -37,6 +37,12 @@ export interface GlobalState {
 
   readonly nodes: Set<SceneNode>
   readonly rtc: ReturnType<typeof createRtcState>
+  readonly viewport: {
+    width: number
+    height: number
+    vw: number
+    vh: number
+  }
   readonly scene: {
     ref: HTMLElement | undefined
     scale: number
@@ -104,6 +110,7 @@ export function GlobalStateProvider(props: ParentProps) {
   const navigate = useNavigate()
 
   const nodes: GlobalState['nodes'] = new Set()
+  const viewport: GlobalState['viewport'] = { width: 0, height: 0, vw: 0, vh: 0 }
   const misc: GlobalState['misc'] = {
     player: {
       size: {
@@ -121,7 +128,7 @@ export function GlobalStateProvider(props: ParentProps) {
   const scene: GlobalState['scene'] = {
     ref: null as unknown as HTMLElement,
     scale: 1,
-    worldUnit: { x: 0, y: 0 }, // 0 to 100 but in px
+    worldUnit: { x: 0, y: 0 }, // scaled/100 in px
     originalSize: { width: 0, height: 0 },
     scaled: { width: 0, height: 0 },
     walkableMinX: 0,
@@ -215,6 +222,11 @@ export function GlobalStateProvider(props: ParentProps) {
     const root = document.documentElement
     const gameContentHeight = window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
     root.style.setProperty('--window-inner-height', `${window.innerHeight}px`)
+
+    viewport.width = window.innerWidth
+    viewport.height = window.innerHeight
+    viewport.vw = viewport.width / 100
+    viewport.vh = viewport.height / 100
 
     scene.scale = Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1) // --scale
     root?.style.setProperty('--scale', `${scene.scale}`)
@@ -378,6 +390,7 @@ export function GlobalStateProvider(props: ParentProps) {
         rtc,
         player,
         misc,
+        viewport,
       }}
     >
       {props.children}

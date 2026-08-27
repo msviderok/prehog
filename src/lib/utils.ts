@@ -61,10 +61,6 @@ export function fastRound(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100
 }
 
-export function access<T extends MaybeAccessor<T>>(value: T): T extends Function ? ReturnType<T> : T {
-  return typeof value === 'function' ? value() : value
-}
-
 export function isUserDate(value: LoadingStatus): value is UserData {
   return typeof value !== 'string'
 }
@@ -87,34 +83,12 @@ export function createPolygonClipPath(sides: number): JSX.CSSProperties['clip-pa
   return `polygon(${points.join(', ')})`
 }
 
-export function xy(x1: number, y1: number = 92) {
-  return {
-    x1,
-    x2: x1 + 2.5,
-    y1: y1 - 5,
-    y2: y1,
-  }
-}
-
 export function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-// function onCreateNode(e: MouseEvent) {
-//   const target = e.target as HTMLElement
-//   if (target.dataset.node) {
-//     // navigator.clipboard.writeText(JSON.stringify(sceneState.nodes))
-//     return
-//   }
-//   // const x = clamp((e.clientX - sceneState.rect.left) / sceneState.realSceneSize.width, 0, 1)
-//   // const y = clamp((e.clientY - sceneState.rect.top) / sceneState.realSceneSize.height, 0, 1)
-//   // setSceneState('nodes', sceneState.nodes.length, { x, y })
-// }
-
-// // onMount(() => {
-// //   document.addEventListener('click', onCreateNode)
-// // })
-
-// // onCleanup(() => {
-// //   document.removeEventListener('click', onCreateNode)
-// // })
+export function preloadImage(src: string) {
+  if (typeof window === 'undefined') return
+  const img = new Image()
+  img.src = src
+}

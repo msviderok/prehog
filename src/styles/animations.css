@@ -55,11 +55,10 @@
     )
     infinite;
 
-  --default-spin-speed: 10s;
-  --animate-spinX: spinX var(--default-spin-speed) linear infinite;
-  --animate-spinY: spinY var(--default-spin-speed) linear infinite;
-  --animate-spinZ: spinZ var(--default-spin-speed) linear infinite;
-  --animate-flactuate-height: flactuateHeight 2s ease-in-out infinite;
+  --animate-spinX: spinX 10s linear infinite;
+  --animate-spinY: spinY 10s linear infinite;
+  --animate-spinZ: spinZ 10s linear infinite;
+  --animate-flactuate-height: flactuateHeight 2s linear infinite;
 }
 
 @keyframes ellipsis {
@@ -106,13 +105,15 @@
 }
 
 @keyframes flactuateHeight {
-  0%,
-  100% {
+  0% {
     filter: brightness(calc(110% + var(--collided, 0) * 20%));
-    --sy: calc(var(--side-flactuation-step) * 1);
+    --wave-phase: 0deg;
   }
   50% {
     filter: brightness(calc(120% + var(--collided, 0) * 20%));
-    --sy: calc(var(--side-flactuation-step) * (var(--len) + 1));
+  }
+  100% {
+    filter: brightness(calc(110% + var(--collided, 0) * 20%));
+    --wave-phase: 360deg;
   }
 }

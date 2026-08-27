@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/popover'
 import { api } from '@/convex/api'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
-import { xy } from '@/lib/utils'
 
 export function DoorPopover() {
   const setScene = useSingleFlightMutation(api.gameState.setScene)
@@ -21,8 +20,8 @@ export function DoorPopover() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 1, y: 73 },
-        hitbox: xy(0, 97),
+        anchorPosition: { x: 1, y: 73 },
+        hitboxPosition: { x: 3, y: 97 },
       }}
     >
       <PopoverTrigger />
@@ -52,8 +51,8 @@ export function Stage1() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 12.5, y: 71.5 },
-        hitbox: xy(9.4, 97),
+        anchorPosition: { x: 12.3, y: 71.5 },
+        hitboxPosition: { x: 12.3, y: 97 },
       }}
     >
       <PopoverTrigger />
@@ -82,8 +81,8 @@ export function Stage2() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 30.5, y: 71.5 },
-        hitbox: xy(27.3, 97),
+        anchorPosition: { x: 30.3, y: 71.5 },
+        hitboxPosition: { x: 30.3, y: 97 },
       }}
     >
       <PopoverTrigger />
@@ -111,8 +110,8 @@ export function Stage3() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 50, y: 71.5 },
-        hitbox: xy(46.8, 97),
+        anchorPosition: { x: 49.7, y: 71.5 },
+        hitboxPosition: { x: 49.7, y: 97 },
       }}
     >
       <PopoverTrigger />
@@ -140,8 +139,8 @@ export function Stage4() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 69.6, y: 71.5 },
-        hitbox: xy(66.6, 97),
+        anchorPosition: { x: 69.6, y: 71.5 },
+        hitboxPosition: { x: 69.6, y: 97 },
       }}
     >
       <PopoverTrigger />
@@ -169,8 +168,8 @@ export function Stage5() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        position: { x: 89.6, y: 71.5 },
-        hitbox: xy(86.6, 97),
+        anchorPosition: { x: 89.6, y: 71.5 },
+        hitboxPosition: { x: 89.6, y: 97 },
       }}
     >
       <PopoverTrigger />

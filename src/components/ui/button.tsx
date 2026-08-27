@@ -186,4 +186,12 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   )
 }
 
+export function PressE(props: { onPress: HotkeyCallback }) {
+  return (
+    <Button variant="game-action" animate="scale" size="icon" hotkey="E" onHotkeyPress={props.onPress}>
+      E
+    </Button>
+  )
+}
+
 export { Button, buttonVariants, type ExtraButtonProps }

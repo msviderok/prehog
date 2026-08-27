@@ -1,8 +1,8 @@
 import { useQuery } from 'convex-solidjs'
 import type { FunctionArgs, FunctionReference, FunctionReturnType } from 'convex/server'
-import { createEffect, createMemo, mergeProps, on, splitProps, type Accessor } from 'solid-js'
+import { createEffect, mergeProps, on, splitProps, type Accessor } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
-import { access, defaultProps } from './utils'
+import { defaultProps } from './utils'
 
 interface QueryOptions<T> {
   enabled?: boolean

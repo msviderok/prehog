@@ -13,9 +13,9 @@ import {
   type ComponentProps,
   type ParentProps,
 } from 'solid-js'
-import { useGlobalState } from '../GlobalStateContext'
-import { Button, type VariantGameAction } from './button'
 import { EventMarker } from '../EventMarker'
+import { useGlobalState } from '../GlobalStateContext'
+import { PressE, type VariantGameAction } from './button'
 
 const popoverVariants = cva(
   'group z-50 w-72 rounded-base border-2 border-border bg-ph-mustard-yellow p-4  outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all [--arrow-offset:2px]',
@@ -43,8 +43,9 @@ interface VariantOther {
 interface VariantScenery {
   variant: Extract<InferredPopoverVariantProps['variant'], 'scenery'>
   sceneryProps: {
-    position: { x: number; y: number }
-    hitbox: { x1: number; y1: number; x2: number; y2: number }
+    anchorPosition: { x: number; y: number }
+    hitboxPosition: { x: number; y: number }
+    onNodeRegistered?: (node: SceneNode) => void
   }
 }
 
@@ -60,9 +61,15 @@ export function usePopoverContext() {
 function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps) {
   let ref!: HTMLDivElement
   let node: SceneNodePopover | undefined
-  const { nodes } = useGlobalState()
+  const { viewport, scene, nodes } = useGlobalState()
   const props = defaultProps(componentProps, { variant: 'default' })
   const [local, misc, rest] = splitProps(props, ['variant', 'sceneryProps'], ['open'])
+
+  function getHitbox({ x, y }: Coords): Hitbox {
+    const rPX = viewport.vw * 6
+    const rWU = (rPX / scene.worldUnit.x) * scene.scale
+    return { x1: x - rWU, x2: x + rWU, y1: y - rWU, y2: y + rWU }
+  }
 
   createRenderEffect(() => {
     if (local.variant === 'scenery') {
@@ -73,9 +80,10 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
         },
         type: 'popover',
         popupRef: undefined,
-        position: local.sceneryProps.position,
+        position: local.sceneryProps.anchorPosition,
         hitbox: {
-          inWorldUnits: local.sceneryProps.hitbox,
+          inWorldUnits: getHitbox(local.sceneryProps.hitboxPosition),
+          /* This will be recalculated again in the window resize event */
           inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
         },
         actions: {
@@ -88,15 +96,17 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
       }
 
       nodes.add(node)
+      local.sceneryProps.onNodeRegistered?.(node)
     }
   })
 
   onMount(() => {
-    if (local.variant === 'scenery') {
-      ref.style.setProperty('--node-hitbox-x1', `${local.sceneryProps.hitbox.x1}`)
-      ref.style.setProperty('--node-hitbox-x2', `${local.sceneryProps.hitbox.x2}`)
-      ref.style.setProperty('--node-hitbox-y1', `${local.sceneryProps.hitbox.y1}`)
-      ref.style.setProperty('--node-hitbox-y2', `${local.sceneryProps.hitbox.y2}`)
+    if (local.variant === 'scenery' && node) {
+      ref.style.setProperty('--node-hitbox-x1', `${node.hitbox.inWorldUnits.x1}`)
+      ref.style.setProperty('--node-hitbox-x2', `${node.hitbox.inWorldUnits.x2}`)
+      ref.style.setProperty('--node-hitbox-y1', `${node.hitbox.inWorldUnits.y1}`)
+      ref.style.setProperty('--node-hitbox-y2', `${node.hitbox.inWorldUnits.y2}`)
+      local.sceneryProps.onNodeRegistered?.(node)
       onCleanup(() => node && nodes.delete(node))
     }
   })
@@ -128,8 +138,8 @@ function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
 
   onMount(() => {
     if (ctx.variant === 'scenery') {
-      ref.style.setProperty('--node-anchor-x', `${ctx.sceneryProps.position.x}`)
-      ref.style.setProperty('--node-anchor-y', `${ctx.sceneryProps.position.y}`)
+      ref.style.setProperty('--node-anchor-x', `${ctx.sceneryProps.anchorPosition.x}`)
+      ref.style.setProperty('--node-anchor-y', `${ctx.sceneryProps.anchorPosition.y}`)
     }
   })
 
@@ -298,16 +308,8 @@ function PopoverDescription(props: PopoverPrimitive.Description.Props) {
 function PopoverActionDoor(props: ParentProps<Pick<VariantGameAction, 'hotkey' | 'onHotkeyPress'>>) {
   return (
     <PopoverAction class="flex items-center gap-2 text-shade-ph-warm-pink/40">
-      <Button
-        variant="game-action"
-        animate="scale"
-        size="icon"
-        hotkey={props.hotkey}
-        onHotkeyPress={props.onHotkeyPress}
-      >
-        {props.hotkey}
-      </Button>
-      <span>{props.children}</span>
+      <PressE onPress={props.onHotkeyPress} />
+      <span class="comic">{props.children}</span>
     </PopoverAction>
   )
 }

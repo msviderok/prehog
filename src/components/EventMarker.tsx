@@ -1,7 +1,7 @@
 import { createPolygonClipPath, random } from '@/lib/utils'
 import { Index, type Ref } from 'solid-js'
 
-const POLYGON_SIDES = 20
+const POLYGON_SIDES = 14
 const POLYGON_ARR = Array.from({ length: POLYGON_SIDES }, (_, i) => i)
 const POLYGON_BOTTOM_PLANE_CLIP_PATH = createPolygonClipPath(POLYGON_SIDES)
 
