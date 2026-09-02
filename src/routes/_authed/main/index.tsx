@@ -6,13 +6,13 @@ export const Route = createFileRoute('/_authed/main/')({
   component() {
     return (
       <>
-        <Intro />
+        {/*<Intro />*/}
         <Experience />
-        <WhyAmIGoodForARole />
+        {/*<WhyAmIGoodForARole />
         <MyProjects />
         <PersonalStuff />
         <Temp1 />
-        <Temp2 />
+        <Temp2 />*/}
       </>
     )
   },

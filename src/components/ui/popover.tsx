@@ -45,7 +45,7 @@ interface VariantScenery {
   sceneryProps: {
     anchorPosition: { x: number; y: number }
     hitboxPosition: { x: number; y: number }
-    onNodeRegistered?: (node: SceneNode) => void
+    onNodeRegistered?: (node: SceneNodePopover) => void
   }
 }
 
@@ -61,15 +61,9 @@ export function usePopoverContext() {
 function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps) {
   let ref!: HTMLDivElement
   let node: SceneNodePopover | undefined
-  const { viewport, scene, nodes } = useGlobalState()
+  const { nodes } = useGlobalState()
   const props = defaultProps(componentProps, { variant: 'default' })
   const [local, misc, rest] = splitProps(props, ['variant', 'sceneryProps'], ['open'])
-
-  function getHitbox({ x, y }: Coords): Hitbox {
-    const rPX = viewport.vw * 6
-    const rWU = (rPX / scene.worldUnit.x) * scene.scale
-    return { x1: x - rWU, x2: x + rWU, y1: y - rWU, y2: y + rWU }
-  }
 
   createRenderEffect(() => {
     if (local.variant === 'scenery') {
@@ -82,8 +76,8 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
         popupRef: undefined,
         position: local.sceneryProps.anchorPosition,
         hitbox: {
-          inWorldUnits: getHitbox(local.sceneryProps.hitboxPosition),
-          /* This will be recalculated again in the window resize event */
+          position: local.sceneryProps.hitboxPosition,
+          inWorldUnits: { x1: 0, y1: 0, x2: 0, y2: 0 },
           inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
         },
         actions: {
@@ -101,15 +95,15 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
   })
 
   onMount(() => {
-    if (local.variant === 'scenery' && node) {
-      ref.style.setProperty('--node-hitbox-x1', `${node.hitbox.inWorldUnits.x1}`)
-      ref.style.setProperty('--node-hitbox-x2', `${node.hitbox.inWorldUnits.x2}`)
-      ref.style.setProperty('--node-hitbox-y1', `${node.hitbox.inWorldUnits.y1}`)
-      ref.style.setProperty('--node-hitbox-y2', `${node.hitbox.inWorldUnits.y2}`)
-      local.sceneryProps.onNodeRegistered?.(node)
-      onCleanup(() => node && nodes.delete(node))
+    if (node) {
+      ref?.style.setProperty('--node-hitbox-x1', `${node.hitbox.inWorldUnits.x1}`)
+      ref?.style.setProperty('--node-hitbox-x2', `${node.hitbox.inWorldUnits.x2}`)
+      ref?.style.setProperty('--node-hitbox-y1', `${node.hitbox.inWorldUnits.y1}`)
+      ref?.style.setProperty('--node-hitbox-y2', `${node.hitbox.inWorldUnits.y2}`)
     }
   })
+
+  onCleanup(() => node && nodes.delete(node))
 
   return (
     <PopoverContext.Provider

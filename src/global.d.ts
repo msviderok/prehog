@@ -57,6 +57,7 @@ declare global {
 
   interface BaseSceneNodeProps {
     hitbox: {
+      position: Coords
       inWorldUnits: Hitbox
       inPX: Hitbox
     }

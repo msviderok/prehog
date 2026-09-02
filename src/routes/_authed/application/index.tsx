@@ -1,12 +1,8 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import img from '../../../assets/sprites/skins/dyno_idle.png'
-import { preloadImage } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authed/application/')({
   component: RouteComponent,
-  loader() {
-    preloadImage(img)
-  },
   head: () => ({
     links: [{ rel: 'preload', href: img, as: 'image' }],
   }),

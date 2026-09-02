@@ -2,6 +2,7 @@ import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
 import {
   COMMON_SCENE_HEIGHT,
+  EVENT_MARKER_RADIUS,
   GAME_CONTENT_HEIGHT_RATIO,
   HEARTBEAT_MS,
   PLAYER_BASE_SPEED_PX_PER_SEC,
@@ -166,8 +167,8 @@ export function GlobalStateProvider(props: ParentProps) {
       root.style.setProperty('--original-scene-height', `${scene.originalSize.height}px`)
       root.style.setProperty('--player-offset-y', `${sceneInitialState.playerInitialY}`)
 
-      calculate()
       navigate({ to: `/${sceneValue}` })
+      queueMicrotask(() => calculate())
     }),
   )
 
@@ -252,11 +253,10 @@ export function GlobalStateProvider(props: ParentProps) {
     player.realX = player.x * scene.worldUnit.x
     player.hitbox.inPX.x1 = player.realX - misc.player.size.inPX.halfWidth
     player.hitbox.inPX.x2 = player.realX + misc.player.size.inPX.halfWidth
-
-    scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
-
     player.cameraMinX = scene.walkableMinX * scene.worldUnit.x
     player.cameraMaxX = playableWidth - misc.player.size.inPX.halfWidth
+
+    scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
 
     const atStart = player.realX < scene.s50
     const playerViewportX = player.realX - scene.cameraViewportWidth
@@ -272,6 +272,20 @@ export function GlobalStateProvider(props: ParentProps) {
     }
 
     for (const node of nodes) {
+      if (node.type === 'popover') {
+        const r = 20 / viewport.vh
+        console.log(viewport.vh, r)
+        node.hitbox.inWorldUnits.x1 = node.hitbox.position.x - r
+        node.hitbox.inWorldUnits.x2 = node.hitbox.position.x + r
+        node.hitbox.inWorldUnits.y1 = node.hitbox.position.y - r
+        node.hitbox.inWorldUnits.y2 = node.hitbox.position.y + r
+
+        node.rootRef?.style.setProperty('--node-hitbox-x1', `${node.hitbox.inWorldUnits.x1}`)
+        node.rootRef?.style.setProperty('--node-hitbox-x2', `${node.hitbox.inWorldUnits.x2}`)
+        node.rootRef?.style.setProperty('--node-hitbox-y1', `${node.hitbox.inWorldUnits.y1}`)
+        node.rootRef?.style.setProperty('--node-hitbox-y2', `${node.hitbox.inWorldUnits.y2}`)
+      }
+
       node.hitbox.inPX.x1 = node.hitbox.inWorldUnits.x1 * scene.worldUnit.x
       node.hitbox.inPX.x2 = node.hitbox.inWorldUnits.x2 * scene.worldUnit.x
       node.hitbox.inPX.y1 = node.hitbox.inWorldUnits.y1 * scene.worldUnit.y
@@ -367,8 +381,6 @@ export function GlobalStateProvider(props: ParentProps) {
       player.speed = PLAYER_BASE_SPEED_PX_PER_SEC * (shift ? PLAYER_RUNNING_SPEED_MOD : 1)
       player.ref?.style.setProperty('--is-running', shift ? '1' : '0')
     }),
-    void 0,
-    { name: 'player-running' },
   )
 
   onMount(() => {

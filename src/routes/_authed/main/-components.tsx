@@ -23,7 +23,7 @@ import { api } from '@/convex/api'
 import { useRouter } from '@tanstack/solid-router'
 import { useMutation } from 'convex-solidjs'
 import { InfoIcon } from 'lucide-solid'
-import { createEffect, on, type Accessor } from 'solid-js'
+import { createEffect, on } from 'solid-js'
 
 export function Intro() {
   return (
@@ -107,8 +107,6 @@ export function Experience() {
 
 export function WhyAmIGoodForARole() {
   const router = useRouter()
-  let open: Accessor<boolean> = () => false
-
   return (
     <Popover
       variant="scenery"
@@ -118,8 +116,8 @@ export function WhyAmIGoodForARole() {
         onNodeRegistered: (node) => {
           createEffect(
             on(node.actions.open.get, (popoverOpen) => {
-              if(popoverOpen) void router.preloadRoute({ to: '/application' })
-            },
+              if (popoverOpen) void router.preloadRoute({ to: '/application' })
+            }),
           )
         },
       }}

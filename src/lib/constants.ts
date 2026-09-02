@@ -60,3 +60,5 @@ export const SCENE: Record<
   main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 80 },
   tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
 }
+
+export const EVENT_MARKER_RADIUS = 1.4
