@@ -1,4 +1,5 @@
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { splitProps, type ComponentProps } from 'solid-js'
 
 function Skeleton(componentProps: ComponentProps<'div'> & { variant?: 'default' | 'overlay' }) {

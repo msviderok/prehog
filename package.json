@@ -31,7 +31,7 @@
     "@web-kits/audio": "catalog:",
     "class-variance-authority": "catalog:",
     "clerk-solidjs-tanstack-start": "catalog:",
-    "clsx": "catalog:",
+    "cn": "catalog:",
     "convex": "catalog:",
     "convex-helpers": "catalog:",
     "convex-solidjs": "git+https://github.com/msviderok/convex-solidjs.git#main",
@@ -44,7 +44,6 @@
     "solid-js": "catalog:",
     "solid-motionone": "catalog:",
     "svix": "catalog:",
-    "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
     "valibot": "catalog:"

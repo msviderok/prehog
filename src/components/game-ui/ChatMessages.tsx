@@ -1,7 +1,7 @@
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
 import { useCurrentUser } from '@/components/ConvexClerkProvider'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { useQuery } from 'convex-solidjs'
 import { formatDate, isToday } from 'date-fns'
 import { ArrowDownLeftIcon, ArrowUpRightIcon, PhoneIcon, PhoneMissedIcon } from 'lucide-solid'

@@ -1,4 +1,5 @@
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { Menu as MenuPrimitive } from '@msviderok/base-ui-solid/menu'
 import { CheckIcon, ChevronRightIcon } from 'lucide-solid'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'

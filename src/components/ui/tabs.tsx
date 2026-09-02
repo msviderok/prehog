@@ -1,7 +1,7 @@
 import { Tabs as TabsPrimitive } from '@msviderok/base-ui-solid/tabs'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { mergeProps, splitProps } from 'solid-js'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 
 function Tabs(props: TabsPrimitive.Root.Props) {
   const mergedProps = mergeProps({ orientation: 'horizontal' as const }, props)

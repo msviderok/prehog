@@ -1,4 +1,5 @@
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { createMemo, createSignal, Index } from 'solid-js'
 import { Motion } from 'solid-motionone'
 

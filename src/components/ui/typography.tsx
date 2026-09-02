@@ -1,6 +1,6 @@
 import type { ComponentProps, ParentComponent } from 'solid-js'
 import { splitProps } from 'solid-js'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 
 export function TypographyH1(props: ComponentProps<'h1'>) {
   const [local, rest] = splitProps(props, ['class'])

@@ -1,6 +1,6 @@
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { Avatar as AvatarPrimitive } from '@msviderok/base-ui-solid/avatar'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { useQuery } from 'convex-solidjs'

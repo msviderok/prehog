@@ -4,7 +4,7 @@ import { useGlobalState } from '@/components/GlobalStateContext'
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import { api } from '@/convex/api'
 import { SOUNDS } from '@/lib/sounds'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { useMutation, useQuery } from 'convex-solidjs'
 import {
   MicIcon,

@@ -1,6 +1,6 @@
 import { Select as SelectPrimitive } from '@msviderok/base-ui-solid/select'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-solid'
 
 const Select = SelectPrimitive.Root

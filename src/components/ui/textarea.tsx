@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 import { splitProps, type ComponentProps } from 'solid-js'
 
 function Textarea(props: ComponentProps<'textarea'>) {

@@ -3,7 +3,7 @@ import { useRender } from '@msviderok/base-ui-solid/use-render'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 
 const buttonGroupVariants = cva(
   "grid grid-flow-col w-fit items-stretch *:focus-visible:relative *:focus-visible:z-10 has-data-[slot=button-group]:gap-2 has-[select[aria-hidden=true]:last-child]:[&_[data-slot=select-trigger]:last-of-type]:rounded-r-md [&_[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&_input]:auto-cols-fr",

@@ -1,4 +1,5 @@
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { XIcon } from 'lucide-solid'
 import { createContext, splitProps, useContext, type ComponentProps } from 'solid-js'

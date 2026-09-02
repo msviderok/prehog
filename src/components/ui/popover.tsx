@@ -1,4 +1,5 @@
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { cva, type VariantProps } from 'class-variance-authority'
 import {

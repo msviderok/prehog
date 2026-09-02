@@ -1,7 +1,7 @@
 import { Separator as SeparatorPrimitive } from '@msviderok/base-ui-solid/separator'
 import { mergeProps, splitProps } from 'solid-js'
 
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 
 function Separator(props: SeparatorPrimitive.Props) {
   const mergedProps = mergeProps({ orientation: 'horizontal' as const }, props)

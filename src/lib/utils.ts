@@ -1,11 +1,4 @@
-import { clsx, type ClassValue } from 'clsx'
 import { mergeProps, type JSX } from 'solid-js'
-import { twMerge } from 'tailwind-merge'
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
 type Simplify<T> = T extends any ? { [K in keyof T]: T[K] } : T
 type OnlyDeclaredProps<P, D extends Partial<P>> = {
   -readonly [K in keyof D]-?: D[K] | Exclude<P[K extends keyof P ? K : never], undefined>

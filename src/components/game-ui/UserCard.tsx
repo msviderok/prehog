@@ -1,6 +1,7 @@
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { useQuery } from 'convex-solidjs'
 import { differenceInCalendarDays, formatDate } from 'date-fns'
 import { createMemo, Match, Show, splitProps, Switch, type ComponentProps } from 'solid-js'

@@ -1,4 +1,5 @@
-import { cn, defaultProps } from '@/lib/utils'
+import { defaultProps } from '@/lib/utils'
+import { cn } from 'cn'
 import { Tooltip as TooltipPrimitive } from '@msviderok/base-ui-solid/tooltip'
 import { createContext, mergeProps, splitProps, useContext } from 'solid-js'
 import { cva, type VariantProps } from 'class-variance-authority'
