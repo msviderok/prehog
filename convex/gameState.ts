@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { BATCHING_INTERVAL_MS, SCENE } from '../src/lib/constants'
-import { mutation, query } from './_generated/server'
+import { env, mutation, query } from './_generated/server'
 import * as Users from './model/users'
 
 export const getMyPosition = query({
@@ -72,7 +72,7 @@ export const isUserAdmin = query({
   },
   handler: async (ctx, args) => {
     const user = (await ctx.db.get('users', args.userId))!
-    return user._id === process.env.ADMIN_ID
+    return user._id === env.ADMIN_ID
   },
 })
 

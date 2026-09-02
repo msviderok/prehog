@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
-import { action, query } from './_generated/server'
+import { action, env, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
 import { asyncMap, pick, pruneNull } from 'convex-helpers'
@@ -157,12 +157,12 @@ export const floatingPanels = query({
 export const pingAdmin = action({
   handler: async (ctx) => {
     const data = await fetch(
-      `https://api.telegram.org/bot${encodeURIComponent(process.env.TG_BOT_TOKEN!)}/sendMessage`,
+      `https://api.telegram.org/bot${encodeURIComponent(env.TG_BOT_TOKEN!)}/sendMessage`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: process.env.TG_BOT_CHAT_ID,
+          chat_id: env.TG_BOT_CHAT_ID,
           text: 'Convex msg',
         }),
       },

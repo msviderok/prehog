@@ -30,10 +30,15 @@ import type { DataModel } from "./dataModel.js";
 type Env = {
   readonly CONVEX_CLOUD_URL: string;
   readonly CONVEX_SITE_URL: string;
+  readonly ADMIN_ID: string | undefined;
+  readonly CLERK_JWT_ISSUER_DOMAIN: string | undefined;
+  readonly CLERK_WEBHOOK_SECRET: string | undefined;
   readonly POSTHOG_FLAGS_POLLING_INTERVAL_SECONDS: string | undefined;
   readonly POSTHOG_HOST: string | undefined;
   readonly POSTHOG_PERSONAL_API_KEY: string | undefined;
   readonly POSTHOG_PROJECT_TOKEN: string;
+  readonly TG_BOT_CHAT_ID: string | undefined;
+  readonly TG_BOT_TOKEN: string | undefined;
 };
 
 /**

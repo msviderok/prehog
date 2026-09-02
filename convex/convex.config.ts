@@ -9,6 +9,11 @@ const app = defineApp({
     POSTHOG_HOST: v.optional(v.string()),
     POSTHOG_PERSONAL_API_KEY: v.optional(v.string()),
     POSTHOG_FLAGS_POLLING_INTERVAL_SECONDS: v.optional(v.string()),
+    CLERK_JWT_ISSUER_DOMAIN: v.optional(v.string()),
+    CLERK_WEBHOOK_SECRET: v.optional(v.string()),
+    TG_BOT_TOKEN: v.optional(v.string()),
+    TG_BOT_CHAT_ID: v.optional(v.string()),
+    ADMIN_ID: v.optional(v.string()),
   },
 })
 
