@@ -1,18 +1,30 @@
 import { createFileRoute } from '@tanstack/solid-router'
-import img from '../../../assets/sprites/skins/dyno_idle.png'
+import { Door } from './-components'
+import ladderImgSrc from './-assets/c_asset_ladder.png?url'
+import { useRouteAssets } from '@/lib/useRouteAssets'
 
 export const Route = createFileRoute('/_authed/application/')({
   component: RouteComponent,
-  head: () => ({
-    links: [{ rel: 'preload', href: img, as: 'image' }],
-  }),
+  staticData: { scene: 'application' },
+  head: ({ match }) => {
+    const images = useRouteAssets(match.routeId)
+    return {
+      links: Object.values(images).map((href) => ({ rel: 'preload', as: 'image', href })),
+    }
+  },
 })
 
 function RouteComponent() {
+  const assets = useRouteAssets(Route)
   return (
     <div>
-      <img src={img} />
-      <ul>
+      <div
+        class="asset absolute top-0 left-0 size-200 translate-10"
+        style={{ 'background-image': `url(${assets['c_asset_wide.png']})` }}
+      />
+
+      <Door />
+      {/*<ul>
         <li>
           Things we care about
           <ul>
@@ -64,7 +76,7 @@ function RouteComponent() {
             <li>Experience building AI-native products, or integrating AI into existing software</li>
           </ul>
         </li>
-      </ul>
+      </ul>*/}
     </div>
   )
 }

@@ -86,10 +86,8 @@ export function runGameLoop() {
       for (const node of nodes) {
         const nodeCollided = collisionDetected(player.hitbox.inWorldUnits, node.hitbox.inWorldUnits)
         const v = nodeCollided ? '1' : '0'
-        if (node.type === 'player') {
-          node.ref?.style.setProperty('--collided', v)
-        } else {
-          node.rootRef?.style.setProperty('--collided', v)
+        node.rootRef?.style.setProperty('--collided', v)
+        if (node.type === 'popover') {
           node.popupRef?.style.setProperty('--is-open', v)
         }
 

@@ -1,7 +1,7 @@
 import { defaultProps } from '@/lib/utils'
-import { cn } from 'cn'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from 'cn'
 import {
   createContext,
   createRenderEffect,
@@ -76,6 +76,10 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
         type: 'popover',
         popupRef: undefined,
         position: local.sceneryProps.anchorPosition,
+        size: {
+          inWorldUnits: { width: 0, height: 0 },
+          inPX: { width: 0, height: 0 },
+        },
         hitbox: {
           position: local.sceneryProps.hitboxPosition,
           inWorldUnits: { x1: 0, y1: 0, x2: 0, y2: 0 },
@@ -92,15 +96,6 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
 
       nodes.add(node)
       local.sceneryProps.onNodeRegistered?.(node)
-    }
-  })
-
-  onMount(() => {
-    if (node) {
-      ref?.style.setProperty('--node-hitbox-x1', `${node.hitbox.inWorldUnits.x1}`)
-      ref?.style.setProperty('--node-hitbox-x2', `${node.hitbox.inWorldUnits.x2}`)
-      ref?.style.setProperty('--node-hitbox-y1', `${node.hitbox.inWorldUnits.y1}`)
-      ref?.style.setProperty('--node-hitbox-y2', `${node.hitbox.inWorldUnits.y2}`)
     }
   })
 

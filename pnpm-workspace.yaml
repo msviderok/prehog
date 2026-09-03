@@ -35,18 +35,18 @@ catalog:
   '@web-kits/audio': ^0.1.0
   class-variance-authority: ^0.7.1
   clerk-solidjs-tanstack-start: ^0.0.3
-  cn: ^0.2.2
+  cn: ^0.2.4
   convex: ^1.45.0
   convex-helpers: ^0.1.123
   date-fns: ^4.4.0
   howler: ^2.2.4
   knip: ^6.34.0
   lucide-solid: ^1.39.0
-  motion: ^13.1.1
-  nitro: npm:nitro-nightly@3.0.1-20260901-102404-5d83475c
+  motion: ^13.2.0
+  nitro: npm:nitro-nightly@3.0.1-20260902-190952-ee541098
   oxfmt: ^0.66.0
   oxlint: ^1.81.0
-  posthog-js: ^1.424.1
+  posthog-js: ^1.425.1
   shadcn: ^4.20.1
   solid-js: 1.9.15
   solid-motionone: ^1.0.4

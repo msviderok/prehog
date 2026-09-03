@@ -29,6 +29,6 @@ declare module '@tanstack/solid-router' {
   }
 
   interface StaticDataRouteOption {
-    scene?: CurrentScene
+    scene: CurrentScene | null
   }
 }

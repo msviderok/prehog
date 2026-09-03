@@ -132,7 +132,7 @@ export const setIsRunning = mutation({
 
 export const setScene = mutation({
   args: {
-    scene: v.union(v.literal('main'), v.literal('tour')),
+    scene: v.union(v.literal('main'), v.literal('tour'), v.literal('application')),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)

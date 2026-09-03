@@ -4,7 +4,7 @@ import { useGlobalState } from '@/components/GlobalStateContext'
 import { Loading } from '@/components/Loading'
 import { api } from '@/convex/api'
 import { authServerFn } from '@/lib/server.functions'
-import { createFileRoute, Outlet, redirect, useBlocker, useMatches } from '@tanstack/solid-router'
+import { createFileRoute, Outlet, redirect, useBlocker, useMatches, useRouter } from '@tanstack/solid-router'
 import { useMutation } from 'convex-solidjs'
 import { onCleanup, onMount, Show } from 'solid-js'
 import { runGameLoop } from './-gameloop'
@@ -12,6 +12,7 @@ import { OtherPlayer } from '@/components/OtherPlayer'
 import { For } from 'solid-js'
 
 export const Route = createFileRoute('/_authed')({
+  staticData: { scene: null },
   async beforeLoad() {
     const userId = await authServerFn()
     if (userId == null) throw redirect({ to: '/login' })
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/_authed')({
     return <Loading type="clerk" />
   },
   component() {
+    const router = useRouter()
     const sceneMatch = useMatches({
       select: (matches) => matches.find((m) => m.staticData?.scene)?.staticData.scene,
     })
@@ -31,7 +33,7 @@ export const Route = createFileRoute('/_authed')({
     onMount(() => {
       queueMicrotask(() => recalculate())
       window.addEventListener('resize', recalculate)
-      onCleanup(() => window.removeEventListener('resize', recalculate))
+      const unsubscribe = router.subscribe('onRendered', recalculate)
 
       void getMyInitialState.mutate({}).then((s) => {
         player.isWalking = false
@@ -39,6 +41,11 @@ export const Route = createFileRoute('/_authed')({
         player.facing = s.direction
         player.x = s.x
         recalculate()
+      })
+
+      onCleanup(() => {
+        window.removeEventListener('resize', recalculate)
+        unsubscribe()
       })
     })
 

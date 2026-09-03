@@ -2,7 +2,7 @@ import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
 import {
   COMMON_SCENE_HEIGHT,
-  EVENT_MARKER_RADIUS,
+  EVENT_MARKER_RADIUS_IN_VH,
   GAME_CONTENT_HEIGHT_RATIO,
   HEARTBEAT_MS,
   PLAYER_BASE_SPEED_PX_PER_SEC,
@@ -12,7 +12,7 @@ import {
   SCENE,
   type Hat,
 } from '@/lib/constants'
-import { clamp } from '@/lib/utils'
+import { clamp, fastRound } from '@/lib/utils'
 import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
@@ -273,23 +273,32 @@ export function GlobalStateProvider(props: ParentProps) {
 
     for (const node of nodes) {
       if (node.type === 'popover') {
-        const r = 20 / viewport.vh
-        console.log(viewport.vh, r)
-        node.hitbox.inWorldUnits.x1 = node.hitbox.position.x - r
-        node.hitbox.inWorldUnits.x2 = node.hitbox.position.x + r
-        node.hitbox.inWorldUnits.y1 = node.hitbox.position.y - r
-        node.hitbox.inWorldUnits.y2 = node.hitbox.position.y + r
+        const xPX = node.hitbox.position.x * scene.worldUnit.x
+        const yPX = node.hitbox.position.y * scene.worldUnit.y
+        const rwPX = EVENT_MARKER_RADIUS_IN_VH.width * viewport.vw * scene.scale
+        const rhPX = EVENT_MARKER_RADIUS_IN_VH.height * viewport.vh * scene.scale
 
-        node.rootRef?.style.setProperty('--node-hitbox-x1', `${node.hitbox.inWorldUnits.x1}`)
-        node.rootRef?.style.setProperty('--node-hitbox-x2', `${node.hitbox.inWorldUnits.x2}`)
-        node.rootRef?.style.setProperty('--node-hitbox-y1', `${node.hitbox.inWorldUnits.y1}`)
-        node.rootRef?.style.setProperty('--node-hitbox-y2', `${node.hitbox.inWorldUnits.y2}`)
+        node.hitbox.inPX.x1 = xPX - rwPX
+        node.hitbox.inPX.x2 = xPX + rwPX
+        node.hitbox.inPX.y1 = yPX - rhPX
+        node.hitbox.inPX.y2 = yPX + rhPX
+        node.size.inPX.width = node.hitbox.inPX.x2 - node.hitbox.inPX.x1
+        node.size.inPX.height = node.hitbox.inPX.y2 - node.hitbox.inPX.y1
+
+        node.hitbox.inWorldUnits.x1 = node.hitbox.inPX.x1 / scene.worldUnit.x
+        node.hitbox.inWorldUnits.x2 = node.hitbox.inPX.x2 / scene.worldUnit.x
+        node.hitbox.inWorldUnits.y1 = node.hitbox.inPX.y1 / scene.worldUnit.y
+        node.hitbox.inWorldUnits.y2 = node.hitbox.inPX.y2 / scene.worldUnit.y
+        node.size.inWorldUnits.width = node.hitbox.inWorldUnits.x2 - node.hitbox.inWorldUnits.x1
+        node.size.inWorldUnits.height = node.hitbox.inWorldUnits.y2 - node.hitbox.inWorldUnits.y1
       }
 
-      node.hitbox.inPX.x1 = node.hitbox.inWorldUnits.x1 * scene.worldUnit.x
-      node.hitbox.inPX.x2 = node.hitbox.inWorldUnits.x2 * scene.worldUnit.x
-      node.hitbox.inPX.y1 = node.hitbox.inWorldUnits.y1 * scene.worldUnit.y
-      node.hitbox.inPX.y2 = node.hitbox.inWorldUnits.y2 * scene.worldUnit.y
+      if (node.type === 'popover') {
+        node.rootRef?.style.setProperty('--node-tx', `${fastRound(node.hitbox.inPX.x1)}px`)
+        node.rootRef?.style.setProperty('--node-ty', `${fastRound(node.hitbox.inPX.y1)}px`)
+        node.rootRef?.style.setProperty('--node-width', `${fastRound(node.size.inPX.width)}px`)
+        node.rootRef?.style.setProperty('--node-height', `${fastRound(node.size.inPX.height)}px`)
+      }
     }
     updatePlayerAnimations()
   }

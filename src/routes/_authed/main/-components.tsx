@@ -31,7 +31,7 @@ export function Intro() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 19.99, y: 48 },
-        hitboxPosition: { x: 11, y: 91 },
+        hitboxPosition: { x: 11, y: 94 },
       }}
     >
       <PopoverTrigger />
@@ -59,7 +59,7 @@ export function Experience() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 22.58, y: 70.1 },
-        hitboxPosition: { x: 19, y: 91 },
+        hitboxPosition: { x: 19, y: 94 },
       }}
     >
       <PopoverTrigger />
@@ -107,12 +107,13 @@ export function Experience() {
 
 export function WhyAmIGoodForARole() {
   const router = useRouter()
+  const setScene = useMutation(api.gameState.setScene)
   return (
     <Popover
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 52.34, y: 45.49 },
-        hitboxPosition: { x: 53, y: 91 },
+        hitboxPosition: { x: 53, y: 94 },
         onNodeRegistered: (node) => {
           createEffect(
             on(node.actions.open.get, (popoverOpen) => {
@@ -135,6 +136,12 @@ export function WhyAmIGoodForARole() {
             <PopoverDescription>
               This is my job application for the Posthog Product engineer position.
             </PopoverDescription>
+
+            <PopoverFooter>
+              <PopoverActionDoor hotkey="E" onHotkeyPress={() => void setScene.mutate({ scene: 'application' })}>
+                Take a tour
+              </PopoverActionDoor>
+            </PopoverFooter>
           </PopoverPopup>
         </PopoverPositioner>
       </PopoverPortal>
@@ -148,7 +155,7 @@ export function MyProjects() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 50.64, y: 70.39 },
-        hitboxPosition: { x: 41, y: 91 },
+        hitboxPosition: { x: 41, y: 94 },
       }}
     >
       <PopoverTrigger />
@@ -177,7 +184,7 @@ export function PersonalStuff() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 82.64, y: 42.12 },
-        hitboxPosition: { x: 74, y: 91 },
+        hitboxPosition: { x: 74, y: 94 },
       }}
     >
       <PopoverTrigger />
@@ -204,7 +211,7 @@ export function Temp1() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 84.31, y: 58.58 },
-        hitboxPosition: { x: 82, y: 91 },
+        hitboxPosition: { x: 82, y: 94 },
       }}
     >
       <PopoverTrigger />
@@ -226,7 +233,7 @@ export function Temp2() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 92.47, y: 64.63 },
-        hitboxPosition: { x: 90, y: 91 },
+        hitboxPosition: { x: 90, y: 94 },
       }}
     >
       <PopoverTrigger />

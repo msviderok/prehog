@@ -35,7 +35,12 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
       x: 0,
       realX: 0,
       batchQueue: [],
+      size: {
+        inPX: { width: 0, height: 0 },
+        inWorldUnits: { width: 0, height: 0 },
+      },
       hitbox: {
+        position: { x: 0, y: 0 },
         inPX: { x1: 0, x2: 0, y1: 0, y2: 0 },
         inWorldUnits: { x1: 0, x2: 0, y1: 0, y2: 0 },
       },
@@ -52,8 +57,9 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
           set: setNodeOpen,
         },
       },
+      size: newOtherPlayer.size,
       hitbox: newOtherPlayer.hitbox,
-      get ref() {
+      get rootRef() {
         return newOtherPlayer.ref
       },
     }

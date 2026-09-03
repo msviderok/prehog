@@ -25,7 +25,7 @@ export default defineSchema({
     x: v.number(),
   }),
   game_user_state: defineTable({
-    scene: v.union(v.literal('main'), v.literal('tour')),
+    scene: v.union(v.literal('main'), v.literal('tour'), v.literal('application')),
     movementDir: v.union(v.literal('left'), v.literal('right')),
     isWalking: v.boolean(),
     isRunning: v.boolean(),

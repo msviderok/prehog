@@ -244,6 +244,17 @@
   }
 }
 
+@utility asset {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: top left;
+  will-change: transform translate scale;
+  position: relative;
+  overflow: hidden;
+  transform-origin: top left;
+  image-rendering: pixelated;
+}
+
 @utility scene-elements {
   will-change: transform;
   transform: translate3d(var(--scene-tx, 0), 0, 0);
@@ -282,16 +293,9 @@
 @utility marker {
   @apply absolute perspective-midrange origin-center top-0 left-0 transform-3d;
 
-  --node-hitbox-x1-scaled: calc(var(--node-hitbox-x1, 0) * var(--scene-world-unit-x));
-  --node-hitbox-x2-scaled: calc(var(--node-hitbox-x2, 0) * var(--scene-world-unit-x));
-  --node-hitbox-y1-scaled: calc(var(--node-hitbox-y1, 0) * var(--scene-world-unit-y));
-  --node-hitbox-y2-scaled: calc(var(--node-hitbox-y2, 0) * var(--scene-world-unit-y));
-  --node-width: calc(var(--node-hitbox-x2-scaled) - var(--node-hitbox-x1-scaled));
-  --node-height: calc(var(--node-hitbox-y2-scaled) - var(--node-hitbox-y1-scaled));
-
   width: var(--node-width);
   height: var(--node-height);
-  transform: translate3d(var(--node-hitbox-x1-scaled), var(--node-hitbox-y1-scaled), 0);
+  transform: translate3d(var(--node-tx), var(--node-ty), 0);
 
   & > * {
     @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform transition-[scale] ease-in-out duration-300;

@@ -21,7 +21,7 @@ export function DoorPopover() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 1, y: 73 },
-        hitboxPosition: { x: 3, y: 97 },
+        hitboxPosition: { x: 3, y: 96 },
       }}
     >
       <PopoverTrigger />
@@ -52,7 +52,7 @@ export function Stage1() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 12.3, y: 71.5 },
-        hitboxPosition: { x: 12.3, y: 97 },
+        hitboxPosition: { x: 12.3, y: 96 },
       }}
     >
       <PopoverTrigger />
@@ -82,7 +82,7 @@ export function Stage2() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 30.3, y: 71.5 },
-        hitboxPosition: { x: 30.3, y: 97 },
+        hitboxPosition: { x: 30.3, y: 96 },
       }}
     >
       <PopoverTrigger />
@@ -111,7 +111,7 @@ export function Stage3() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 49.7, y: 71.5 },
-        hitboxPosition: { x: 49.7, y: 97 },
+        hitboxPosition: { x: 49.7, y: 96 },
       }}
     >
       <PopoverTrigger />
@@ -140,7 +140,7 @@ export function Stage4() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 69.6, y: 71.5 },
-        hitboxPosition: { x: 69.6, y: 97 },
+        hitboxPosition: { x: 69.6, y: 96 },
       }}
     >
       <PopoverTrigger />
@@ -169,7 +169,7 @@ export function Stage5() {
       variant="scenery"
       sceneryProps={{
         anchorPosition: { x: 89.6, y: 71.5 },
-        hitboxPosition: { x: 89.6, y: 97 },
+        hitboxPosition: { x: 89.6, y: 96 },
       }}
     >
       <PopoverTrigger />

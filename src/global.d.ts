@@ -56,6 +56,11 @@ declare global {
   type SceneNode = SceneNodePopover | SceneNodePlayer
 
   interface BaseSceneNodeProps {
+    rootRef: HTMLElement | undefined
+    size: {
+      inWorldUnits: Size
+      inPX: Size
+    }
     hitbox: {
       position: Coords
       inWorldUnits: Hitbox
@@ -68,14 +73,12 @@ declare global {
 
   interface SceneNodePopover extends BaseSceneNodeProps {
     type: 'popover'
-    rootRef: HTMLElement | undefined
     popupRef: HTMLElement | undefined
     position: Coords
   }
 
   interface SceneNodePlayer extends BaseSceneNodeProps {
     type: 'player'
-    ref: HTMLElement | undefined
   }
 
   interface OtherPlayer {
@@ -83,6 +86,7 @@ declare global {
     x: number
     realX: number
     batchQueue: GameEventBatch
+    size: BaseSceneNodeProps['size']
     hitbox: BaseSceneNodeProps['hitbox']
   }
 

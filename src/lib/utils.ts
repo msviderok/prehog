@@ -1,3 +1,5 @@
+import { routeAssets, type RouteAssets } from '@/route-assets.gen'
+import type { AnyRoute } from '@tanstack/solid-router'
 import { mergeProps, type JSX } from 'solid-js'
 type Simplify<T> = T extends any ? { [K in keyof T]: T[K] } : T
 type OnlyDeclaredProps<P, D extends Partial<P>> = {
@@ -78,10 +80,4 @@ export function createPolygonClipPath(sides: number): JSX.CSSProperties['clip-pa
 
 export function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export function preloadImage(src: string) {
-  if (typeof window === 'undefined') return
-  const img = new Image()
-  img.src = src
 }
