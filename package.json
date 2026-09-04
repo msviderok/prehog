@@ -54,6 +54,7 @@
     "@total-typescript/ts-reset": "catalog:",
     "@types/howler": "catalog:",
     "@types/node": "catalog:",
+    "image-size": "catalog:",
     "knip": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

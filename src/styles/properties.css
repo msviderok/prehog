@@ -1,0 +1,65 @@
+@property --rx {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --ry {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --rz {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --tx {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --ty {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tz {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --sx {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+@property --sy {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+@property --sz {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+@property --skx {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --sky {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --side-height {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --wave-phase {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}

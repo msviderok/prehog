@@ -1,6 +1,7 @@
-import { routeAssets, type RouteAssets } from '@/route-assets.gen'
-import type { AnyRoute } from '@tanstack/solid-router'
+import { assets } from '@/routeAssets.gen'
+import type { RouteIds } from '@tanstack/solid-router'
 import { mergeProps, type JSX } from 'solid-js'
+
 type Simplify<T> = T extends any ? { [K in keyof T]: T[K] } : T
 type OnlyDeclaredProps<P, D extends Partial<P>> = {
   -readonly [K in keyof D]-?: D[K] | Exclude<P[K extends keyof P ? K : never], undefined>
@@ -80,4 +81,9 @@ export function createPolygonClipPath(sides: number): JSX.CSSProperties['clip-pa
 
 export function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+export function preloadAssets<T extends string>(routeId: T) {
+  const images = Object.values(assets[routeId as keyof typeof assets])
+  return images.map(({ src }): JSX.LinkHTMLAttributes<HTMLLinkElement> => ({ rel: 'preload', as: 'image', href: src }))
 }

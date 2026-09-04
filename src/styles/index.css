@@ -3,9 +3,11 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@clerk/ui/themes/shadcn.css';
+@import './properties.css';
 @import './animations.css';
 @import './utils.css';
 @import './player.css';
+@import './scenery.css';
 @plugin "@tailwindcss/typography";
 
 :root {

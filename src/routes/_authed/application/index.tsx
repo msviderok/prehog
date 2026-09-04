@@ -1,28 +1,19 @@
 import { createFileRoute } from '@tanstack/solid-router'
-import { Door } from './-components'
-import ladderImgSrc from './-assets/c_asset_ladder.png?url'
-import { useRouteAssets } from '@/lib/useRouteAssets'
+import { AssetScaffoldWide, Door } from './-components'
+import { preloadAssets } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authed/application/')({
   component: RouteComponent,
   staticData: { scene: 'application' },
   head: ({ match }) => {
-    const images = useRouteAssets(match.routeId)
-    return {
-      links: Object.values(images).map((href) => ({ rel: 'preload', as: 'image', href })),
-    }
+    return { links: preloadAssets(match.routeId) }
   },
 })
 
 function RouteComponent() {
-  const assets = useRouteAssets(Route)
   return (
     <div>
-      <div
-        class="asset absolute top-0 left-0 size-200 translate-10"
-        style={{ 'background-image': `url(${assets['c_asset_wide.png']})` }}
-      />
-
+      <AssetScaffoldWide />
       <Door />
       {/*<ul>
         <li>

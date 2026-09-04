@@ -1,14 +1,12 @@
+import { Asset } from '@/components/Asset'
 import {
   Popover,
   PopoverActionDoor,
   PopoverArrow,
-  PopoverDescription,
   PopoverFooter,
-  PopoverHeader,
   PopoverPopup,
   PopoverPortal,
   PopoverPositioner,
-  PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { api } from '@/convex/api'
@@ -40,4 +38,8 @@ export function Door() {
       </PopoverPortal>
     </Popover>
   )
+}
+
+export function AssetScaffoldWide() {
+  return <Asset routeId="/_authed/application/" asset="c_asset_wide_304x335.png" />
 }
