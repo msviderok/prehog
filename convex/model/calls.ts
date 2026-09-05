@@ -1,4 +1,4 @@
-import { Doc, Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import { type MutationCtx, type QueryCtx } from '../_generated/server'
 import * as Users from './users'
 import * as FloatingPanels from './floatingPanels'

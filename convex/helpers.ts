@@ -1,4 +1,4 @@
-import { Doc } from './_generated/dataModel'
+import type { Doc } from './_generated/dataModel'
 import { env } from './_generated/server'
 
 export type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>

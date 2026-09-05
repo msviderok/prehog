@@ -1,6 +1,6 @@
 import { asyncMap } from 'convex-helpers'
-import { Doc, Id } from '../_generated/dataModel'
-import { MutationCtx, QueryCtx } from '../_generated/server'
+import type { Doc, Id } from '../_generated/dataModel'
+import type { MutationCtx, QueryCtx } from '../_generated/server'
 import * as Users from './users'
 
 export async function getMyChats(ctx: QueryCtx | MutationCtx) {
@@ -49,7 +49,7 @@ export async function getDirectChatWithUser(ctx: QueryCtx | MutationCtx, userId:
     if (acc.has(member.chatId)) acc.get(member.chatId)!.push(member)
     else acc.set(member.chatId, [member])
     return acc
-  }, new Map<Id<'chats'>, Doc<'chat_members'>[]>())
+  }, new Map<Id<'chats'>, Array<Doc<'chat_members'>>>())
 
   const directChat = chats.find((chat) => {
     const group = membersGrouped.get(chat._id)?.map((p) => p.userId)

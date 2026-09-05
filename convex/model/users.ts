@@ -1,7 +1,7 @@
-import { UserJSON } from '@clerk/backend'
+import type { UserJSON } from '@clerk/backend'
 import { asyncMap } from 'convex-helpers'
 import { SCENE } from '../../src/lib/constants'
-import { MutationCtx, QueryCtx } from '../_generated/server'
+import type { MutationCtx, QueryCtx } from '../_generated/server'
 import * as Calls from './calls'
 import * as FloatingPanels from './floatingPanels'
 

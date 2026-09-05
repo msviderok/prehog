@@ -81,7 +81,11 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   let ref!: HTMLButtonElement
   const popoverCtx = usePopoverContext()
   const [pressed, setPressed] = createSignal(false)
-  const props = defaultProps(componentProps, { variant: 'outline', size: 'default', animate: 'default' })
+  const props = defaultProps(componentProps, {
+    variant: 'outline',
+    size: 'default',
+    animate: 'default',
+  })
   const [local, rest] = splitProps(props, [
     'class',
     'size',

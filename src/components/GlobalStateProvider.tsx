@@ -65,7 +65,7 @@ export interface GlobalState {
     currentScene: CurrentScene
   }
   readonly otherPlayers: {
-    list: Accessor<Id<'users'>[]>
+    list: Accessor<Array<Id<'users'>>>
     hashmap: Map<Id<'users'>, OtherPlayer>
   }
   readonly player: {
@@ -198,7 +198,7 @@ export function GlobalStateProvider(props: ParentProps) {
     isAdmin,
   }
 
-  const [otherPlayersIds, setOtherPlayersIds] = createStore({ ids: [] as Id<'users'>[] })
+  const [otherPlayersIds, setOtherPlayersIds] = createStore({ ids: [] as Array<Id<'users'>> })
   const { data: onlineUsersList } = useQuery(api.users.listOnlineUsers, {})
   createEffect(
     on(

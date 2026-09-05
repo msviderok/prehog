@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
-import { v, Validator } from 'convex/values'
+import type { Validator } from 'convex/values'
+import { v } from 'convex/values'
 
 export default defineSchema({
   users: defineTable({

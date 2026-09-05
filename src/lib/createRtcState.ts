@@ -11,7 +11,7 @@ export function createRtcState() {
   let myStream = new MediaStream()
   let themStream = new MediaStream()
   let peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
-  const pendingCandidates: RTCIceCandidateInit[] = []
+  const pendingCandidates: Array<RTCIceCandidateInit> = []
 
   const sendRtcMessage = useMutation(api.activeCall.sendRtcMessage)
 

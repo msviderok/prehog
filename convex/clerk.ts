@@ -1,5 +1,6 @@
 import { type UserJSON } from '@clerk/backend'
-import { v, Validator } from 'convex/values'
+import type { Validator } from 'convex/values'
+import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import * as Users from './model/users'
 import * as Chats from './model/chats'

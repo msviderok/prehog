@@ -1,5 +1,5 @@
 export class Queue<T> {
-  private items: T[] = []
+  private items: Array<T> = []
   private head = 0
 
   public push(item: T) {

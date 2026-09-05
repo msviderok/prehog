@@ -223,7 +223,7 @@ const minimalPatch = {
 } satisfies SoundPatch
 
 export const UIAudio = definePatch(minimalPatch) as Omit<AudioPatch, 'sounds'> & {
-  sounds: UIAudio.SoundKey[]
+  sounds: Array<UIAudio.SoundKey>
   play: (name: UIAudio.SoundKey, opts?: PlayOptions) => VoiceHandle
   get: (name: UIAudio.SoundKey) => SoundDefinition | undefined
 }

@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { Id } from './_generated/dataModel'
+import type { Id } from './_generated/dataModel'
 import { action, env, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
@@ -68,15 +68,18 @@ export const unconnectedUsers = query(async (ctx) => {
     ),
   )
 
-  const connectedUserIds = participantsOfMyChats.reduce((acc, participants) => {
-    for (const p of participants) {
-      // ignore me
-      if (p.userId === user._id) continue
-      // include users my user has chats with
-      if (acc.includes(p.userId) === false) acc.push(p.userId)
-    }
-    return acc
-  }, [] as Id<'users'>[])
+  const connectedUserIds = participantsOfMyChats.reduce(
+    (acc, participants) => {
+      for (const p of participants) {
+        // ignore me
+        if (p.userId === user._id) continue
+        // include users my user has chats with
+        if (acc.includes(p.userId) === false) acc.push(p.userId)
+      }
+      return acc
+    },
+    [] as Array<Id<'users'>>,
+  )
 
   const usersWithNoChats = allUsers.filter((u) => connectedUserIds.includes(u._id) === false)
   return usersWithNoChats

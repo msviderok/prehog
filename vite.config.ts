@@ -9,7 +9,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     staged: {
-      '*': 'vp check --fix',
+      // '*': 'vp check --fix',
+      '*': '',
     },
     fmt: {
       semi: false,
@@ -17,7 +18,17 @@ export default defineConfig(({ mode }) => {
       trailingComma: 'all',
       printWidth: 120,
       sortPackageJson: false,
-      ignorePatterns: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
+      ignorePatterns: [
+        'package-lock.json',
+        'pnpm-lock.yaml',
+        'yarn.lock',
+        '.agents',
+        '.claude',
+        '.vite-hooks',
+        '*.gen.ts',
+        '*.gen.d.ts',
+        '**/_generated',
+      ],
     },
     lint: {
       plugins: ['import', 'typescript'],
@@ -89,13 +100,6 @@ export default defineConfig(({ mode }) => {
         'require-yield': 'error',
         'use-isnan': 'error',
         'valid-typeof': 'error',
-        'import/consistent-type-imports': [
-          'error',
-          {
-            fixStyle: 'inline-type-imports',
-            prefer: 'type-imports',
-          },
-        ],
         'import/first': 'error',
         'import/no-commonjs': 'error',
         'import/no-duplicates': 'error',

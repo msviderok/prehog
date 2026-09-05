@@ -155,7 +155,7 @@ function decodeJwtPayload(token: string) {
 
   try {
     const jwt = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-    return JSON.parse(jwt) as { aud?: string | string[]; azp?: string; exp?: number; iss?: string; sub?: string }
+    return JSON.parse(jwt) as { aud?: string | Array<string>; azp?: string; exp?: number; iss?: string; sub?: string }
   } catch {
     return null
   }

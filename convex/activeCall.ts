@@ -309,7 +309,7 @@ export const iceCandidateRtcMessages = query({
         q.eq('toUserId', user._id).eq('callId', call.call._id).eq('type', 'ice-candidate').eq('claimed', false),
       )
       .collect()
-    return candidates as CallRtcMessageIceCandidate[]
+    return candidates as Array<CallRtcMessageIceCandidate>
   },
 })
 

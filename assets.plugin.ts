@@ -16,7 +16,7 @@ export function routeAssetsPlugin(): Plugin {
     const entries: Array<{
       routeId: string
       assetDir: string
-      files: { name: string; size: ISize }[]
+      files: Array<{ name: string; size: ISize }>
     }> = []
 
     async function walk(dir: string) {
@@ -59,8 +59,8 @@ export function routeAssetsPlugin(): Plugin {
 
     entries.sort((a, b) => a.routeId.localeCompare(b.routeId))
 
-    const globPaths: string[] = []
-    const meta: string[] = []
+    const globPaths: Array<string> = []
+    const meta: Array<string> = []
     for (const { routeId, assetDir, files } of entries) {
       const id = JSON.stringify(`${routeId}/`)
       const globPath = `/${relative(process.cwd(), assetDir).replaceAll(sep, '/')}`
@@ -100,7 +100,6 @@ export function routeAssetsPlugin(): Plugin {
 
         export type Assets = typeof assets
       `,
-      oxfmtConfig as any,
     )
 
     await writeFile(output, formattedOutput.code)

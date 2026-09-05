@@ -1,5 +1,5 @@
 import { asyncMap } from 'convex-helpers'
-import { Doc, Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import { type MutationCtx, type QueryCtx } from '../_generated/server'
 import { type PanelTypeChat, type PanelTypeRTC } from '../helpers'
 import * as Users from './users'

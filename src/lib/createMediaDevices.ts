@@ -15,10 +15,10 @@ const MediaDeviceInfoSchema: v.GenericSchema<Omit<MediaDeviceInfo, 'toJSON'>> = 
 const StoredMediaDeviceInfoSchema = v.record(MediaDeviceKindSchema, v.optional(MediaDeviceInfoSchema))
 
 type SelectedDevices = Record<MediaDeviceInfo['kind'], MediaDeviceInfo | undefined>
-type GroupedDevices = Record<MediaDeviceInfo['kind'], MediaDeviceInfo[]>
+type GroupedDevices = Record<MediaDeviceInfo['kind'], Array<MediaDeviceInfo>>
 
 interface State {
-  all: MediaDeviceInfo[]
+  all: Array<MediaDeviceInfo>
   dropdown: GroupedDevices
 }
 
@@ -136,7 +136,7 @@ export function createMediaDevices() {
       const storedDevicesLSData = localStorage.getItem(SELECTED_LS_KEY)
       const storedDevices = v.parse(StoredMediaDeviceInfoSchema, JSON.parse(storedDevicesLSData ?? '{}'))
 
-      for (const kind of ['audioinput', 'audiooutput', 'videoinput'] as MediaDeviceKind[]) {
+      for (const kind of ['audioinput', 'audiooutput', 'videoinput'] as Array<MediaDeviceKind>) {
         const stored = storedDevices[kind]
         const dropdownList = devices().dropdown[kind]
 

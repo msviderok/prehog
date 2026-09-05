@@ -6,10 +6,9 @@ import { api } from '@/convex/api'
 import { authServerFn } from '@/lib/server.functions'
 import { createFileRoute, Outlet, redirect, useBlocker, useMatches, useRouter } from '@tanstack/solid-router'
 import { useMutation } from 'convex-solidjs'
-import { onCleanup, onMount, Show } from 'solid-js'
+import { onCleanup, onMount, Show, For } from 'solid-js'
 import { runGameLoop } from './-gameloop'
 import { OtherPlayer } from '@/components/OtherPlayer'
-import { For } from 'solid-js'
 import * as Scene from '@/components/Scene'
 
 export const Route = createFileRoute('/_authed')({

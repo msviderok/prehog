@@ -7,7 +7,9 @@ export type ToggleProps = TogglePrimitive.Props & ExtraButtonProps
 function Toggle(componentProps: ToggleProps) {
   const props = defaultProps(componentProps, { variant: 'default', size: 'default' })
   const [buttonProps, rest] = splitProps(props, ['class', 'variant', 'size'])
-  const restPropsWithRender = defaultProps(rest, { render: (p) => <Button {...p} {...buttonProps} /> })
+  const restPropsWithRender = defaultProps(rest, {
+    render: (p) => <Button {...p} {...buttonProps} />,
+  })
   return <TogglePrimitive data-slot="toggle" {...restPropsWithRender} />
 }
 
