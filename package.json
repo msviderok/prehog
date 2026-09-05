@@ -3,15 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3000",
-    "build": "vite build",
+    "dev": "vp dev --port 3000",
+    "build": "vp build",
     "start": "node --env-file=.env.local .output/server/index.mjs",
-    "lint": "oxlint",
-    "format": "oxfmt && oxlint --fix",
-    "check": "oxfmt --check",
+    "lint": "vp lint",
+    "format": "vp fmt && vp lint --fix",
+    "check": "vp fmt --check",
     "shad": "pnx @msviderok/shadcn-to-solid@latest",
     "catalog": "pnx codemod pnpm/catalog",
-    "knip": "knip"
+    "knip": "knip",
+    "prepare": "vp config"
   },
   "dependencies": {
     "@clerk/ui": "catalog:",
@@ -57,10 +58,17 @@
     "image-size": "catalog:",
     "knip": "catalog:",
     "oxfmt": "catalog:",
-    "oxlint": "catalog:",
     "shadcn": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-plugin-solid": "catalog:"
+    "vite-plugin-solid": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.3.2",
+      "onFail": "download"
+    }
   }
 }

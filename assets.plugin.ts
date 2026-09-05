@@ -4,7 +4,6 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 import { format } from 'oxfmt'
 import type { Plugin } from 'vite'
-import oxfmtConfig from './.oxfmtrc.json' with { type: 'json' }
 
 const ASSET_RE = /\.(png|jpe?g|gif|webp|svg|avif)$/i
 const ASSETS_DIR = '-assets' as const

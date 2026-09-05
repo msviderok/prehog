@@ -74,14 +74,7 @@ export interface FileRouteTypes {
   fullPaths: '/' | '/login' | '/application/' | '/main/' | '/tour/'
   fileRoutesByTo: FileRoutesByTo
   to: '/login' | '/' | '/application' | '/main' | '/tour'
-  id:
-    | '__root__'
-    | '/_authed'
-    | '/login'
-    | '/_authed/'
-    | '/_authed/application/'
-    | '/_authed/main/'
-    | '/_authed/tour/'
+  id: '__root__' | '/_authed' | '/login' | '/_authed/' | '/_authed/application/' | '/_authed/main/' | '/_authed/tour/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -150,17 +143,13 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedTourIndexRoute: AuthedTourIndexRoute,
 }
 
-const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
-  AuthedRouteRouteChildren,
-)
+const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(AuthedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
 }
-export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
 import type { startInstance } from './start.ts'
