@@ -12,24 +12,6 @@ export default defineConfig(({ mode }) => {
       // '*': 'vp check --fix',
       '*': '',
     },
-    fmt: {
-      semi: false,
-      singleQuote: true,
-      trailingComma: 'all',
-      printWidth: 120,
-      sortPackageJson: false,
-      ignorePatterns: [
-        'package-lock.json',
-        'pnpm-lock.yaml',
-        'yarn.lock',
-        '.agents',
-        '.claude',
-        '.vite-hooks',
-        '*.gen.ts',
-        '*.gen.d.ts',
-        '**/_generated',
-      ],
-    },
     lint: {
       plugins: ['import', 'typescript'],
       categories: {
