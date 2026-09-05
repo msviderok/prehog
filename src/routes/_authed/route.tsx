@@ -10,6 +10,7 @@ import { onCleanup, onMount, Show } from 'solid-js'
 import { runGameLoop } from './-gameloop'
 import { OtherPlayer } from '@/components/OtherPlayer'
 import { For } from 'solid-js'
+import * as Scene from '@/components/Scene'
 
 export const Route = createFileRoute('/_authed')({
   staticData: { scene: null },
@@ -59,15 +60,15 @@ export const Route = createFileRoute('/_authed')({
 
     return (
       <Show when={getMyInitialState.data() != undefined} fallback={<Loading type="convex" />}>
-        <div class="w-min h-min relative z-1">
-          <div ref={(el) => (scene.ref = el)} class="scene" data-scene={sceneMatch()}>
+        <Scene.Root scene={sceneMatch()!}></Scene.Root>
+        {/*<div class="w-min h-min relative z-1">
+          <div ref={(el) => (scene.ref = el)} class="scene-background" data-scene={sceneMatch()}>
             <For each={otherPlayers.list()}>{(userId) => <OtherPlayer id={userId} />}</For>
           </div>
 
           <div class="absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) z-2 transform-3d">
-            <div class="absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) transform-3d scene-elements">
-              <Outlet />
-            </div>
+            <Outlet />
+
             <div
               ref={(el) => (player.ref = el)}
               class="player player-idle"
@@ -77,7 +78,7 @@ export const Route = createFileRoute('/_authed')({
               <Hat hat={player.isAdmin() ? 'admin' : 'baseball'} />
             </div>
           </div>
-        </div>
+        </div>*/}
         <GameUI />
       </Show>
     )

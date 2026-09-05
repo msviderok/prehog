@@ -1,6 +1,7 @@
-import { createFileRoute } from '@tanstack/solid-router'
-import { AssetScaffoldWide, Door } from './-components'
 import { preloadAssets } from '@/lib/utils'
+import { createFileRoute } from '@tanstack/solid-router'
+import { For } from 'solid-js'
+import * as components from './-components'
 
 export const Route = createFileRoute('/_authed/application/')({
   component: RouteComponent,
@@ -13,8 +14,7 @@ export const Route = createFileRoute('/_authed/application/')({
 function RouteComponent() {
   return (
     <div>
-      <AssetScaffoldWide />
-      <Door />
+      <For each={Object.values(components)}>{(C) => <C />}</For>
       {/*<ul>
         <li>
           Things we care about

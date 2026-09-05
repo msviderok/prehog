@@ -98,6 +98,8 @@ export function routeAssetsPlugin(): Plugin {
         const globPaths = { ${globPaths.join(',')} } as const
 
         export const assets = { ${meta.join(',')} } as const
+
+        export type Assets = typeof assets
       `,
       oxfmtConfig as any,
     )

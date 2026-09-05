@@ -1,11 +1,12 @@
 import { defaultProps } from '@/lib/utils'
-import { assets, type RouteAsset } from '@/routeAssets.gen'
+import { assets, type Assets, type RouteAsset } from '@/routeAssets.gen'
 import { cn } from 'cn'
 import { splitProps, type JSX } from 'solid-js'
 
-type Assets = typeof assets
-
-interface AssetProps<K extends keyof Assets, A extends keyof Assets[K]> extends JSX.HTMLAttributes<HTMLDivElement> {
+export interface AssetProps<
+  K extends keyof Assets,
+  A extends keyof Assets[K],
+> extends JSX.HTMLAttributes<HTMLDivElement> {
   routeId: K
   asset: A
   width?: number
@@ -19,7 +20,7 @@ export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(compone
   const [local, rest] = splitProps(props, ['routeId', 'asset', 'width', 'height', 'scale', 'class'])
   return (
     <div
-      class={cn('asset absolute top-0 left-0 translate-10', local.class)}
+      class={cn('asset', local.class)}
       data-width={(local.width ?? asset.size.width) * (local.scale ?? 1)}
       data-height={(local.height ?? asset.size.height) * (local.scale ?? 1)}
       {...rest}

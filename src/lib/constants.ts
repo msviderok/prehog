@@ -59,7 +59,7 @@ export const SCENE: Record<
 > = {
   main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
   tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
-  application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 85 },
+  application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 65 },
 }
 
 export const EVENT_MARKER_RADIUS_IN_VH = { width: 7, height: 1.5 }

@@ -16,40 +16,42 @@ const globPaths = {
 
 export const assets = {
   '/_authed/application/': {
-    'c_asset_ladder_67x335.png': {
-      name: 'c_asset_ladder_67x335.png',
+    'c_asset_ladder.png': {
+      name: 'c_asset_ladder.png',
       size: { width: 67 as number, height: 335 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_ladder_67x335.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_ladder.png']!,
     },
-    'c_asset_normal_221x336.png': {
-      name: 'c_asset_normal_221x336.png',
+    'c_asset_normal.png': {
+      name: 'c_asset_normal.png',
       size: { width: 221 as number, height: 336 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_normal_221x336.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_normal.png']!,
     },
-    'c_asset_slim_125x335.png': {
-      name: 'c_asset_slim_125x335.png',
+    'c_asset_slim.png': {
+      name: 'c_asset_slim.png',
       size: { width: 125 as number, height: 335 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_slim_125x335.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_slim.png']!,
     },
-    'c_asset_wide_304x335.png': {
-      name: 'c_asset_wide_304x335.png',
+    'c_asset_wide.png': {
+      name: 'c_asset_wide.png',
       size: { width: 304 as number, height: 335 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_wide_304x335.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/c_asset_wide.png']!,
     },
-    'hog_donotcross_2979x1667.png': {
-      name: 'hog_donotcross_2979x1667.png',
+    'hog_donotcross.png': {
+      name: 'hog_donotcross.png',
       size: { width: 2979 as number, height: 1667 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/hog_donotcross_2979x1667.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/hog_donotcross.png']!,
     },
-    'hog_drill_2979x1667.png': {
-      name: 'hog_drill_2979x1667.png',
+    'hog_drill.png': {
+      name: 'hog_drill.png',
       size: { width: 2979 as number, height: 1667 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/hog_drill_2979x1667.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/hog_drill.png']!,
     },
-    'hog_noting_2979x1667.png': {
-      name: 'hog_noting_2979x1667.png',
+    'hog_noting.png': {
+      name: 'hog_noting.png',
       size: { width: 2979 as number, height: 1667 as number },
-      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/hog_noting_2979x1667.png']!,
+      src: globPaths['/_authed/application/']['/src/routes/_authed/application/-assets/hog_noting.png']!,
     },
   },
 } as const
+
+export type Assets = typeof assets

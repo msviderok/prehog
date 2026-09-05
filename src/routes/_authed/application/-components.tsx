@@ -18,13 +18,13 @@ export function Door() {
     <Popover
       variant="scenery"
       sceneryProps={{
-        anchorPosition: { x: 19.99, y: 48 },
-        hitboxPosition: { x: 11, y: 94 },
+        anchorPosition: { x: 10, y: 70 },
+        hitboxPosition: { x: 10, y: 94 },
       }}
     >
       <PopoverTrigger />
       <PopoverPortal>
-        <PopoverPositioner side="top" align="end">
+        <PopoverPositioner side="top" align="start">
           <PopoverPopup>
             <PopoverArrow />
 
@@ -40,6 +40,17 @@ export function Door() {
   )
 }
 
-export function AssetScaffoldWide() {
-  return <Asset routeId="/_authed/application/" asset="c_asset_wide_304x335.png" />
+// export function AssetScaffoldWide() {
+//   return <Asset routeId="/_authed/application/" asset="c_asset_wide.png" />
+// }
+
+export function AssetScaffoldHogDrill() {
+  return (
+    <Asset
+      routeId="/_authed/application/"
+      asset="hog_drill.png"
+      scale={0.6}
+      class="translate-y-[10%] translate-x-[10%]"
+    />
+  )
 }

@@ -18,6 +18,7 @@
     "**/snap/**",
     "**/vite.config.*.timestamp-*.*"
   ],
+
   "rules": {
     "for-direction": "error",
     "no-async-promise-executor": "error",
@@ -59,7 +60,12 @@
     "no-unassigned-vars": "off",
     "no-var": "error",
     "no-with": "error",
-    "no-unused-expressions": "off",
+    "no-unused-expressions": [
+      "warn",
+      {
+        "allowTernary": true
+      }
+    ],
     "prefer-const": "error",
     "require-yield": "error",
     "use-isnan": "error",
