@@ -32,21 +32,21 @@ catalog:
   '@total-typescript/ts-reset': ^0.6.1
   '@types/howler': ^2.2.13
   '@types/node': ^26.4.1
-  '@web-kits/audio': ^0.1.0
+  '@web-kits/audio': ^0.2.0
   class-variance-authority: ^0.7.1
   clerk-solidjs-tanstack-start: ^0.0.3
-  cn: ^0.2.5
+  cn: ^0.2.6
   convex: ^1.45.0
-  convex-helpers: ^0.1.123
+  convex-helpers: ^0.1.124
   date-fns: ^4.4.0
   howler: ^2.2.4
   image-size: ^2.0.2
   knip: ^6.34.0
-  lucide-solid: ^1.40.0
+  lucide-solid: ^1.41.0
   motion: ^13.2.0
   nitro: npm:nitro-nightly@3.0.260903-beta
   oxfmt: ^0.66.0
-  posthog-js: ^1.426.3
+  posthog-js: ^1.427.2
   shadcn: ^4.21.0
   solid-js: 1.9.15
   solid-motionone: ^1.0.4

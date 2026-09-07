@@ -6,11 +6,13 @@ import type { Assets } from '@/routeAssets.gen'
 import { Asset, type AssetProps } from './Asset'
 
 export function Root(props: { children: JSX.Element }) {
+  return <div class="w-min h-min relative z-1 overflow-hidden">{props.children}</div>
+}
+
+export function Elements(props: { children: JSX.Element }) {
   return (
-    <div class="w-min h-min relative z-1">
+    <div class="absolute top-0 left-0 transform-3d w-(--scene-width-scaled) h-(--scene-height-scaled)">
       {props.children}
-      {/*
-      <div class="absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) z-2 transform-3d"></div>*/}
     </div>
   )
 }
@@ -24,13 +26,9 @@ export function Background<K extends keyof Assets, A extends keyof Assets[K]>(pr
         scene.ref = el
         typeof props.ref === 'function' ? props.ref(el) : (props.ref = el)
       }}
-      class="scene-background w-(--scene-width-scaled) h-(--scene-height-scaled) bg-background translate-x-(--scene-tx) transform-gpu"
+      class="w-(--scene-width-scaled) h-(--scene-height-scaled) bg-background translate-x-(--scene-tx) transform-gpu relative"
     />
   )
-}
-
-export function Elements() {
-  return
 }
 
 export function Players() {

@@ -1,15 +1,22 @@
 @utility scene-node-popover-trigger {
   --node-anchor-x-scaled: calc(var(--node-anchor-x) * var(--scene-world-unit-x));
   --node-anchor-y-scaled: calc(var(--node-anchor-y) * var(--scene-world-unit-y));
-
   transform: translate3d(var(--node-anchor-x-scaled), var(--node-anchor-y-scaled), 0);
-
   position: absolute;
   top: 0;
   left: 0;
 }
 
-@utility scenery-asset {
+@utility asset {
+  @apply game-transform;
+  --attr-w: attr(data-width type(<number>), var(--w));
+  --attr-h: attr(data-height type(<number>), var(--h));
+  --attr-x: attr(data-x type(<number>), var(--x, 0));
+  --attr-y: attr(data-y type(<number>), var(--y, 0));
+  --tx: calc(var(--scene-tx, 0) + var(--dtx, 0) + (var(--attr-x) * var(--scene-world-unit-x)));
+  --ty: calc(var(--dty, 0) + var(--attr-y) * var(--scene-world-unit-y));
+  width: calc(var(--attr-w) * var(--scale, 1) * 1px);
+  height: calc(var(--attr-h) * var(--scale, 1) * 1px);
   position: absolute;
   top: 0;
   left: 0;
@@ -17,34 +24,9 @@
   background-repeat: no-repeat;
   background-position: top left;
   will-change: transform, translate, scale;
-  position: relative;
   overflow: hidden;
   transform-origin: top left;
   image-rendering: pixelated;
-}
-
-@utility scene-background {
-  @apply scenery-asset;
-  width: var(--scene-width-scaled);
-  height: var(--scene-height-scaled);
-  background-color: #111220;
-  transform: translate3d(var(--scene-tx, 0), 0, 0);
-
-  &[data-scene='main'] {
-    background-image: url('../assets/sprites/scenes/main.png');
-  }
-
-  &[data-scene='tour'] {
-    background-image: url('../assets/sprites/scenes/evolution.png');
-  }
-}
-
-@utility asset {
-  @apply scenery-asset;
-  --attr-w: attr(data-width type(<number>), var(--w));
-  --attr-h: attr(data-height type(<number>), var(--h));
-  width: calc(var(--attr-w) * var(--scale, 1) * 1px);
-  height: calc(var(--attr-h) * var(--scale, 1) * 1px);
 }
 
 @utility hitbox {

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/solid-router'
 import { SignIn } from 'clerk-solidjs-tanstack-start'
 
 export const Route = createFileRoute('/login')({
+  staticData: { scene: null },
   component: RouteComponent,
 })
 

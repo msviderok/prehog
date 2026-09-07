@@ -59,6 +59,8 @@
   --animate-spinY: spinY 10s linear infinite;
   --animate-spinZ: spinZ 10s linear infinite;
   --animate-flactuate-height: flactuateHeight 2s linear infinite;
+  --animate-truckMoving: truckMoving 30s ease-in-out infinite;
+  --animate-truckWheelSpin: truckWheelSpin 30s ease-in-out infinite;
 }
 
 @keyframes ellipsis {
@@ -115,5 +117,29 @@
   100% {
     filter: brightness(calc(110% + var(--collided, 0) * 20%));
     --wave-phase: 360deg;
+  }
+}
+
+@keyframes truckMoving {
+  0%,
+  80%,
+  100% {
+    --dtx: 0%;
+  }
+  30% {
+    --dtx: -320%;
+  }
+}
+
+@keyframes truckWheelSpin {
+  0% {
+    --rz: 0deg;
+  }
+  30% {
+    --rz: calc(-360deg * 10);
+  }
+  80%,
+  100% {
+    --rz: 0deg;
   }
 }

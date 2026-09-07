@@ -11,6 +11,7 @@ import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
 
 export const Route = createRootRouteWithContext()({
+  staticData: { scene: null },
   head: () => ({ links: [{ rel: 'stylesheet', href: styleCss }] }),
   shellComponent() {
     return (

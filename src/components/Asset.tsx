@@ -9,6 +9,8 @@ export interface AssetProps<
 > extends JSX.HTMLAttributes<HTMLDivElement> {
   routeId: K
   asset: A
+  x?: number
+  y?: number
   width?: number
   height?: number
   scale?: number
@@ -17,10 +19,12 @@ export interface AssetProps<
 export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(componentProps: AssetProps<K, A>) {
   const asset = assets[componentProps.routeId]![componentProps.asset] as RouteAsset
   const props = defaultProps(componentProps, { style: { 'background-image': `url(${asset.src})` } })
-  const [local, rest] = splitProps(props, ['routeId', 'asset', 'width', 'height', 'scale', 'class'])
+  const [local, rest] = splitProps(props, ['routeId', 'asset', 'width', 'height', 'scale', 'class', 'x', 'y'])
   return (
     <div
       class={cn('asset', local.class)}
+      data-x={local.x}
+      data-y={local.y}
       data-width={(local.width ?? asset.size.width) * (local.scale ?? 1)}
       data-height={(local.height ?? asset.size.height) * (local.scale ?? 1)}
       {...rest}

@@ -165,8 +165,8 @@ catalogs:
       specifier: ^26.4.1
       version: 26.4.1
     '@web-kits/audio':
-      specifier: ^0.1.0
-      version: 0.1.0
+      specifier: ^0.2.0
+      version: 0.2.0
     class-variance-authority:
       specifier: ^0.7.1
       version: 0.7.1
@@ -174,14 +174,14 @@ catalogs:
       specifier: ^0.0.3
       version: 0.0.3
     cn:
-      specifier: ^0.2.5
-      version: 0.2.5
+      specifier: ^0.2.6
+      version: 0.2.6
     convex:
       specifier: ^1.45.0
       version: 1.45.0
     convex-helpers:
-      specifier: ^0.1.123
-      version: 0.1.123
+      specifier: ^0.1.124
+      version: 0.1.124
     date-fns:
       specifier: ^4.4.0
       version: 4.4.0
@@ -195,8 +195,8 @@ catalogs:
       specifier: ^6.34.0
       version: 6.34.0
     lucide-solid:
-      specifier: ^1.40.0
-      version: 1.40.0
+      specifier: ^1.41.0
+      version: 1.41.0
     motion:
       specifier: ^13.2.0
       version: 13.2.0
@@ -207,8 +207,8 @@ catalogs:
       specifier: ^0.66.0
       version: 0.66.0
     posthog-js:
-      specifier: ^1.426.3
-      version: 1.426.3
+      specifier: ^1.427.2
+      version: 1.427.2
     shadcn:
       specifier: ^4.21.0
       version: 4.21.0
@@ -294,7 +294,7 @@ importers:
         version: 1.168.47(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.1)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.1)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1))
       '@web-kits/audio':
         specifier: 'catalog:'
-        version: 0.1.0(react@19.2.8)
+        version: 0.2.0(react@19.2.8)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -303,13 +303,13 @@ importers:
         version: 0.0.3(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.1)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(@tanstack/solid-router@1.170.30(solid-js@1.9.15))(@tanstack/solid-start@1.168.47(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.1)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.1)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.3.0)
       cn:
         specifier: 'catalog:'
-        version: 0.2.5
+        version: 0.2.6
       convex:
         specifier: 'catalog:'
         version: 1.45.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6)
       convex-helpers:
         specifier: 'catalog:'
-        version: 0.1.123(@standard-schema/spec@1.1.0)(convex@1.45.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))(hono@4.13.5)(react@19.2.8)(typescript@7.0.2)(zod@3.25.76)
+        version: 0.1.124(@standard-schema/spec@1.1.0)(convex@1.45.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))(hono@4.13.5)(react@19.2.8)(typescript@7.0.2)(zod@3.25.76)
       convex-solidjs:
         specifier: git+https://github.com/msviderok/convex-solidjs.git#main
         version: https://codeload.github.com/msviderok/convex-solidjs/tar.gz/b21f6332498bcac8b2b2a18bfe2ae78a0402bcc2(bufferutil@4.1.0)(react@19.2.8)(solid-js@1.9.15)(utf-8-validate@6.0.6)
@@ -321,7 +321,7 @@ importers:
         version: 2.2.4
       lucide-solid:
         specifier: 'catalog:'
-        version: 1.40.0(solid-js@1.9.15)
+        version: 1.41.0(solid-js@1.9.15)
       motion:
         specifier: 'catalog:'
         version: 13.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -330,7 +330,7 @@ importers:
         version: nitro-nightly@3.0.260903-beta
       posthog-js:
         specifier: 'catalog:'
-        version: 1.426.3(react@19.2.8)
+        version: 1.427.2(react@19.2.8)
       solid-js:
         specifier: 'catalog:'
         version: 1.9.15
@@ -1787,11 +1787,17 @@ packages:
   '@posthog/core@1.50.4':
     resolution: {integrity: sha512-4iuCMbPJgy+w8xiFlSM/zapchVSzkba6Nb+iZEo+4DsAplNFj38pXE1htGx2GU8Fac70PPOwvNv4uHsZjYDbzA==}
 
+  '@posthog/core@1.50.5':
+    resolution: {integrity: sha512-afEchuShDaVIoxAIj76kDZQ1DhfesDmgfVp+mtTzsA3wlc8DF5uoz8YjuTjnxOicWkpP5HCDqYidK/1kT125Cg==}
+
   '@posthog/types@1.407.1':
     resolution: {integrity: sha512-WhbkXPC2rgylXqmxHqv70ffI3k+KxyR6s7DBIfr5NvIqHkxp6v0pk31D/jbz0DNVbzwkLjyll2pxr4FNbJiYzg==}
 
   '@posthog/types@1.408.1':
     resolution: {integrity: sha512-zcQ3rdAbWDWegL/TA3OiC+Wc8qquNtFj2Q2RPc3QuJas3D6FYsNhR9xYmZgLWEm+GDN/zhGlOHijG3nPMEiCbw==}
+
+  '@posthog/types@1.409.0':
+    resolution: {integrity: sha512-239umoaZVb2GBaXeEyJpwFvjhrrChJH8NHCwiao23EBSu3NA6EN0MTMoaHSmMEf4yjiXEFFoYJA6FjJAXF5HGA==}
 
   '@preact/signals-core@1.14.4':
     resolution: {integrity: sha512-HNB6HYeYKhQbJ1aKl+YRjrS4+QWHLKX6qKoUsfS/m0vqzsVaEBiZiaKbG/e+NKk2ch5ALQr/ihWaMHxiCuuWHA==}
@@ -3318,8 +3324,8 @@ packages:
     resolution: {integrity: sha512-8WiRPaKk/wNNRZhB2eVhpR/JW7/aqTCMoZhgVUCujuzDmxxmGvsosMxdCG4NAdYkoyozAHCX8/xLtlWUn5mNdQ==}
     engines: {node: '>=22'}
 
-  '@web-kits/audio@0.1.0':
-    resolution: {integrity: sha512-jaS9Z6MSilo4SN9dUpztvqZhRkJWd8ABcB38Vdqpsh5UbKxYUBC9qq0a/YUC+RPzG8Iy5/wpycIV4d18ewX0rg==}
+  '@web-kits/audio@0.2.0':
+    resolution: {integrity: sha512-4naddQeSNBPsgQUEoCqes9jlNg3u+XDYu8x73I9YcxuWIdN1YhCSR+ANtOE61vllU55EY7e/eVKc48rsIRieSw==}
     engines: {node: '>=20.0.0'}
     hasBin: true
     peerDependencies:
@@ -3730,8 +3736,8 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
-  cn@0.2.5:
-    resolution: {integrity: sha512-OCjZtMeQfXbI4Es1+EIjkd77gvWzaE689gD8KhfexlqjClC06qR1MQBR+Z35ZMSPNEBWyHiItW1Soy0UvwNv9w==}
+  cn@0.2.6:
+    resolution: {integrity: sha512-+i4L0zUGgRcEnhsxueVrP7iBGxBx5iD0WOTYg1MwFEu2ZyCmH5Ov2V1cul2Ht5UchRQQgftCf4be/RxspuW6QQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -3801,8 +3807,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  convex-helpers@0.1.123:
-    resolution: {integrity: sha512-E9W4tscZy6ZtNnwPDdL5UhMc7Rj9aUYlzjdYiKsfVIAwdarABWqvPB8+St3Q6IwS83r+QIGSO1lTidTamDdyPQ==}
+  convex-helpers@0.1.124:
+    resolution: {integrity: sha512-Gbu/jq6I3x5Y51cXP5c7+CI3t15vX5Xi2G0tOym3rxpBtYqrI+qWwxkqZgJYrHHccY42wZudB8h6kS3fak8Aeg==}
     hasBin: true
     peerDependencies:
       '@standard-schema/spec': ^1.0.0
@@ -4872,8 +4878,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-solid@1.40.0:
-    resolution: {integrity: sha512-cup9kc187Y9ls+vZs3nCXV31YTHDqrS8ctEC4D9IPecp/nnGcnbObUKcWpbuH3rLTaeIoZgiwU4pVbZ8rXfP1g==}
+  lucide-solid@1.41.0:
+    resolution: {integrity: sha512-kqAHyabxyoI9badC2nTvvW88d90E4NYyXtBEFdHI5mKQYegw4NW6vXook7UU69tjBzO578bYVwbNqLT1Q5VRLw==}
     peerDependencies:
       solid-js: ^1.4.7
 
@@ -5350,8 +5356,8 @@ packages:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.426.3:
-    resolution: {integrity: sha512-afLmhlSZjLZ63Z+JlJNb2EJchA9+1NdrqxP59VzLTOB4nIc9XBB3UICLDpjGRgycOrTmavklw1Lfe0knATSu+w==}
+  posthog-js@1.427.2:
+    resolution: {integrity: sha512-/jRg3ChHuxcHTTJ/xb+IbpXLYxiBKIWdjrsNNqY1tAwjnFoijmz58i4mIR4A2P5MWx+4R7LlpK9vQfBr8v292g==}
     peerDependencies:
       '@types/react': '>=16.8.0'
       react: '>=16.8.0'
@@ -7500,9 +7506,15 @@ snapshots:
     dependencies:
       '@posthog/types': 1.408.1
 
+  '@posthog/core@1.50.5':
+    dependencies:
+      '@posthog/types': 1.409.0
+
   '@posthog/types@1.407.1': {}
 
   '@posthog/types@1.408.1': {}
+
+  '@posthog/types@1.409.0': {}
 
   '@preact/signals-core@1.14.4': {}
 
@@ -9130,7 +9142,7 @@ snapshots:
     dependencies:
       '@wallet-standard/base': 1.1.1
 
-  '@web-kits/audio@0.1.0(react@19.2.8)':
+  '@web-kits/audio@0.2.0(react@19.2.8)':
     dependencies:
       '@clack/prompts': 0.9.1
       picocolors: 1.1.1
@@ -9497,7 +9509,7 @@ snapshots:
 
   clsx@2.1.1: {}
 
-  cn@0.2.5: {}
+  cn@0.2.6: {}
 
   code-block-writer@13.0.3: {}
 
@@ -9555,7 +9567,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.123(@standard-schema/spec@1.1.0)(convex@1.45.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))(hono@4.13.5)(react@19.2.8)(typescript@7.0.2)(zod@3.25.76):
+  convex-helpers@0.1.124(@standard-schema/spec@1.1.0)(convex@1.45.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))(hono@4.13.5)(react@19.2.8)(typescript@7.0.2)(zod@3.25.76):
     dependencies:
       convex: 1.45.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6)
     optionalDependencies:
@@ -10516,7 +10528,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-solid@1.40.0(solid-js@1.9.15):
+  lucide-solid@1.41.0(solid-js@1.9.15):
     dependencies:
       solid-js: 1.9.15
 
@@ -11168,11 +11180,11 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.426.3(react@19.2.8):
+  posthog-js@1.427.2(react@19.2.8):
     dependencies:
       '@posthog/browser-common': 0.7.2
-      '@posthog/core': 1.50.4
-      '@posthog/types': 1.408.1
+      '@posthog/core': 1.50.5
+      '@posthog/types': 1.409.0
       core-js: 3.50.0
       dompurify: 3.4.14
       fflate: 0.4.9
@@ -11541,7 +11553,7 @@ snapshots:
       '@modelcontextprotocol/sdk': 1.30.0(supports-color@8.1.1)(zod@3.25.76)
       '@types/validate-npm-package-name': 4.0.2
       browserslist: 4.28.8
-      cn: 0.2.5
+      cn: 0.2.6
       commander: 14.0.3
       cosmiconfig: 9.0.2(typescript@7.0.2)
       dedent: 1.7.2(babel-plugin-macros@3.1.0)

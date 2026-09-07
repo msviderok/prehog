@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/solid-start/plugin/vite'
 import { nitro } from 'nitro/vite'
-import { defineConfig, loadEnv, lazyPlugins } from 'vite-plus'
+import { defineConfig, loadEnv } from 'vite-plus'
 import solidPlugin from 'vite-plugin-solid'
 import { routeAssetsPlugin } from './assets.plugin.ts'
 
@@ -140,13 +140,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       tsconfigPaths: true,
     },
-    plugins: lazyPlugins(() => [
-      nitro(),
-      tailwindcss(),
-      tanstackStart(),
-      solidPlugin({ ssr: true }),
-      routeAssetsPlugin(),
-    ]),
+    plugins: [nitro(), tailwindcss(), tanstackStart(), solidPlugin({ ssr: true }), routeAssetsPlugin()],
     environments: {
       ssr: {
         define: {

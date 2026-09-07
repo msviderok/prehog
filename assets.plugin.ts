@@ -1,86 +1,87 @@
-import imageSize from "image-size";
-import type { ISize } from "image-size/types/interface";
-import { readdir, readFile, writeFile } from "node:fs/promises";
-import { relative, resolve, sep } from "node:path";
-import { format } from "oxfmt";
-import type { Plugin } from "vite";
+import imageSize from 'image-size'
+import type { ISize } from 'image-size/types/interface'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { relative, resolve, sep } from 'node:path'
+import { format } from 'oxfmt'
+import type { Plugin } from 'vite'
+import oxfmtConfig from './.oxfmtrc.json' with { type: 'json' }
 
-const ASSET_RE = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
-const ASSETS_DIR = "-assets" as const;
+const ASSET_RE = /\.(png|jpe?g|gif|webp|svg|avif)$/i
+const ASSETS_DIR = '-assets' as const
 
 export function routeAssetsPlugin(): Plugin {
-  const routesDir = resolve("src/routes");
-  const output = resolve("src/routeAssets.gen.ts");
+  const routesDir = resolve('src/routes')
+  const output = resolve('src/routeAssets.gen.ts')
 
   async function generate() {
     const entries: Array<{
-      routeId: string;
-      assetDir: string;
-      files: Array<{ name: string; size: ISize }>;
-    }> = [];
+      routeId: string
+      assetDir: string
+      files: Array<{ name: string; size: ISize }>
+    }> = []
 
     async function walk(dir: string) {
       for (const entry of await readdir(dir, { withFileTypes: true })) {
-        const path = resolve(dir, entry.name);
+        const path = resolve(dir, entry.name)
 
-        if (!entry.isDirectory()) continue;
+        if (!entry.isDirectory()) continue
 
         if (entry.name === ASSETS_DIR) {
           const files = (await readdir(path, { withFileTypes: true })).filter(
             (e) => e.isFile() && ASSET_RE.test(e.name),
-          );
+          )
 
           const processedFiles = (
             await Promise.all(
               files.map(async ({ name }) => {
-                const buffer = await readFile(resolve(path, name));
-                const size = imageSize(buffer);
-                return { name, size };
+                const buffer = await readFile(resolve(path, name))
+                const size = imageSize(buffer)
+                return { name, size }
               }),
             )
-          ).sort();
+          ).sort()
 
           if (files.length) {
             entries.push({
-              routeId: `/${relative(routesDir, dir).replaceAll(sep, "/")}`,
+              routeId: `/${relative(routesDir, dir).replaceAll(sep, '/')}`,
               assetDir: path,
               files: processedFiles,
-            });
+            })
           }
 
-          continue;
+          continue
         }
 
-        await walk(path);
+        await walk(path)
       }
     }
 
-    await walk(routesDir);
+    await walk(routesDir)
 
-    entries.sort((a, b) => a.routeId.localeCompare(b.routeId));
+    entries.sort((a, b) => a.routeId.localeCompare(b.routeId))
 
-    const globPaths: Array<string> = [];
-    const meta: Array<string> = [];
+    const globPaths: Array<string> = []
+    const meta: Array<string> = []
     for (const { routeId, assetDir, files } of entries) {
-      const id = JSON.stringify(`${routeId}/`);
-      const globPath = `/${relative(process.cwd(), assetDir).replaceAll(sep, "/")}`;
+      const id = JSON.stringify(`${routeId}/`)
+      const globPath = `/${relative(process.cwd(), assetDir).replaceAll(sep, '/')}`
       globPaths.push(`
         ${id}: import.meta.glob<string>(${JSON.stringify(`${globPath}/*`)}, { eager: true, query: '?url', import: 'default' })
-      `);
+      `)
       meta.push(`
         ${id}: {
           ${files.map((f) => {
-            const name = JSON.stringify(f.name);
+            const name = JSON.stringify(f.name)
             return `
               ${name}: {
                 name: ${name},
                 size: { width: ${f.size.width} as number, height: ${f.size.height} as number },
                 src: globPaths[${id}]['${globPath}${sep}${f.name}']!
               }
-            `;
+            `
           })}
         }
-      `);
+      `)
     }
 
     const formattedOutput = await format(
@@ -94,31 +95,32 @@ export function routeAssetsPlugin(): Plugin {
           size: { width: number; height: number; }
         }
 
-        const globPaths = { ${globPaths.join(",")} } as const
+        const globPaths = { ${globPaths.join(',')} } as const
 
-        export const assets = { ${meta.join(",")} } as const
+        export const assets = { ${meta.join(',')} } as const
 
         export type Assets = typeof assets
       `,
-    );
+      oxfmtConfig as any,
+    )
 
-    await writeFile(output, formattedOutput.code);
+    await writeFile(output, formattedOutput.code)
   }
 
   return {
-    name: "route-assets",
+    name: 'route-assets',
     buildStart() {
-      return generate();
+      return generate()
     },
     configureServer(server) {
       const update = (file: string) => {
         if (file.startsWith(routesDir) && file.includes(`${sep}${ASSETS_DIR}${sep}`)) {
-          void generate();
+          void generate()
         }
-      };
+      }
 
-      server.watcher.on("add", update);
-      server.watcher.on("unlink", update);
+      server.watcher.on('add', update)
+      server.watcher.on('unlink', update)
     },
-  };
+  }
 }
