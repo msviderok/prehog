@@ -85,5 +85,8 @@ export function random(min: number, max: number) {
 
 export function preloadAssets<T extends string>(routeId: T) {
   const images = Object.values(assets[routeId as keyof typeof assets])
-  return images.map(({ src }): JSX.LinkHTMLAttributes<HTMLLinkElement> => ({ rel: 'preload', as: 'image', href: src }))
+  return images.map(({ src }): JSX.LinkHTMLAttributes<HTMLLinkElement> => {
+    new Image().src = src
+    return { rel: 'preload', as: 'image', href: src }
+  })
 }

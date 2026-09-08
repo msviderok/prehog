@@ -1,7 +1,7 @@
 import type { Doc } from '../../convex/_generated/dataModel'
 
 /* The ratio of the game content height to the window height. */
-export const GAME_CONTENT_HEIGHT_RATIO = 0.6666
+export const GAME_CONTENT_HEIGHT_RATIO = 0.7
 
 /**
  * Whether the browser supports setting the audio output device.
@@ -57,9 +57,9 @@ export const SCENE: Record<
     playerInitialY: number
   }
 > = {
-  main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
+  main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 83 },
   tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
   application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 62 },
 }
 
-export const EVENT_MARKER_RADIUS_IN_VH = { width: 7, height: 1.5 }
+export const EVENT_MARKER_SIZE = { width: 80, height: 16 }

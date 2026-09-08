@@ -1,12 +1,3 @@
-@utility scene-node-popover-trigger {
-  --node-anchor-x-scaled: calc(var(--node-anchor-x) * var(--scene-world-unit-x));
-  --node-anchor-y-scaled: calc(var(--node-anchor-y) * var(--scene-world-unit-y));
-  transform: translate3d(var(--node-anchor-x-scaled), var(--node-anchor-y-scaled), 0);
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
 @utility asset {
   @apply game-transform;
   --attr-w: attr(data-width type(<number>), var(--w));
@@ -82,7 +73,7 @@
     --side-static-h: var(--node-height) * var(--side-static-h-fraction);
     --side-wave-amplitude: calc(1 - var(--side-static-h-fraction));
 
-    scale: calc(1 + var(--collided, 0) * 0.3);
+    scale: calc(1 + var(--collided, 0) * 0.15);
     animation-delay: calc(var(--delay) * -500ms);
     animation-duration: calc(10s - (var(--collided, 0) * 5s));
 

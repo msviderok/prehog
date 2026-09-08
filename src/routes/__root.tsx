@@ -9,6 +9,7 @@ import posthog from 'posthog-js'
 import { onMount, Suspense, type ParentProps } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
+import { useGlobalState } from '@/components/GlobalStateContext'
 
 export const Route = createRootRouteWithContext()({
   staticData: { scene: null },
@@ -28,8 +29,9 @@ export const Route = createRootRouteWithContext()({
                   <ClerkProvider>
                     <ConvexClerkProvider>
                       <GlobalStateProvider>
-                        <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden">
+                        <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden justify-center">
                           <Outlet />
+                          <ScenePopoverContainer />
                         </main>
                       </GlobalStateProvider>
                     </ConvexClerkProvider>
@@ -55,4 +57,14 @@ function PosthogProvider(props: ParentProps) {
   })
 
   return <>{props.children}</>
+}
+
+function ScenePopoverContainer() {
+  const { scene } = useGlobalState()
+  return (
+    <div
+      ref={(el) => (scene.popupContainerRef = el)}
+      class="z-1 m-auto absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) translate-x-(--scene-tx) scale-(--scale)"
+    />
+  )
 }

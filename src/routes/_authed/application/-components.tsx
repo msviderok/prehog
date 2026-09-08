@@ -79,22 +79,7 @@ export function Scenery() {
 
       <Asset routeId="/_authed/application/" asset="hog_donotcross.png" scale={0.5} x={0} y={20} />
       <Asset routeId="/_authed/application/" asset="boxes.png" scale={0.3} x={60} y={3.6} />
-      <Asset
-        routeId="/_authed/application/"
-        asset="hog_truck.png"
-        scale={0.3}
-        x={50}
-        y={21}
-        class="animate-truckMoving"
-      >
-        <Asset
-          routeId="/_authed/application/"
-          asset="truck_wheel.png"
-          scale={0.3}
-          class="bottom-[2.5%] right-[34.2%] top-[unset] left-[unset] origin-center animate-truckWheelSpin"
-        />
-      </Asset>
-
+      <Truck />
       <Asset routeId="/_authed/application/" asset="c_asset_normal.png" scale={0.8} x={65} y={28} />
 
       <div>
@@ -147,6 +132,25 @@ function Door() {
         </PopoverPositioner>
       </PopoverPortal>
     </Popover>
+  )
+}
+
+function Truck() {
+  return (
+    <Asset routeId="/_authed/application/" asset="hog_truck.png" scale={0.3} x={50} y={21} class="animate-truckMoving">
+      <Asset
+        routeId="/_authed/application/"
+        asset="truck_wheel.png"
+        scale={0.3}
+        class="bottom-[2.5%] right-[34.2%] top-[unset] left-[unset] origin-center animate-truckWheelSpin [--tx:0]"
+      />
+      <Asset
+        routeId="/_authed/application/"
+        asset="truck_wheel.png"
+        scale={0.3}
+        class="bottom-[2.5%] left-[2%] delay-75 rotate-45 top-[unset]  origin-center animate-truckWheelSpin [--tx:0]"
+      />
+    </Asset>
   )
 }
 

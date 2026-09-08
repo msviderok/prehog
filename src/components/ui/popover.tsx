@@ -137,12 +137,18 @@ function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
     <PopoverPrimitive.Trigger
       data-slot="popover-trigger"
       render={ctx.variant === 'scenery' ? { component: 'div' } : local.render}
+      class={cn(
+        local.class,
+        ctx.variant === 'scenery' &&
+          `absolute top-0 left-0 game-transform
+          [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--scene-world-unit-x))]
+          [--ty:calc(var(--node-anchor-y)*var(--scene-world-unit-y))]
+          `,
+      )}
       ref={(el) => {
-        // oxlint-disable-next-line no-unused-expressions
-        typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
         ref = el
+        typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
       }}
-      class={cn(local.class, ctx.variant === 'scenery' && 'scene-node-popover-trigger')}
       {...rest}
     />
   )
@@ -157,15 +163,8 @@ function PopoverPopup(props: PopoverPrimitive.Popup.Props) {
       data-variant={ctx.variant}
       class={popoverVariants({ class: local.class, variant: ctx.variant })}
       ref={(el) => {
-        if (ctx.variant === 'scenery') {
-          ctx.node.popupRef = el
-        }
-
-        if (typeof local.ref === 'function') {
-          local.ref(el)
-        } else {
-          local.ref = el
-        }
+        if (ctx.variant === 'scenery') ctx.node.popupRef = el
+        typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
       }}
       {...rest}
     />
@@ -185,7 +184,7 @@ function PopoverArrow(props: ComponentProps<'div'>) {
       <svg width="20" height="10" viewBox="0 0 20 10" fill="none">
         <path
           d="M9.66437 2.60207L4.80758 6.97318C4.07308 7.63423 3.11989 8 2.13172 8H0V10H20V8H18.5349C17.5468 8 16.5936 7.63423 15.8591 6.97318L11.0023 2.60207C10.622 2.2598 10.0447 2.25979 9.66437 2.60207Z"
-          class="group-data-[variant=scenery]:fill-ph-mustard-yellow fill-ph-mustard-yellow"
+          class="group-data-[variant=scenery]:fill-white fill-white"
         />
         <path
           d="M8.99542 1.85876C9.75604 1.17425 10.9106 1.17422 11.6713 1.85878L16.5281 6.22989C17.0789 6.72568 17.7938 7.00001 18.5349 7.00001L15.89 7L11.0023 2.60207C10.622 2.2598 10.0447 2.2598 9.66436 2.60207L4.77734 7L2.13171 7.00001C2.87284 7.00001 3.58774 6.72568 4.13861 6.22989L8.99542 1.85876Z"
@@ -203,10 +202,11 @@ function PopoverArrow(props: ComponentProps<'div'>) {
 function PopoverPortal(props: PopoverPrimitive.Portal.Props) {
   const ctx = useContext(PopoverContext)
   const { scene } = useGlobalState()
+
   return (
     <PopoverPrimitive.Portal
       keepMounted={ctx.variant === 'scenery'}
-      container={ctx.variant === 'scenery' ? scene.ref : undefined}
+      container={ctx.variant === 'scenery' ? scene.popupContainerRef : undefined}
       {...props}
     />
   )
@@ -219,7 +219,7 @@ function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
   onMount(() => {
     if (ctx.variant !== 'scenery') return
 
-    let transformOrigin: string = 'center center'
+    let transformOrigin = 'center center'
 
     switch (true) {
       case props.side === 'top' && props.align === 'start':
@@ -255,7 +255,7 @@ function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
       alignOffset={ctx.variant === 'scenery' ? 0 : 10}
       side={ctx.variant === 'scenery' ? 'top' : 'bottom'}
       sideOffset={ctx.variant === 'scenery' ? 0 : 10}
-      trackAnchor={ctx.variant === 'scenery' ? false : undefined}
+      trackAnchor={ctx.variant === 'scenery' ? true : undefined}
       collisionAvoidance={
         ctx.variant === 'scenery' ? { align: 'none', side: 'none', fallbackAxisSide: 'none' } : undefined
       }

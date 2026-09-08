@@ -6,7 +6,8 @@ import { Scenery } from './-components'
 export const Route = createFileRoute('/_authed/application/')({
   component: RouteComponent,
   staticData: { scene: 'application' },
-  head: ({ match }) => ({ links: preloadAssets(match.routeId) }),
+  loader: ({ route }) => ({ links: preloadAssets(route.id) }),
+  head: ({ loaderData }) => ({ links: loaderData!.links }),
 })
 
 function RouteComponent() {

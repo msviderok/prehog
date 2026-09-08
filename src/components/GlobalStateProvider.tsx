@@ -2,7 +2,7 @@ import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
 import {
   COMMON_SCENE_HEIGHT,
-  EVENT_MARKER_RADIUS_IN_VH,
+  EVENT_MARKER_SIZE,
   GAME_CONTENT_HEIGHT_RATIO,
   HEARTBEAT_MS,
   PLAYER_BASE_SPEED_PX_PER_SEC,
@@ -46,6 +46,7 @@ export interface GlobalState {
   }
   readonly scene: {
     ref: HTMLElement | undefined
+    popupContainerRef: HTMLElement | undefined
     scale: number
     worldUnit: Coords
     originalSize: Size
@@ -128,6 +129,7 @@ export function GlobalStateProvider(props: ParentProps) {
   const { data: currentScene } = useStableQuery(api.gameState.currentScene)
   const scene: GlobalState['scene'] = {
     ref: null as unknown as HTMLElement,
+    popupContainerRef: null as unknown as HTMLElement,
     scale: 1,
     worldUnit: { x: 0, y: 0 }, // scaled/100 in px
     originalSize: { width: 0, height: 0 },
@@ -278,8 +280,8 @@ export function GlobalStateProvider(props: ParentProps) {
       if (node.type === 'popover') {
         const xPX = node.hitbox.position.x * scene.worldUnit.x
         const yPX = node.hitbox.position.y * scene.worldUnit.y
-        const rwPX = EVENT_MARKER_RADIUS_IN_VH.width * viewport.vw * scene.scale
-        const rhPX = EVENT_MARKER_RADIUS_IN_VH.height * viewport.vh * scene.scale
+        const rwPX = EVENT_MARKER_SIZE.width * scene.scale
+        const rhPX = EVENT_MARKER_SIZE.height * scene.scale
 
         node.hitbox.inPX.x1 = xPX - rwPX
         node.hitbox.inPX.x2 = xPX + rwPX

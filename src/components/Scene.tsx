@@ -1,4 +1,4 @@
-import { For, type JSX } from 'solid-js'
+import { For, onMount, type JSX } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
 import { OtherPlayer } from './OtherPlayer'
@@ -10,6 +10,9 @@ export function Root(props: { children: JSX.Element }) {
 }
 
 export function Elements(props: { children: JSX.Element }) {
+  onMount(() => {
+    console.log('Render scene Elements')
+  })
   return (
     <div class="absolute top-0 left-0 transform-3d w-(--scene-width-scaled) h-(--scene-height-scaled)">
       {props.children}

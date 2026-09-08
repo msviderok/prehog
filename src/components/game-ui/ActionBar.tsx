@@ -21,7 +21,7 @@ export function ActionBar() {
 
   return (
     <div data-interactive="true" class="fixed top-0 left-0 p-4 flex z-1 items-start gap-4 w-full">
-      <div id="qwe" class="flex flex-col gap-1 *:border &:border-red-500 whitespace-break-spaces" />
+      <div class="flex flex-col gap-1 *:border &:border-red-500 whitespace-break-spaces" />
       <Card
         data-open={open()}
         class="w-14 h-14 transition-all ease-out overflow-hidden whitespace-nowrap border-none data-open:size-90 ring-0! bg-transparent data-open:ring-1! data-open:bg-card *:data-[slot=card-content]:opacity-0 data-open:*:data-[slot=card-content]:opacity-100"

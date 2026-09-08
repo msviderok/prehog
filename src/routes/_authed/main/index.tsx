@@ -1,9 +1,12 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { Experience, Intro, MyProjects, PersonalStuff, Temp1, Temp2, WhyAmIGoodForARole } from './-components'
 import * as Scene from '@/components/Scene'
+import { preloadAssets } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authed/main/')({
   staticData: { scene: 'main' },
+  loader: ({ route }) => ({ links: preloadAssets(route.id) }),
+  head: ({ loaderData }) => ({ links: loaderData!.links }),
   component() {
     return (
       <Scene.Root>
