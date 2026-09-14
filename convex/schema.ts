@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from 'convex/server'
 import type { Validator } from 'convex/values'
 import { v } from 'convex/values'
+import { sceneSchema } from './fields'
 
 export default defineSchema({
   users: defineTable({
@@ -26,11 +27,20 @@ export default defineSchema({
     x: v.number(),
   }),
   game_user_state: defineTable({
-    scene: v.union(v.literal('main'), v.literal('tour'), v.literal('application')),
+    scene: sceneSchema,
     movementDir: v.union(v.literal('left'), v.literal('right')),
     isWalking: v.boolean(),
     isRunning: v.boolean(),
     y: v.number(),
+    lastKnownXPosition: v.optional(
+      v.object({
+        main: v.optional(v.number()),
+        tour: v.optional(v.number()),
+        application: v.optional(v.number()),
+        pet: v.optional(v.number()),
+        personal: v.optional(v.number()),
+      }),
+    ),
   }),
   game_event_batches: defineTable({
     batch: v.array(

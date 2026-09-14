@@ -4,17 +4,13 @@ import { SCENE } from '../../src/lib/constants'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import * as Calls from './calls'
 import * as FloatingPanels from './floatingPanels'
+import { authMismtach, unauthenticated } from '../errors'
 
 /** @throws */
 export async function getCurrentUser(ctx: QueryCtx) {
   const identity = await ctx.auth.getUserIdentity()
-  if (identity === null) {
-    throw new Error('Not authenticated via Clerk')
-  }
-
+  if (identity === null) unauthenticated()
   const user = await getUserByExternalId(ctx, identity.subject)
-  if (!user) throw new Error("Can't get current user")
-
   return user
 }
 
@@ -24,7 +20,7 @@ export async function getUserByExternalId(ctx: QueryCtx, externalId: string) {
     .query('users')
     .withIndex('by_clerkId', (q) => q.eq('externalId', externalId))
     .unique()
-  if (!user) throw new Error(`User not found by externalId: ${externalId}`)
+  if (user == null) authMismtach()
   return user
 }
 
@@ -48,6 +44,7 @@ export async function ensureUserExists(ctx: MutationCtx, userData: UserJSON | { 
     movementDir: 'right',
     scene: 'main',
     y: SCENE.main.playerInitialY,
+    lastKnownXPosition: {},
   })
 
   await ctx.db.insert('users', {

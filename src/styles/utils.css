@@ -21,16 +21,23 @@
 
 @utility comic {
   @apply text-white;
-  --c: color-mix(in oklch, currentColor, black 100%);
+  --b80: color-mix(in oklch, currentColor, black 80%);
+  --b50: color-mix(in oklch, currentColor, black 50%);
+  --s: 0.02em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-shadow:
-    0.025em 0.025em 0 var(--c),
-    -0.025em 0.025em 0 var(--c),
-    0.025em -0.025em 0 var(--c),
-    -0.025em -0.025em 0 var(--c),
-    0.05em 0.05em 0 var(--c),
-    -0.05em 0 0 var(--c),
-    0.075em 0.075em 0 var(--c),
-    0.1em 0.1em 0 var(--c);
+    var(--s) var(--s) 0 var(--b80),
+    calc(var(--s) * 2) calc(var(--s) * 2) 0 var(--b50),
+    calc(var(--s) * 3) calc(var(--s) * 3) 0 var(--b50),
+    calc(var(--s) * 4) calc(var(--s) * 4) 0 var(--b50),
+    calc(var(--s) * 5) calc(var(--s) * 5) 0 var(--b80);
+}
+
+@utility overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }

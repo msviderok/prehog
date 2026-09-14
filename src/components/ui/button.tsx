@@ -1,4 +1,4 @@
-import { UIAudio } from '@/lib/ui-audio'
+import { UIAudio } from '@/audio'
 import { defaultProps } from '@/lib/utils'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { ensureReady } from '@web-kits/audio'
@@ -8,7 +8,7 @@ import { Button as ButtonPrimitive } from './button-primitive'
 import { usePopoverContext } from './popover'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
   {
     variants: {
       variant: {
@@ -22,7 +22,7 @@ const buttonVariants = cva(
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
         'game-action':
-          'shadow-button v-ph-background translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-3 bg-ph-warm-pink border-ph-background text-shade-ph-background/20 font-bold',
+          'shadow-button v-ph-background translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-3 bg-ph-mustard-yellow border-ph-background text-shade-ph-background/20 font-bold',
       },
       animate: {
         default: '',
@@ -37,6 +37,7 @@ const buttonVariants = cva(
         sm: 'h-6 p-3 text-xs [&_svg]:size-4',
         icon: 'size-8 [&_svg]:size-4.5',
         'icon-xs': 'size-6 [&_svg]:size-3.5',
+        action: 'size-16 text-4xl!',
       },
     },
     defaultVariants: {
@@ -44,14 +45,6 @@ const buttonVariants = cva(
       animate: 'default',
       size: 'default',
     },
-    compoundVariants: [
-      {
-        variant: 'game-action',
-        animate: 'scale',
-        size: 'default',
-        class: 'text-2xl size-12 p-0',
-      },
-    ],
   },
 )
 
@@ -98,9 +91,11 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
     'disabled',
   ])
 
-  const disabled = createMemo(() =>
-    popoverCtx != null ? popoverCtx.node?.actions.open.get() !== true : local.disabled,
-  )
+  const disabled = createMemo(() => {
+    return popoverCtx != null && popoverCtx.variant === 'scenery'
+      ? popoverCtx.node?.actions.open.get() !== true
+      : local.disabled
+  })
 
   async function handleSound(soundKey: ConfigurableSound | UIAudio.SoundKey) {
     if (local.sound === 'off') return
@@ -190,9 +185,16 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   )
 }
 
-export function PressE(props: { onPress: HotkeyCallback }) {
+export function PressE(props: { onPress: HotkeyCallback; class?: string }) {
   return (
-    <Button variant="game-action" animate="scale" size="icon" hotkey="E" onHotkeyPress={props.onPress}>
+    <Button
+      variant="game-action"
+      animate="scale"
+      size="action"
+      hotkey="E"
+      onHotkeyPress={props.onPress}
+      class={props.class}
+    >
       E
     </Button>
   )

@@ -1,17 +1,6 @@
-import { Asset } from '@/components/Asset'
-import {
-  Popover,
-  PopoverActionDoor,
-  PopoverArrow,
-  PopoverFooter,
-  PopoverPopup,
-  PopoverPortal,
-  PopoverPositioner,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { api } from '@/convex/api'
-import { useMutation } from 'convex-solidjs'
-import * as Scene from '@/components/Scene'
+import { Asset } from '@/routes/_authed/-components/Asset'
+import { Door } from '@/routes/_authed/-components/Door'
+import * as Scene from '@/routes/_authed/-components/Scene'
 
 export function Scenery() {
   return (
@@ -97,41 +86,13 @@ export function Scenery() {
       />
 
       <div class="transform-3d">
-        <Door />
+        <Door to="main" position={{ x: 10, y: 72 }} />
         <Scene.Players />
       </div>
 
       <Asset routeId="/_authed/application/" asset="hog_drill.png" scale={0.55} x={30} y={68} />
       <Asset routeId="/_authed/application/" asset="hog_noting.png" scale={0.55} x={74} y={25} />
     </Scene.Elements>
-  )
-}
-
-function Door() {
-  const setScene = useMutation(api.gameState.setScene)
-  return (
-    <Popover
-      variant="scenery"
-      sceneryProps={{
-        anchorPosition: { x: 10, y: 65 },
-        hitboxPosition: { x: 10, y: 72 },
-      }}
-    >
-      <PopoverTrigger />
-      <PopoverPortal>
-        <PopoverPositioner side="top" align="start">
-          <PopoverPopup>
-            <PopoverArrow />
-
-            <PopoverFooter>
-              <PopoverActionDoor hotkey="E" onHotkeyPress={() => void setScene.mutate({ scene: 'main' })}>
-                Go back
-              </PopoverActionDoor>
-            </PopoverFooter>
-          </PopoverPopup>
-        </PopoverPositioner>
-      </PopoverPortal>
-    </Popover>
   )
 }
 

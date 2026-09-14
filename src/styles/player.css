@@ -79,7 +79,6 @@
 }
 
 @utility hat {
-  background-image: url('../assets/sprites/hats/hats.png');
   position: absolute;
   top: 0;
   left: 0;
@@ -126,7 +125,7 @@
 }
 
 @utility player-idle {
-  background-image: url('../assets/sprites/main/idle.png');
+  background-image: url('../routes/_authed/-assets/hog-animations/default/idle.png');
   animation: player-idle var(--animation-speed) steps(86) infinite;
   /*player-admin-hue var(--hue-speed) infinite;*/
 
@@ -136,7 +135,7 @@
 }
 
 @utility player-walk {
-  background-image: url('../assets/sprites/main/walk.png');
+  background-image: url('../routes/_authed/-assets/hog-animations/default/walk.png');
   animation: player-walk calc(900ms / var(--movement-speed)) steps(11) infinite;
   /*player-admin-hue var(--hue-speed) infinite;*/
 

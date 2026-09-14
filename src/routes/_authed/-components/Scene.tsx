@@ -1,18 +1,22 @@
-import { For, onMount, type JSX } from 'solid-js'
+import type { Assets } from '@/routeAssets.gen'
+import { SceneryPopoverPortal } from '@/routes/_authed/-components/SceneryPopover'
+import { cn } from 'cn'
+import { For, type JSX } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
+import { Asset, type AssetProps } from './Asset'
 import { Hat } from './Hat'
 import { OtherPlayer } from './OtherPlayer'
-import type { Assets } from '@/routeAssets.gen'
-import { Asset, type AssetProps } from './Asset'
 
 export function Root(props: { children: JSX.Element }) {
-  return <div class="w-min h-min relative z-1 overflow-hidden">{props.children}</div>
+  const { scene } = useGlobalState()
+  return (
+    <div ref={(el) => (scene.ref = el)} class="w-min h-min relative z-1 overflow-hidden [view-transition-name:scene]">
+      {props.children}
+    </div>
+  )
 }
 
 export function Elements(props: { children: JSX.Element }) {
-  onMount(() => {
-    console.log('Render scene Elements')
-  })
   return (
     <div class="absolute top-0 left-0 transform-3d w-(--scene-width-scaled) h-(--scene-height-scaled)">
       {props.children}
@@ -23,14 +27,21 @@ export function Elements(props: { children: JSX.Element }) {
 export function Background<K extends keyof Assets, A extends keyof Assets[K]>(props: AssetProps<K, A>) {
   const { scene } = useGlobalState()
   return (
-    <Asset
-      {...props}
-      ref={(el) => {
-        scene.ref = el
-        typeof props.ref === 'function' ? props.ref(el) : (props.ref = el)
-      }}
-      class="w-(--scene-width-scaled) h-(--scene-height-scaled) bg-background translate-x-(--scene-tx) transform-gpu relative"
-    />
+    <>
+      <Asset
+        {...props}
+        ref={(el) => {
+          scene.backgroundRef = el
+          typeof props.ref === 'function' ? props.ref(el) : (props.ref = el)
+        }}
+        class={cn(
+          'w-(--scene-width-scaled) h-(--scene-height-scaled) bg-background translate-x-(--scene-tx) transform-gpu relative',
+          props.class,
+        )}
+      />
+
+      <SceneryPopoverPortal />
+    </>
   )
 }
 

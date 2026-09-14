@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { BATCHING_INTERVAL_MS, SCENE } from '../src/lib/constants'
 import { env, mutation, query } from './_generated/server'
+import { sceneSchema } from './fields'
 import * as Users from './model/users'
 
 export const getMyPosition = query({
@@ -132,20 +133,27 @@ export const setIsRunning = mutation({
 
 export const setScene = mutation({
   args: {
-    scene: v.union(v.literal('main'), v.literal('tour'), v.literal('application')),
+    scene: sceneSchema,
+    x: v.number(),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
     const sceneInitialData = SCENE[args.scene]
+    const currentState = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+
     await ctx.db.patch('game_user_state', user.gameUserStateId, {
       scene: args.scene,
       isRunning: false,
       isWalking: false,
       movementDir: 'right',
       y: sceneInitialData.playerInitialY,
+      lastKnownXPosition: { ...currentState.lastKnownXPosition, [currentState.scene]: args.x },
     })
-    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: sceneInitialData.playerInitialX })
+
     await ctx.db.patch('game_event_batches', user.gameEventBatchesId, { batch: [] })
+    await ctx.db.patch('game_user_positions', user.gameUserPositionId, {
+      x: currentState.lastKnownXPosition?.[args.scene] ?? sceneInitialData.playerInitialX,
+    })
   },
 })
 
@@ -153,6 +161,6 @@ export const currentScene = query({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
     const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
-    return state.scene
+    return { scene: state.scene, lastKnownXPosition: state.lastKnownXPosition?.[state.scene] }
   },
 })

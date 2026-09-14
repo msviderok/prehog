@@ -7,12 +7,23 @@ export interface RouteAsset {
 }
 
 const globPaths = {
+  '//': import.meta.glob<string>('/src/routes/-assets/*', { eager: true, query: '?url', import: 'default' }),
+  '/_authed/': import.meta.glob<string>('/src/routes/_authed/-assets/*', {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  }),
   '/_authed/application/': import.meta.glob<string>('/src/routes/_authed/application/-assets/*', {
     eager: true,
     query: '?url',
     import: 'default',
   }),
   '/_authed/main/': import.meta.glob<string>('/src/routes/_authed/main/-assets/*', {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  }),
+  '/_authed/pet/': import.meta.glob<string>('/src/routes/_authed/pet/-assets/*', {
     eager: true,
     query: '?url',
     import: 'default',
@@ -25,6 +36,20 @@ const globPaths = {
 } as const
 
 export const assets = {
+  '//': {
+    'bg_pattern.png': {
+      name: 'bg_pattern.png',
+      size: { width: 400 as number, height: 400 as number },
+      src: globPaths['//']['/src/routes/-assets/bg_pattern.png']!,
+    },
+  },
+  '/_authed/': {
+    'hats.png': {
+      name: 'hats.png',
+      size: { width: 1360 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/hats.png']!,
+    },
+  },
   '/_authed/application/': {
     'BG.png': {
       name: 'BG.png',
@@ -93,10 +118,62 @@ export const assets = {
     },
   },
   '/_authed/main/': {
+    'application.png': {
+      name: 'application.png',
+      size: { width: 820 as number, height: 580 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/application.png']!,
+    },
+    'experience.png': {
+      name: 'experience.png',
+      size: { width: 281 as number, height: 313 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/experience.png']!,
+    },
+    'intro.png': {
+      name: 'intro.png',
+      size: { width: 900 as number, height: 580 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/intro.png']!,
+    },
     'main.png': {
       name: 'main.png',
       size: { width: 4096 as number, height: 732 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/main.png']!,
+    },
+    'personal.png': {
+      name: 'personal.png',
+      size: { width: 860 as number, height: 580 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/personal.png']!,
+    },
+    'pet.png': {
+      name: 'pet.png',
+      size: { width: 264 as number, height: 312 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/pet.png']!,
+    },
+    'temp1.png': {
+      name: 'temp1.png',
+      size: { width: 193 as number, height: 196 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/temp1.png']!,
+    },
+    'temp2.png': {
+      name: 'temp2.png',
+      size: { width: 318 as number, height: 353 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/temp2.png']!,
+    },
+  },
+  '/_authed/pet/': {
+    'bg.png': {
+      name: 'bg.png',
+      size: { width: 3200 as number, height: 1920 as number },
+      src: globPaths['/_authed/pet/']['/src/routes/_authed/pet/-assets/bg.png']!,
+    },
+    'climber.png': {
+      name: 'climber.png',
+      size: { width: 534 as number, height: 876 as number },
+      src: globPaths['/_authed/pet/']['/src/routes/_authed/pet/-assets/climber.png']!,
+    },
+    'stander.png': {
+      name: 'stander.png',
+      size: { width: 646 as number, height: 711 as number },
+      src: globPaths['/_authed/pet/']['/src/routes/_authed/pet/-assets/stander.png']!,
     },
   },
   '/_authed/tour/': {
@@ -104,6 +181,36 @@ export const assets = {
       name: 'evolution.png',
       size: { width: 2324 as number, height: 698 as number },
       src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/evolution.png']!,
+    },
+    'podium.png': {
+      name: 'podium.png',
+      size: { width: 2324 as number, height: 437 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/podium.png']!,
+    },
+    'shadow.png': {
+      name: 'shadow.png',
+      size: { width: 351 as number, height: 71 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/shadow.png']!,
+    },
+    'stage1.png': {
+      name: 'stage1.png',
+      size: { width: 420 as number, height: 374 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/stage1.png']!,
+    },
+    'stage2.png': {
+      name: 'stage2.png',
+      size: { width: 410 as number, height: 420 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/stage2.png']!,
+    },
+    'stage3.png': {
+      name: 'stage3.png',
+      size: { width: 440 as number, height: 480 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/stage3.png']!,
+    },
+    'stage4.png': {
+      name: 'stage4.png',
+      size: { width: 480 as number, height: 480 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/stage4.png']!,
     },
   },
 } as const

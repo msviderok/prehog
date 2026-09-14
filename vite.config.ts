@@ -85,13 +85,7 @@ export default defineConfig(({ mode }) => {
         'import/first': 'error',
         'import/no-commonjs': 'error',
         'import/no-duplicates': 'error',
-        'typescript/array-type': [
-          'error',
-          {
-            default: 'generic',
-            readonly: 'generic',
-          },
-        ],
+        'typescript/array-type': 'off',
         'typescript/ban-ts-comment': [
           'error',
           {
@@ -114,7 +108,12 @@ export default defineConfig(({ mode }) => {
           },
         ],
         'typescript/no-misused-new': 'error',
-        'typescript/no-namespace': 'error',
+        'typescript/no-namespace': [
+          'error',
+          {
+            allowDeclarations: true,
+          },
+        ],
         'typescript/no-non-null-asserted-optional-chain': 'error',
         'typescript/no-unsafe-function-type': 'error',
         'typescript/no-wrapper-object-types': 'error',

@@ -90,3 +90,21 @@ export function preloadAssets<T extends string>(routeId: T) {
     return { rel: 'preload', as: 'image', href: src }
   })
 }
+
+export function decodeJwtPayload(token: string) {
+  const [, payload] = token.split('.')
+  if (!payload) return null
+
+  try {
+    const jwt = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(jwt) as { aud?: string | Array<string>; azp?: string; exp?: number; iss?: string; sub?: string }
+  } catch {
+    return null
+  }
+}
+
+export function hasConvexAudience(token: string) {
+  const payload = decodeJwtPayload(token)
+  const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : []
+  return audiences.includes('convex')
+}

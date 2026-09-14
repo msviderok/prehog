@@ -1,39 +1,59 @@
-import { ClerkProvider } from '@/components/ClerkProvider'
-import { ConvexClerkProvider } from '@/components/ConvexClerkProvider'
-import { GlobalStateProvider } from '@/components/GlobalStateProvider'
+import { ClerkProvider } from '@/routes/-components/ClerkProvider'
+import { ConvexClerkProvider } from '@/routes/-components/ConvexClerkProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { api } from '@/convex/api'
 import { env } from '@/env'
-import { ClientOnly, createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/solid-router'
+import { authClerkServerFn } from '@/lib/server.functions'
+import { ClientOnly, createRootRouteWithContext, HeadContent, Outlet, redirect, Scripts } from '@tanstack/solid-router'
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
+import { setupConvexHttp } from 'convex-solidjs'
 import posthog from 'posthog-js'
 import { onMount, Suspense, type ParentProps } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
-import { useGlobalState } from '@/components/GlobalStateContext'
+import { assets } from '@/routeAssets.gen'
 
 export const Route = createRootRouteWithContext()({
   staticData: { scene: null },
   head: () => ({ links: [{ rel: 'stylesheet', href: styleCss }] }),
+  /**
+   * Authentication is based on two parts:
+   *  - Clerk JWT token
+   *  - User's data present in Convex
+   */
+  async beforeLoad({ matches }) {
+    const clerkAuth = await authClerkServerFn()
+    const isCurrentPathLogin = matches.some((m) => m.routeId === '/login')
+
+    /** If there's no Clerk JWT token – redirect to login  */
+    if (clerkAuth == null) {
+      /** Unless the current path is '/login' – redirect to it */
+      if (isCurrentPathLogin == false) throw redirect({ to: '/login' })
+      return
+    }
+
+    const convexHttpClient = setupConvexHttp(env.VITE_CONVEX_URL)
+    convexHttpClient.setAuth(clerkAuth.token)
+    await convexHttpClient.mutation(api.users.ensureCurrent, { clerkUserId: clerkAuth.userId })
+  },
   shellComponent() {
     return (
-      <html class="dark">
+      <html class="dark size-full overfow-hidden">
         <head>
           <HydrationScript />
           <HeadContent />
         </head>
-        <body>
+        <body
+          class="font-base text-foreground bg-background size-full bg-size-[100px] bg-repeat"
+          style={{ 'background-image': `url(${assets['//']['bg_pattern.png'].src})` }}
+        >
           <Suspense>
             <ClientOnly>
               <PosthogProvider>
                 <TooltipProvider>
                   <ClerkProvider>
                     <ConvexClerkProvider>
-                      <GlobalStateProvider>
-                        <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden justify-center">
-                          <Outlet />
-                          <ScenePopoverContainer />
-                        </main>
-                      </GlobalStateProvider>
+                      <Outlet />
                     </ConvexClerkProvider>
                   </ClerkProvider>
                 </TooltipProvider>
@@ -57,14 +77,4 @@ function PosthogProvider(props: ParentProps) {
   })
 
   return <>{props.children}</>
-}
-
-function ScenePopoverContainer() {
-  const { scene } = useGlobalState()
-  return (
-    <div
-      ref={(el) => (scene.popupContainerRef = el)}
-      class="z-1 m-auto absolute top-0 left-0 w-(--scene-width-scaled) h-(--scene-height-scaled) translate-x-(--scene-tx) scale-(--scale)"
-    />
-  )
 }

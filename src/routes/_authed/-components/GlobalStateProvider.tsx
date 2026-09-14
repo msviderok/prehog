@@ -4,7 +4,6 @@ import {
   COMMON_SCENE_HEIGHT,
   EVENT_MARKER_SIZE,
   GAME_CONTENT_HEIGHT_RATIO,
-  HEARTBEAT_MS,
   PLAYER_BASE_SPEED_PX_PER_SEC,
   PLAYER_HITBOX_SIZE,
   PLAYER_RUNNING_SPEED_MOD,
@@ -12,8 +11,10 @@ import {
   SCENE,
   type Hat,
 } from '@/lib/constants'
+import { useStableQuery } from '@/lib/useStableQuery'
 import { clamp, fastRound } from '@/lib/utils'
 import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
+import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
 import {
@@ -21,17 +22,14 @@ import {
   createMemo,
   createSignal,
   on,
-  onCleanup,
   onMount,
   type Accessor,
   type ParentProps,
   type Setter,
 } from 'solid-js'
 import { createStore } from 'solid-js/store'
+import { createRtcState } from '../../../lib/createRtcState'
 import { GlobalStateContext } from './GlobalStateContext'
-import { createRtcState } from '../lib/createRtcState'
-import { useStableQuery } from '@/lib/useStableQuery'
-import { useNavigate } from '@tanstack/solid-router'
 
 export interface GlobalState {
   recalculate: () => void
@@ -46,10 +44,12 @@ export interface GlobalState {
   }
   readonly scene: {
     ref: HTMLElement | undefined
+    backgroundRef: HTMLElement | undefined
     popupContainerRef: HTMLElement | undefined
     scale: number
     worldUnit: Coords
     originalSize: Size
+    offsetTop: number
     scaled: Size
     walkableMinX: number
     walkableMaxX: number
@@ -101,12 +101,16 @@ export interface GlobalState {
         inPX: { y1: number; y2: number }
       }
     }
+    eventMarker: {
+      radius: {
+        inWorldUnits: { w: number; h: number }
+        inPX: { w: number; h: number }
+      }
+    }
   }
 }
 
 export function GlobalStateProvider(props: ParentProps) {
-  useWatchPresence()
-
   const clerk = useClerk()
   const rtc = createRtcState()
   const navigate = useNavigate()
@@ -124,16 +128,24 @@ export function GlobalStateProvider(props: ParentProps) {
         inPX: { y1: 0, y2: 0 },
       },
     },
+    eventMarker: {
+      radius: {
+        inWorldUnits: { w: 0, h: 0 },
+        inPX: { w: 0, h: 0 },
+      },
+    },
   }
 
   const { data: currentScene } = useStableQuery(api.gameState.currentScene)
   const scene: GlobalState['scene'] = {
     ref: null as unknown as HTMLElement,
+    backgroundRef: null as unknown as HTMLElement,
     popupContainerRef: null as unknown as HTMLElement,
     scale: 1,
     worldUnit: { x: 0, y: 0 }, // scaled/100 in px
     originalSize: { width: 0, height: 0 },
     scaled: { width: 0, height: 0 },
+    offsetTop: 0,
     walkableMinX: 0,
     walkableMaxX: 0,
     cameraX: 0,
@@ -145,7 +157,7 @@ export function GlobalStateProvider(props: ParentProps) {
     currentScene: 'main',
   }
   createEffect(
-    on(currentScene, (sceneValue) => {
+    on([() => currentScene()?.scene, () => currentScene()?.lastKnownXPosition], ([sceneValue, lastKnownX]) => {
       if (sceneValue == null) return
       const sceneInitialState = SCENE[sceneValue]
 
@@ -161,7 +173,7 @@ export function GlobalStateProvider(props: ParentProps) {
       scene.walkableMinX = misc.player.size.inWorldUnits.halfWidth
       scene.walkableMaxX = 100 - misc.player.size.inWorldUnits.halfWidth
 
-      player.x = sceneInitialState.playerInitialX
+      player.x = lastKnownX ?? sceneInitialState.playerInitialX
       player.hitbox.inWorldUnits.x1 = sceneInitialState.playerInitialX
       player.hitbox.inWorldUnits.x2 = sceneInitialState.playerInitialX + misc.player.size.inWorldUnits.width
       player.hitbox.inWorldUnits.y1 = misc.player.hitbox.inWorldUnits.y1
@@ -242,11 +254,19 @@ export function GlobalStateProvider(props: ParentProps) {
     scene.worldUnit.x = scene.scaled.width / 100 // --scene-world-unit-x
     scene.worldUnit.y = scene.scaled.height / 100 // --scene-world-unit-y
 
+    scene.offsetTop = (viewport.height - scene.scaled.height) / 2
+    root?.style.setProperty('--scene-offset-top', `${scene.offsetTop}px`)
+
     const playableWidth = Math.min(window.innerWidth, scene.scaled.width)
     scene.s50 = playableWidth / 2 // 50% of the screen width
     scene.cameraViewportWidth = scene.scaled.width - playableWidth
     scene.cameraStartMovingX = scene.s50
     scene.cameraEndMovingX = scene.scaled.width - scene.s50
+
+    misc.eventMarker.radius.inPX.w = EVENT_MARKER_SIZE.width * scene.scale
+    misc.eventMarker.radius.inPX.h = EVENT_MARKER_SIZE.height * scene.scale
+    misc.eventMarker.radius.inWorldUnits.w = misc.eventMarker.radius.inPX.w / scene.worldUnit.x
+    misc.eventMarker.radius.inWorldUnits.h = misc.eventMarker.radius.inPX.h / scene.worldUnit.y
 
     misc.player.size.inPX.width = misc.player.size.inWorldUnits.width * scene.worldUnit.x // --player-width-scaled
     misc.player.size.inPX.height = misc.player.size.inWorldUnits.height * scene.worldUnit.y // --player-height-scaled
@@ -261,6 +281,7 @@ export function GlobalStateProvider(props: ParentProps) {
     player.cameraMinX = scene.walkableMinX * scene.worldUnit.x
     player.cameraMaxX = playableWidth - misc.player.size.inPX.halfWidth
 
+    console.log(player)
     scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
 
     const atStart = player.realX < scene.s50
@@ -280,13 +301,11 @@ export function GlobalStateProvider(props: ParentProps) {
       if (node.type === 'popover') {
         const xPX = node.hitbox.position.x * scene.worldUnit.x
         const yPX = node.hitbox.position.y * scene.worldUnit.y
-        const rwPX = EVENT_MARKER_SIZE.width * scene.scale
-        const rhPX = EVENT_MARKER_SIZE.height * scene.scale
 
-        node.hitbox.inPX.x1 = xPX - rwPX
-        node.hitbox.inPX.x2 = xPX + rwPX
-        node.hitbox.inPX.y1 = yPX - rhPX
-        node.hitbox.inPX.y2 = yPX + rhPX
+        node.hitbox.inPX.x1 = xPX - misc.eventMarker.radius.inPX.w
+        node.hitbox.inPX.x2 = xPX + misc.eventMarker.radius.inPX.w
+        node.hitbox.inPX.y1 = yPX - misc.eventMarker.radius.inPX.h
+        node.hitbox.inPX.y2 = yPX + misc.eventMarker.radius.inPX.h
         node.size.inPX.width = node.hitbox.inPX.x2 - node.hitbox.inPX.x1
         node.size.inPX.height = node.hitbox.inPX.y2 - node.hitbox.inPX.y1
 
@@ -422,36 +441,4 @@ export function GlobalStateProvider(props: ParentProps) {
       {props.children}
     </GlobalStateContext.Provider>
   )
-}
-
-function useWatchPresence() {
-  let interval: NodeJS.Timeout | undefined
-  const sendHeartbeat = useMutation(api.heartbeats.updateHeartbeat)
-
-  function onVisibilityChange() {
-    if (document.hidden) {
-      if (interval) {
-        clearInterval(interval)
-        interval = undefined
-      }
-      return
-    }
-
-    void sendHeartbeat.mutate({})
-    if (interval) clearInterval(interval)
-    interval = setInterval(() => sendHeartbeat.mutate({}), HEARTBEAT_MS)
-  }
-
-  onMount(() => {
-    document.addEventListener('visibilitychange', onVisibilityChange)
-
-    void sendHeartbeat.mutate({})
-    if (interval) clearInterval(interval)
-    interval = setInterval(() => sendHeartbeat.mutate({}), HEARTBEAT_MS)
-
-    onCleanup(() => {
-      if (interval) clearInterval(interval)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    })
-  })
 }

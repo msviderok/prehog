@@ -1,6 +1,6 @@
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
-import { useCurrentUser } from '@/components/ConvexClerkProvider'
+import { useCurrentUser } from '@/routes/-components/ConvexClerkProvider'
 import { cn } from 'cn'
 import { useQuery } from 'convex-solidjs'
 import { formatDate, isToday } from 'date-fns'

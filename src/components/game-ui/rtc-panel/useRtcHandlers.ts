@@ -1,7 +1,7 @@
-import { useGlobalState } from '@/components/GlobalStateContext'
+import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { api } from '@/convex/api'
 import type { Id } from '@/convex/dataModel'
-import { SOUNDS } from '@/lib/sounds'
+import { SOUNDS } from '@/audio'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { createEffect, on, onCleanup } from 'solid-js'
 

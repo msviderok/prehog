@@ -1,9 +1,9 @@
+import { Door } from '@/routes/_authed/-components/Door'
+import * as Scene from '@/routes/_authed/-components/Scene'
 import {
   Popover,
-  PopoverActionDoor,
   PopoverArrow,
   PopoverDescription,
-  PopoverFooter,
   PopoverHeader,
   PopoverPopup,
   PopoverPortal,
@@ -11,38 +11,18 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { api } from '@/convex/api'
-import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 
-export function DoorPopover() {
-  const setScene = useSingleFlightMutation(api.gameState.setScene)
+export function Scenery() {
   return (
-    <Popover
-      variant="scenery"
-      sceneryProps={{
-        anchorPosition: { x: 1, y: 73 },
-        hitboxPosition: { x: 3, y: 96 },
-      }}
-    >
-      <PopoverTrigger />
-      <PopoverPortal>
-        <PopoverPositioner side="top" align="start">
-          <PopoverPopup class="text-xs">
-            <PopoverArrow />
-
-            <PopoverHeader>
-              <PopoverTitle>Wanna go back?</PopoverTitle>
-            </PopoverHeader>
-
-            <PopoverFooter>
-              <PopoverActionDoor hotkey="E" onHotkeyPress={() => void setScene.mutate({ scene: 'main' })}>
-                Go back
-              </PopoverActionDoor>
-            </PopoverFooter>
-          </PopoverPopup>
-        </PopoverPositioner>
-      </PopoverPortal>
-    </Popover>
+    <Scene.Elements>
+      <Scene.Players />
+      <Door to="main" position={{ x: 3, y: 96 }} />
+      <Stage1 />
+      <Stage2 />
+      <Stage3 />
+      <Stage4 />
+      <Stage5 />
+    </Scene.Elements>
   )
 }
 

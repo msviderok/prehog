@@ -1,7 +1,10 @@
+import { Asset } from '@/routes/_authed/-components/Asset'
+import * as Scene from '@/routes/_authed/-components/Scene'
 import {
   Popover,
   PopoverActionDoor,
   PopoverArrow,
+  PopoverBackdrop,
   PopoverDescription,
   PopoverFooter,
   PopoverHeader,
@@ -11,6 +14,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { SceneryPopover } from '@/routes/_authed/-components/SceneryPopover'
 import {
   Tooltip,
   TooltipArrow,
@@ -19,95 +23,87 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { api } from '@/convex/api'
 import { useRouter } from '@tanstack/solid-router'
-import { useMutation } from 'convex-solidjs'
 import { InfoIcon } from 'lucide-solid'
 import { createEffect, on } from 'solid-js'
 
-export function Intro() {
+export function Scenery() {
   return (
-    <Popover
-      variant="scenery"
-      sceneryProps={{
-        anchorPosition: { x: 19.99, y: 48 },
-        hitboxPosition: { x: 11, y: 94 },
-      }}
-    >
-      <PopoverTrigger />
-      <PopoverPortal>
-        <PopoverPositioner side="top" align="end">
-          <PopoverPopup>
-            <PopoverArrow />
+    <Scene.Elements>
+      <Intro />
+      <Experience />
+      {/*<WhyAmIGoodForARole />
+      <MyProjects />
+      <PersonalStuff />
+      <Temp1 />
+      <Temp2 />*/}
 
-            <PopoverHeader>
-              <PopoverTitle>Oh, hey there! Welcome!</PopoverTitle>
-            </PopoverHeader>
-
-            <PopoverDescription>Here you can get to know me better.</PopoverDescription>
-          </PopoverPopup>
-        </PopoverPositioner>
-      </PopoverPortal>
-    </Popover>
+      <Scene.Players />
+    </Scene.Elements>
   )
 }
 
-export function Experience() {
-  const setScene = useMutation(api.gameState.setScene)
+function Intro() {
   return (
-    <Popover
-      variant="scenery"
-      sceneryProps={{
-        anchorPosition: { x: 22.58, y: 70.1 },
-        hitboxPosition: { x: 19, y: 94 },
-      }}
+    <SceneryPopover
+      id="intro"
+      anchorPosition={{ x: 19.99, y: 48 }}
+      markerPosition={{ x: 11, y: 94 }}
+      side="top"
+      align="end"
     >
-      <PopoverTrigger />
-      <PopoverPortal>
-        <PopoverPositioner side="left" align="end">
-          <PopoverPopup class="text-xs">
-            <PopoverArrow />
+      <PopoverHeader>
+        <PopoverTitle>Oh, hey there! Welcome!</PopoverTitle>
+      </PopoverHeader>
 
-            <PopoverHeader>
-              <PopoverTitle>Experience</PopoverTitle>
-            </PopoverHeader>
-
-            <PopoverDescription>
-              <span>Here you can take a </span>
-              <Tooltip>
-                <TooltipTrigger render="span" class="text-ph-dark-cornflower-blue flex gap-1">
-                  walkthrour <InfoIcon class="size-3.5" />
-                </TooltipTrigger>
-                <TooltipPortal>
-                  <TooltipPositioner side="top">
-                    <TooltipPopup>
-                      <TooltipArrow />
-                      <p>
-                        It's <span class="italic underline">walkthrough</span> +{' '}
-                        <span class="italic underline">tour</span>, get it? You get it, right?..
-                      </p>
-                    </TooltipPopup>
-                  </TooltipPositioner>
-                </TooltipPortal>
-              </Tooltip>{' '}
-              <span>of my professional experience.</span>
-            </PopoverDescription>
-
-            <PopoverFooter>
-              <PopoverActionDoor hotkey="E" onHotkeyPress={() => void setScene.mutate({ scene: 'tour' })}>
-                Take a tour
-              </PopoverActionDoor>
-            </PopoverFooter>
-          </PopoverPopup>
-        </PopoverPositioner>
-      </PopoverPortal>
-    </Popover>
+      <PopoverDescription>Here you can get to know me better.</PopoverDescription>
+    </SceneryPopover>
   )
 }
 
-export function WhyAmIGoodForARole() {
+function Experience() {
+  return (
+    <SceneryPopover
+      id="experience"
+      anchorPosition={{ x: 22.58, y: 70.1 }}
+      markerPosition={{ x: 19, y: 94 }}
+      side="left"
+      align="end"
+    >
+      <PopoverHeader>
+        <PopoverTitle>Experience</PopoverTitle>
+      </PopoverHeader>
+
+      <PopoverDescription>
+        <span>Here you can take a </span>
+        <Tooltip>
+          <TooltipTrigger render="span" class="text-ph-dark-cornflower-blue flex gap-1">
+            walkthrour <InfoIcon class="size-3.5" />
+          </TooltipTrigger>
+          <TooltipPortal>
+            <TooltipPositioner side="top">
+              <TooltipPopup>
+                <TooltipArrow />
+                <p>
+                  It's <span class="italic underline">walkthrough</span> + <span class="italic underline">tour</span>,
+                  get it? You get it, right?..
+                </p>
+              </TooltipPopup>
+            </TooltipPositioner>
+          </TooltipPortal>
+        </Tooltip>{' '}
+        <span>of my professional experience.</span>
+      </PopoverDescription>
+
+      <PopoverFooter>
+        <PopoverActionDoor to="tour">Take a tour</PopoverActionDoor>
+      </PopoverFooter>
+    </SceneryPopover>
+  )
+}
+
+function WhyAmIGoodForARole() {
   const router = useRouter()
-  const setScene = useMutation(api.gameState.setScene)
   return (
     <Popover
       variant="scenery"
@@ -138,9 +134,7 @@ export function WhyAmIGoodForARole() {
             </PopoverDescription>
 
             <PopoverFooter>
-              <PopoverActionDoor hotkey="E" onHotkeyPress={() => void setScene.mutate({ scene: 'application' })}>
-                Take a tour
-              </PopoverActionDoor>
+              <PopoverActionDoor to="application">Explore</PopoverActionDoor>
             </PopoverFooter>
           </PopoverPopup>
         </PopoverPositioner>
@@ -149,7 +143,7 @@ export function WhyAmIGoodForARole() {
   )
 }
 
-export function MyProjects() {
+function MyProjects() {
   return (
     <Popover
       variant="scenery"
@@ -178,7 +172,7 @@ export function MyProjects() {
   )
 }
 
-export function PersonalStuff() {
+function PersonalStuff() {
   return (
     <Popover
       variant="scenery"
@@ -198,6 +192,10 @@ export function PersonalStuff() {
             </PopoverHeader>
 
             <PopoverDescription>Here you can get to know me better.</PopoverDescription>
+
+            <PopoverFooter>
+              <PopoverActionDoor to="pet">Get to know me</PopoverActionDoor>
+            </PopoverFooter>
           </PopoverPopup>
         </PopoverPositioner>
       </PopoverPortal>
@@ -205,7 +203,7 @@ export function PersonalStuff() {
   )
 }
 
-export function Temp1() {
+function Temp1() {
   return (
     <Popover
       variant="scenery"
@@ -227,7 +225,7 @@ export function Temp1() {
   )
 }
 
-export function Temp2() {
+function Temp2() {
   return (
     <Popover
       variant="scenery"

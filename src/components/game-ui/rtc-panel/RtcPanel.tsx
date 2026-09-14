@@ -1,9 +1,9 @@
-import { useCurrentUser } from '@/components/ConvexClerkProvider'
+import { useCurrentUser } from '@/routes/-components/ConvexClerkProvider'
 import { useCallDuration } from '@/components/game-ui/rtc-panel/useCallDuration'
-import { useGlobalState } from '@/components/GlobalStateContext'
+import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { ButtonGroup, ButtonGroupText, ButtonGroupWrapper } from '@/components/ui/button-group'
 import { api } from '@/convex/api'
-import { SOUNDS } from '@/lib/sounds'
+import { SOUNDS } from '@/audio'
 import { cn } from 'cn'
 import { useMutation, useQuery } from 'convex-solidjs'
 import {

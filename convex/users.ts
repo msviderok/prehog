@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import type { Id } from './_generated/dataModel'
-import { action, env, query } from './_generated/server'
+import { action, env, mutation, query } from './_generated/server'
 import * as Chats from './model/chats'
 import * as Users from './model/users'
 import { asyncMap, pick, pruneNull } from 'convex-helpers'
@@ -9,6 +9,15 @@ export const current = query({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
     return user
+  },
+})
+
+export const ensureCurrent = mutation({
+  args: {
+    clerkUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await Users.ensureUserExists(ctx, args)
   },
 })
 

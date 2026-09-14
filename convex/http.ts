@@ -43,6 +43,7 @@ http.route({
       }
 
       case 'session.created': {
+        console.log('create session', event.data.user_id)
         await ctx.runMutation(internal.clerk.createSession, { data: event.data.user, clerkUserId: event.data.user_id })
         break
       }

@@ -9,6 +9,7 @@
 @import './animations.css';
 @import './player.css';
 @import './scenery.css';
+@import './view-transitions.css';
 @plugin "@tailwindcss/typography";
 
 :root {
@@ -51,6 +52,7 @@
   --ph-warm-pink: oklch(0.755 0.122 40.75);
   --ph-hedgehog-body: oklch(0.833 0.099 62.33);
   --ph-light-beige: oklch(0.905 0.066 67.56);
+  --ph-flooring: oklch(0.7911 0.0202 41.77);
 }
 
 @theme inline {
@@ -105,35 +107,6 @@
 }
 
 @layer base {
-  html {
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-
-    --scale: 1;
-
-    --scene-width-scaled: calc(var(--original-scene-width) * var(--scale));
-    --scene-height-scaled: calc(var(--original-scene-height) * var(--scale));
-    --scene-world-unit-x: calc(var(--scene-width-scaled) / 100);
-    --scene-world-unit-y: calc(var(--scene-height-scaled) / 100);
-
-    --player-width-scaled: round(nearest, calc(var(--original-player-width) * var(--scale)), 1px);
-    --player-height-scaled: round(nearest, calc(var(--original-player-height) * var(--scale)), 1px);
-    --player-hitbox-width-scaled: round(nearest, calc(var(--original-player-hitbox-width) * var(--scale)), 1px);
-    --player-hitbox-height-scaled: round(nearest, calc(var(--original-player-hitbox-height) * var(--scale)), 1px);
-
-    --player-offset-y-scaled: calc(var(--player-offset-y) * var(--scene-world-unit-y));
-  }
-
-  body {
-    @apply font-base text-foreground bg-background;
-    height: 100%;
-    width: 100%;
-    background-image: url('../assets/sprites/scenes/bg_pattern.png');
-    background-size: 100px 100px;
-    background-repeat: repeat;
-  }
-
   h1,
   h2,
   h3,
@@ -145,3 +118,20 @@
 }
 
 @custom-variant data-pressed (&[data-pressed]);
+
+html {
+  --scale: 1;
+  --scene-offset-top: 0;
+
+  --scene-width-scaled: calc(var(--original-scene-width) * var(--scale));
+  --scene-height-scaled: calc(var(--original-scene-height) * var(--scale));
+  --scene-world-unit-x: calc(var(--scene-width-scaled) / 100);
+  --scene-world-unit-y: calc(var(--scene-height-scaled) / 100);
+
+  --player-width-scaled: round(nearest, calc(var(--original-player-width) * var(--scale)), 1px);
+  --player-height-scaled: round(nearest, calc(var(--original-player-height) * var(--scale)), 1px);
+  --player-hitbox-width-scaled: round(nearest, calc(var(--original-player-hitbox-width) * var(--scale)), 1px);
+  --player-hitbox-height-scaled: round(nearest, calc(var(--original-player-hitbox-height) * var(--scale)), 1px);
+
+  --player-offset-y-scaled: calc(var(--player-offset-y) * var(--scene-world-unit-y));
+}

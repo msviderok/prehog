@@ -60,6 +60,8 @@ export const SCENE: Record<
   main: { width: 6043, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 83 },
   tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
   application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 62 },
+  pet: { width: 5000, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 80 },
+  personal: { width: 0, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 0 },
 }
 
 export const EVENT_MARKER_SIZE = { width: 80, height: 16 }

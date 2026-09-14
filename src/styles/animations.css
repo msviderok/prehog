@@ -58,9 +58,14 @@
   --animate-spinX: spinX 10s linear infinite;
   --animate-spinY: spinY 10s linear infinite;
   --animate-spinZ: spinZ 10s linear infinite;
-  --animate-flactuate-height: flactuateHeight 2s linear infinite;
+  --animate-flactuate-height: flactuateHeight 2s linear infinite, blinkBright 2s linear infinite;
+  --animate-blink-bright: blinkBright 2s linear infinite;
+  --animate-blink-neon:
+    blinkNeon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, blinkBright 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-blink-neon-text: blinkNeonText 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-truckMoving: truckMoving 30s ease-in-out infinite;
   --animate-truckWheelSpin: truckWheelSpin 30s ease-in-out infinite;
+  --animate-pulseY: pulseY 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes ellipsis {
@@ -108,15 +113,40 @@
 
 @keyframes flactuateHeight {
   0% {
-    filter: brightness(calc(110% + var(--collided, 0) * 20%));
     --wave-phase: 0deg;
+  }
+  100% {
+    --wave-phase: 360deg;
+  }
+}
+
+@keyframes blinkBright {
+  0%,
+  100% {
+    filter: brightness(calc(110% + var(--collided, 0) * 20%));
   }
   50% {
     filter: brightness(calc(120% + var(--collided, 0) * 20%));
   }
+}
+
+@keyframes blinkNeon {
+  0%,
   100% {
-    filter: brightness(calc(110% + var(--collided, 0) * 20%));
-    --wave-phase: 360deg;
+    box-shadow: 0 0 10px 5px var(--ph-mustard-yellow);
+  }
+  50% {
+    box-shadow: 0 0 20px 8px var(--ph-mustard-yellow);
+  }
+}
+
+@keyframes blinkNeonText {
+  0%,
+  100% {
+    filter: brightness(100%);
+  }
+  50% {
+    filter: brightness(130%);
   }
 }
 
@@ -141,5 +171,15 @@
   80%,
   100% {
     --rz: 0deg;
+  }
+}
+
+@keyframes pulseY {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 6px;
   }
 }

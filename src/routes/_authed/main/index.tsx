@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/solid-router'
-import { Experience, Intro, MyProjects, PersonalStuff, Temp1, Temp2, WhyAmIGoodForARole } from './-components'
-import * as Scene from '@/components/Scene'
+import { Scenery } from './-scenery'
+import * as Scene from '@/routes/_authed/-components/Scene'
 import { preloadAssets } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authed/main/')({
@@ -11,17 +11,7 @@ export const Route = createFileRoute('/_authed/main/')({
     return (
       <Scene.Root>
         <Scene.Background routeId="/_authed/main/" asset="main.png" />
-        <Scene.Elements>
-          <Intro />
-          <Experience />
-          <WhyAmIGoodForARole />
-          <MyProjects />
-          <PersonalStuff />
-          <Temp1 />
-          <Temp2 />
-
-          <Scene.Players />
-        </Scene.Elements>
+        <Scenery />
       </Scene.Root>
     )
   },

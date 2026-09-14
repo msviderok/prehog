@@ -1,7 +1,7 @@
-import * as Scene from '@/components/Scene'
+import * as Scene from '@/routes/_authed/-components/Scene'
 import { preloadAssets } from '@/lib/utils'
 import { createFileRoute } from '@tanstack/solid-router'
-import { Scenery } from './-components'
+import { Scenery } from './-scenery'
 
 export const Route = createFileRoute('/_authed/application/')({
   component: RouteComponent,

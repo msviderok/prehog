@@ -1,6 +1,6 @@
 import { api } from '@/convex/api'
 import { env } from '@/env'
-import { useRouter } from '@tanstack/solid-router'
+import { hasConvexAudience } from '@/lib/utils'
 import { useAuth, useClerk } from 'clerk-solidjs-tanstack-start'
 import { ConvexProvider, setupConvex, useQuery } from 'convex-solidjs'
 import type { ConvexClient } from 'convex/browser'
@@ -62,22 +62,25 @@ export function useCurrentUser() {
 }
 
 export function ConvexClerkProvider(props: ParentProps<{ onAuthChanged?: () => void }>) {
-  const auth = useAuth()
-  const client = setupConvex(env.VITE_CONVEX_URL, { unsavedChangesWarning: import.meta.env.PROD, expectAuth: true })
+  const clerkAuth = useAuth()
+  const convexClient = setupConvex(env.VITE_CONVEX_URL, {
+    unsavedChangesWarning: import.meta.env.PROD,
+    expectAuth: true,
+  })
   const [isConvexAuthenticated, setIsConvexAuthenticated] = createSignal<boolean | null>(null)
   const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = createSignal(false)
 
   const isLoading = createMemo(() => !hasResolvedInitialAuth())
-  const isAuthenticated = createMemo(() => !!(auth.isSignedIn() && isConvexAuthenticated()))
+  const isAuthenticated = createMemo(() => !!(clerkAuth.isSignedIn() && isConvexAuthenticated()))
   const authBindingKey = createMemo(() => {
-    if (!auth.isLoaded()) return null
-    if (!auth.isSignedIn()) return 'signed-out'
-    return JSON.stringify({ orgId: auth.orgId() ?? null, orgRole: auth.orgRole() ?? null })
+    if (!clerkAuth.isLoaded()) return null
+    if (!clerkAuth.isSignedIn()) return 'signed-out'
+    return JSON.stringify({ orgId: clerkAuth.orgId() ?? null, orgRole: clerkAuth.orgRole() ?? null })
   })
 
   async function fetchAccessToken(args: { forceRefreshToken: boolean }) {
     try {
-      const token = await auth.getToken({ template: 'convex', skipCache: args.forceRefreshToken })
+      const token = await clerkAuth.getToken({ template: 'convex', skipCache: args.forceRefreshToken })
       return token && !hasConvexAudience(token) ? null : token
     } catch {
       return null
@@ -92,10 +95,10 @@ export function ConvexClerkProvider(props: ParentProps<{ onAuthChanged?: () => v
       return
     }
 
-    const authClient = (client as unknown as ConvexClientWithNestedAuth).client
+    const authClient = (convexClient as unknown as ConvexClientWithNestedAuth).client
     const bindingKey = authBindingKey()
-    const isLoaded = auth.isLoaded()
-    const isSignedIn = auth.isSignedIn() ?? false
+    const isLoaded = clerkAuth.isLoaded()
+    const isSignedIn = clerkAuth.isSignedIn() ?? false
 
     if (!isLoaded) {
       return
@@ -144,25 +147,7 @@ export function ConvexClerkProvider(props: ParentProps<{ onAuthChanged?: () => v
 
   return (
     <ConvexClerkAuthContext.Provider value={{ isAuthenticated, isLoading }}>
-      <ConvexProvider client={client}>{props.children}</ConvexProvider>
+      <ConvexProvider client={convexClient}>{props.children}</ConvexProvider>
     </ConvexClerkAuthContext.Provider>
   )
-}
-
-function decodeJwtPayload(token: string) {
-  const [, payload] = token.split('.')
-  if (!payload) return null
-
-  try {
-    const jwt = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-    return JSON.parse(jwt) as { aud?: string | Array<string>; azp?: string; exp?: number; iss?: string; sub?: string }
-  } catch {
-    return null
-  }
-}
-
-function hasConvexAudience(token: string) {
-  const payload = decodeJwtPayload(token)
-  const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : []
-  return audiences.includes('convex')
 }

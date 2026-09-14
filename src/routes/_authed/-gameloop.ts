@@ -1,4 +1,4 @@
-import { useGlobalState } from '@/components/GlobalStateContext'
+import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
 import { INTERPOLATION_DELAY_MS } from '@/lib/constants'
@@ -87,9 +87,6 @@ export function runGameLoop() {
         const nodeCollided = collisionDetected(player.hitbox.inWorldUnits, node.hitbox.inWorldUnits)
         const v = nodeCollided ? '1' : '0'
         node.rootRef?.style.setProperty('--collided', v)
-        if (node.type === 'popover') {
-          node.popupRef?.style.setProperty('--is-open', v)
-        }
 
         if (node.actions.open.value !== nodeCollided) {
           node.actions.open.value = nodeCollided

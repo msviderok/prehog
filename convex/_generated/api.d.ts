@@ -14,6 +14,8 @@ import type * as calls from "../calls.js";
 import type * as chatMembers from "../chatMembers.js";
 import type * as chats from "../chats.js";
 import type * as clerk from "../clerk.js";
+import type * as errors from "../errors.js";
+import type * as fields from "../fields.js";
 import type * as floatingPanels from "../floatingPanels.js";
 import type * as gameState from "../gameState.js";
 import type * as heartbeats from "../heartbeats.js";
@@ -40,6 +42,8 @@ declare const fullApi: ApiFromModules<{
   chatMembers: typeof chatMembers;
   chats: typeof chats;
   clerk: typeof clerk;
+  errors: typeof errors;
+  fields: typeof fields;
   floatingPanels: typeof floatingPanels;
   gameState: typeof gameState;
   heartbeats: typeof heartbeats;

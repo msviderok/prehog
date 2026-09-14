@@ -1,9 +1,12 @@
+import { api } from '@/convex/api'
 import { defaultProps } from '@/lib/utils'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
+import { useMutation } from 'convex-solidjs'
 import {
   createContext,
+  createMemo,
   createRenderEffect,
   createSignal,
   onCleanup,
@@ -12,36 +15,52 @@ import {
   splitProps,
   useContext,
   type ComponentProps,
+  type JSX,
   type ParentProps,
 } from 'solid-js'
-import { EventMarker } from '../EventMarker'
-import { useGlobalState } from '../GlobalStateContext'
-import { PressE, type VariantGameAction } from './button'
+import { EventMarker } from '../../routes/_authed/-components/EventMarker'
+import { useGlobalState } from '../../routes/_authed/-components/GlobalStateContext'
+import { PressE } from './button'
 
-const popoverVariants = cva(
+const DEBUG = false
+
+export const popoverVariants = cva(
   'group z-50 w-72 rounded-base border-2 border-border bg-ph-mustard-yellow p-4  outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all [--arrow-offset:2px]',
   {
     variants: {
       variant: {
         default: 'bg-ph-mustard-yellow',
         scenery:
-          'bg-white text-black [--arrow-offset:0px]! scale-[calc(100%*var(--is-open))] opacity-[calc(100%*var(--is-open))] duration-200 delay-100 ease-out border-4',
+          'bg-white text-black [--arrow-offset:0px]! data-starting-style:opacity-0 data-ending-style:opacity-0 data-closed:opacity-0 duration-200 ease-out border-4',
+      },
+      flavour: {
+        default: '',
+        'action-only': 'bg-transparent! border-none',
       },
     },
     defaultVariants: {
       variant: 'default',
+      flavour: 'default',
     },
+    compoundVariants: [
+      {
+        variant: 'scenery',
+        flavour: 'action-only',
+        class: 'w-auto',
+      },
+    ],
   },
 )
 
 type InferredPopoverVariantProps = VariantProps<typeof popoverVariants>
+type BaseInferredProps = Omit<InferredPopoverVariantProps, 'variant'>
 
-interface VariantOther {
+interface VariantOther extends BaseInferredProps {
   variant: Exclude<InferredPopoverVariantProps['variant'], 'scenery'>
   sceneryProps?: never
 }
 
-interface VariantScenery {
+interface VariantScenery extends BaseInferredProps {
   variant: Extract<InferredPopoverVariantProps['variant'], 'scenery'>
   sceneryProps: {
     anchorPosition: { x: number; y: number }
@@ -53,22 +72,38 @@ interface VariantScenery {
 type PopoverExtraProps = VariantOther | VariantScenery
 
 type PopoverContextState = (VariantOther & { node?: never }) | (VariantScenery & { node: SceneNodePopover })
-const PopoverContext = createContext<PopoverContextState>({ variant: 'default' })
+const PopoverContext = createContext<PopoverContextState>({ variant: 'default', flavour: 'default' })
 
 export function usePopoverContext() {
   return useContext(PopoverContext)
 }
 
-function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps) {
+export function createHandle() {
+  const [currentTrigger, setCurrentTrigger] = createSignal<HTMLElement>()
+  const data = new Map<HTMLElement, { trigger: JSX.Element; content: JSX.Element }>()
+  const active = createMemo(() => (currentTrigger() ? data.get(currentTrigger()!) : undefined))
+
+  return {
+    active,
+    register(trigger: HTMLElement, content: HTMLElement) {
+      data.set(trigger, { trigger, content })
+    },
+    setActive(trigger: HTMLElement) {
+      setCurrentTrigger(trigger)
+    },
+  }
+}
+
+export function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps) {
   let ref!: HTMLDivElement
   let node: SceneNodePopover | undefined
   const { nodes } = useGlobalState()
-  const props = defaultProps(componentProps, { variant: 'default' })
-  const [local, misc, rest] = splitProps(props, ['variant', 'sceneryProps'], ['open'])
+  const props = defaultProps(componentProps, { variant: 'default', flavour: 'default' })
+  const [local, misc, rest] = splitProps(props, ['variant', 'sceneryProps', 'flavour'], ['open'])
 
   createRenderEffect(() => {
     if (local.variant === 'scenery') {
-      const [open, setOpen] = createSignal(false)
+      const [open, setOpen] = createSignal(DEBUG ? true : false)
       node = {
         get rootRef() {
           return ref
@@ -87,7 +122,7 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
         },
         actions: {
           open: {
-            value: false,
+            value: DEBUG ? true : false,
             get: open,
             set: setOpen,
           },
@@ -106,6 +141,7 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
       value={
         {
           variant: local.variant,
+          flavour: local.flavour,
           sceneryProps: local.sceneryProps,
           get node() {
             return node
@@ -121,7 +157,7 @@ function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExtraProps
   )
 }
 
-function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
+export function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
   let ref!: HTMLElement
   const ctx = useContext(PopoverContext)
   const [local, rest] = splitProps(props, ['render', 'class', 'ref'])
@@ -154,14 +190,14 @@ function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
   )
 }
 
-function PopoverPopup(props: PopoverPrimitive.Popup.Props) {
+export function PopoverPopup(props: PopoverPrimitive.Popup.Props) {
   const ctx = useContext(PopoverContext)
   const [local, rest] = splitProps(props, ['class', 'ref', 'style'])
   return (
     <PopoverPrimitive.Popup
       data-slot="popover-content"
       data-variant={ctx.variant}
-      class={popoverVariants({ class: local.class, variant: ctx.variant })}
+      class={popoverVariants({ class: local.class, variant: ctx.variant, flavour: ctx.flavour })}
       ref={(el) => {
         if (ctx.variant === 'scenery') ctx.node.popupRef = el
         typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
@@ -171,7 +207,7 @@ function PopoverPopup(props: PopoverPrimitive.Popup.Props) {
   )
 }
 
-function PopoverArrow(props: ComponentProps<'div'>) {
+export function PopoverArrow(props: ComponentProps<'div'>) {
   return (
     <PopoverPrimitive.Arrow
       data-slot="popover-arrow"
@@ -199,7 +235,7 @@ function PopoverArrow(props: ComponentProps<'div'>) {
   )
 }
 
-function PopoverPortal(props: PopoverPrimitive.Portal.Props) {
+export function PopoverPortal(props: PopoverPrimitive.Portal.Props) {
   const ctx = useContext(PopoverContext)
   const { scene } = useGlobalState()
 
@@ -212,7 +248,7 @@ function PopoverPortal(props: PopoverPrimitive.Portal.Props) {
   )
 }
 
-function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
+export function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
   const ctx = useContext(PopoverContext)
   const [local, rest] = splitProps(props, ['class'])
 
@@ -249,7 +285,7 @@ function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
 
   return (
     <PopoverPrimitive.Positioner
-      class={cn('isolate z-50', local.class)}
+      class={cn('isolate z-50 scale-(--scale)', local.class)}
       arrowPadding={15}
       align={ctx.variant === 'scenery' ? 'end' : 'start'}
       alignOffset={ctx.variant === 'scenery' ? 0 : 10}
@@ -264,12 +300,12 @@ function PopoverPositioner(props: PopoverPrimitive.Positioner.Props) {
   )
 }
 
-function PopoverHeader(props: ComponentProps<'div'>) {
+export function PopoverHeader(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
   return <div data-slot="popover-header" class={cn('flex flex-col gap-1 text-base', local.class)} {...rest} />
 }
 
-function PopoverFooter(props: ComponentProps<'div'>) {
+export function PopoverFooter(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
   return (
     <div
@@ -280,41 +316,44 @@ function PopoverFooter(props: ComponentProps<'div'>) {
   )
 }
 
-function PopoverAction(props: ComponentProps<'div'>) {
+export function PopoverAction(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
   return <div data-slot="popover-action" class={cn('text-base', local.class)} {...rest} />
 }
 
-function PopoverTitle(props: PopoverPrimitive.Title.Props) {
+export function PopoverTitle(props: PopoverPrimitive.Title.Props) {
   const [local, rest] = splitProps(props, ['class'])
   return <PopoverPrimitive.Title data-slot="popover-title" class={cn('text-lg font-medium', local.class)} {...rest} />
 }
 
-function PopoverDescription(props: PopoverPrimitive.Description.Props) {
+export function PopoverDescription(props: PopoverPrimitive.Description.Props) {
   const [local, rest] = splitProps(props, ['class'])
   return <PopoverPrimitive.Description data-slot="popover-description" class={cn('', local.class)} {...rest} />
 }
 
-function PopoverActionDoor(props: ParentProps<Pick<VariantGameAction, 'hotkey' | 'onHotkeyPress'>>) {
+export function PopoverActionDoor(props: ParentProps<{ to: CurrentScene }>) {
+  const { player } = useGlobalState()
+  const setScene = useMutation(api.gameState.setScene)
   return (
     <PopoverAction class="flex items-center gap-2 text-shade-ph-warm-pink/40">
-      <PressE onPress={props.onHotkeyPress} />
-      <span class="comic">{props.children}</span>
+      <PressE onPress={() => void setScene.mutate({ scene: props.to, x: player.x })} />
+      <span class="comic-40">{props.children}</span>
     </PopoverAction>
   )
 }
 
-export {
-  Popover,
-  PopoverAction,
-  PopoverActionDoor,
-  PopoverArrow,
-  PopoverDescription,
-  PopoverFooter,
-  PopoverHeader,
-  PopoverPopup,
-  PopoverPortal,
-  PopoverPositioner,
-  PopoverTitle,
-  PopoverTrigger,
+export function PopoverBackdrop(props: PopoverPrimitive.Backdrop.Props) {
+  const ctx = useContext(PopoverContext)
+  const [local, rest] = splitProps(props, ['class'])
+  return (
+    <PopoverPrimitive.Backdrop
+      data-slot="popover-backdrop"
+      class={cn(
+        'fixed inset-0 scale-[calc(100/var(--scale)/100)] data-starting-style:opacity-0',
+        ctx.variant === 'scenery' && ctx.node.actions.open.get() && 'bg-black/40',
+        local.class,
+      )}
+      {...rest}
+    />
+  )
 }
