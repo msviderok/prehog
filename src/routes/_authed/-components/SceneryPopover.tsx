@@ -28,7 +28,13 @@ const ANIMATION_DURATION_MS = 200
 interface PopoverItem<K extends string> {
   id: K
   node: SceneNodePopover
-  anchor: { ref: HTMLElement; position: Coords; component: Component }
+  anchor: {
+    ref: HTMLElement
+    position: Coords
+    component: Component
+    side: PopoverPrimitive.Positioner.Props['side']
+    align: PopoverPrimitive.Positioner.Props['align']
+  }
   marker: { ref: HTMLElement; position: Coords; component: Component }
   content: { ref: HTMLElement; component: Component }
 }
@@ -153,15 +159,9 @@ export function SceneryPopoverPortal() {
 
   return (
     <>
-      <PopoverPrimitive.Backdrop
-        data-slot="popover-backdrop"
-        style={{ 'animation-duration': `${ANIMATION_DURATION_MS}ms` }}
-        class="fixed inset-0 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-open:opacity-50 ease-in-out"
-        ref={(el) => (ctx.backdropRef = el)}
-      />
+      <SceneryPopoverBackdrop />
 
       <For each={ctx.registry.anchors}>{(anchor) => <Dynamic component={anchor} />}</For>
-      <For each={ctx.registry.markers}>{(marker) => <Dynamic component={marker} />}</For>
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
         <div class="z-1 fixed inset-0 translate-y-(--scene-offset-top)">
@@ -169,9 +169,9 @@ export function SceneryPopoverPortal() {
             <PopoverPrimitive.Positioner
               class="isolate z-50"
               arrowPadding={15}
-              align={'end'}
+              align={ctx.active()?.anchor.align}
               alignOffset={0}
-              side="top"
+              side={ctx.active()?.anchor.side}
               sideOffset={0}
               trackAnchor={true}
               anchor={ctx.anchorRef()}
@@ -192,6 +192,23 @@ export function SceneryPopoverPortal() {
       </PopoverPrimitive.Portal>
     </>
   )
+}
+
+export function SceneryPopoverBackdrop() {
+  const ctx = useSceneryPopover()
+  return (
+    <PopoverPrimitive.Backdrop
+      data-slot="popover-backdrop"
+      style={{ 'animation-duration': `${ANIMATION_DURATION_MS}ms` }}
+      class="fixed inset-0 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-open:opacity-50 ease-in-out"
+      ref={(el) => (ctx.backdropRef = el)}
+    />
+  )
+}
+
+export function SceneryPopoverMarkers() {
+  const ctx = useSceneryPopover()
+  return <For each={ctx.registry.markers}>{(marker) => <Dynamic component={marker} />}</For>
 }
 
 export function SceneryPopover<const K extends string>(
@@ -284,6 +301,12 @@ export function SceneryPopover<const K extends string>(
       get position() {
         return props.anchorPosition
       },
+      get side() {
+        return props.side
+      },
+      get align() {
+        return props.align
+      },
       component(p) {
         const mergedProps = mergeProps(p, props.anchor)
         const [local, rest] = splitProps(mergedProps, ['class', 'ref'])
@@ -325,11 +348,7 @@ export function SceneryPopover<const K extends string>(
         return props.markerPosition
       },
       component() {
-        return (
-          <>
-            <EventMarker ref={(el) => (markerRef = el)} />
-          </>
-        )
+        return <EventMarker ref={(el) => (markerRef = el)} />
       },
     },
   })

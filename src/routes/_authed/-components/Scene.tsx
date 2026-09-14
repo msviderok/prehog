@@ -1,5 +1,9 @@
 import type { Assets } from '@/routeAssets.gen'
-import { SceneryPopoverPortal } from '@/routes/_authed/-components/SceneryPopover'
+import {
+  SceneryPopoverBackdrop,
+  SceneryPopoverMarkers,
+  SceneryPopoverPortal,
+} from '@/routes/_authed/-components/SceneryPopover'
 import { cn } from 'cn'
 import { For, type JSX } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
@@ -10,7 +14,10 @@ import { OtherPlayer } from './OtherPlayer'
 export function Root(props: { children: JSX.Element }) {
   const { scene } = useGlobalState()
   return (
-    <div ref={(el) => (scene.ref = el)} class="w-min h-min relative z-1 overflow-hidden [view-transition-name:scene]">
+    <div
+      ref={(el) => (scene.ref = el)}
+      class="w-min h-min relative z-1 overflow-hidden [view-transition-name:scene] origin-center"
+    >
       {props.children}
     </div>
   )
@@ -50,6 +57,7 @@ export function Players() {
     <>
       <OtherPlayers />
       <MyPlayer />
+      <SceneryPopoverMarkers />
     </>
   )
 }

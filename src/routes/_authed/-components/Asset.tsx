@@ -30,7 +30,12 @@ export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(compone
     <div
       class={cn(
         'asset',
-        isOpen != null && cn('transition-opacity opacity-0 origin-center', isOpen() && 'opacity-100'),
+        isOpen != null &&
+          cn(
+            'origin-center',
+            isOpen() &&
+              '[--c:var(--ph-warm-pink)] [--cc:var(--ph-mustard-yellow)] drop-shadow-[0_0_1px_var(--c),0_0_2px_var(--cc),0_0_3px_var(--c),0_0_4px_var(--cc),0_0_5px_var(--c)]',
+          ),
         local.class,
       )}
       data-x={local.x}

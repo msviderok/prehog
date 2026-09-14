@@ -138,6 +138,11 @@ export const assets = {
       size: { width: 4096 as number, height: 732 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/main.png']!,
     },
+    'main_empty.png': {
+      name: 'main_empty.png',
+      size: { width: 4096 as number, height: 732 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/main_empty.png']!,
+    },
     'personal.png': {
       name: 'personal.png',
       size: { width: 860 as number, height: 580 as number },
@@ -147,6 +152,11 @@ export const assets = {
       name: 'pet.png',
       size: { width: 264 as number, height: 312 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/pet.png']!,
+    },
+    'sign.png': {
+      name: 'sign.png',
+      size: { width: 275 as number, height: 74 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/sign.png']!,
     },
     'temp1.png': {
       name: 'temp1.png',

@@ -1,15 +1,9 @@
 import {
-  Popover,
   PopoverActionDoor,
-  PopoverArrow,
   PopoverDescription,
   PopoverFooter,
   PopoverHeader,
-  PopoverPopup,
-  PopoverPortal,
-  PopoverPositioner,
   PopoverTitle,
-  PopoverTrigger,
 } from '@/components/ui/popover'
 import {
   Tooltip,
@@ -21,8 +15,7 @@ import {
 } from '@/components/ui/tooltip'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
-import { SceneryPopover, useSceneryPopover } from '@/routes/_authed/-components/SceneryPopover'
-import { cn } from 'cn'
+import { SceneryPopover } from '@/routes/_authed/-components/SceneryPopover'
 import { InfoIcon } from 'lucide-solid'
 
 const SCALE = 1.475
@@ -114,8 +107,8 @@ function WhyAmIGoodForARole() {
       <Asset nodeId="application" routeId="/_authed/main/" asset="application.png" x={39.05} y={-0.1} scale={SCALE} />
       <SceneryPopover
         id="application"
-        side="right"
-        align="center"
+        side="left"
+        align="end"
         anchorPosition={{ x: 52.34, y: 45.49 }}
         markerPosition={{ x: 53, y: 94 }}
       >
