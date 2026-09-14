@@ -281,7 +281,6 @@ export function GlobalStateProvider(props: ParentProps) {
     player.cameraMinX = scene.walkableMinX * scene.worldUnit.x
     player.cameraMaxX = playableWidth - misc.player.size.inPX.halfWidth
 
-    console.log(player)
     scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
 
     const atStart = player.realX < scene.s50
@@ -424,6 +423,10 @@ export function GlobalStateProvider(props: ParentProps) {
     root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)
     root.style.setProperty('--original-player-hitbox-height', `${PLAYER_HITBOX_SIZE.height}px`)
   })
+
+  if (import.meta.hot) {
+    import.meta.hot.on('vite:afterUpdate', () => calculate())
+  }
 
   return (
     <GlobalStateContext.Provider

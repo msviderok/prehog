@@ -6,9 +6,11 @@ import { cn } from 'cn'
 import { useMutation } from 'convex-solidjs'
 import {
   createContext,
+  createEffect,
   createMemo,
   createRenderEffect,
   createSignal,
+  on,
   onCleanup,
   onMount,
   Show,
@@ -21,6 +23,8 @@ import {
 import { EventMarker } from '../../routes/_authed/-components/EventMarker'
 import { useGlobalState } from '../../routes/_authed/-components/GlobalStateContext'
 import { PressE } from './button'
+import { useSceneryPopoverNode } from '@/routes/_authed/-components/SceneryPopover'
+import { useRouter } from '@tanstack/solid-router'
 
 const DEBUG = false
 
@@ -332,8 +336,17 @@ export function PopoverDescription(props: PopoverPrimitive.Description.Props) {
 }
 
 export function PopoverActionDoor(props: ParentProps<{ to: CurrentScene }>) {
+  const router = useRouter()
+  const node = useSceneryPopoverNode()
   const { player } = useGlobalState()
   const setScene = useMutation(api.gameState.setScene)
+
+  createEffect(
+    on(node.actions.open.get, (popoverOpen) => {
+      if (popoverOpen) void router.preloadRoute({ to: `/${props.to}` })
+    }),
+  )
+
   return (
     <PopoverAction class="flex items-center gap-2 text-shade-ph-warm-pink/40">
       <PressE onPress={() => void setScene.mutate({ scene: props.to, x: player.x })} />

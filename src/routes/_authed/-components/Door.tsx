@@ -12,6 +12,9 @@ import { api } from '@/convex/api'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { useGlobalState } from './GlobalStateContext'
 import { PressE } from '../../../components/ui/button'
+import { useSceneryPopoverNode } from './SceneryPopover'
+import { createEffect, on } from 'solid-js'
+import { useRouter } from '@tanstack/solid-router'
 
 export function Door(props: {
   to: CurrentScene
@@ -19,8 +22,17 @@ export function Door(props: {
   /** @default "Go Back" */
   label?: string
 }) {
+  const router = useRouter()
+  const node = useSceneryPopoverNode()
   const { player, misc } = useGlobalState()
   const setScene = useSingleFlightMutation(api.gameState.setScene)
+
+  createEffect(
+    on(node.actions.open.get, (popoverOpen) => {
+      if (popoverOpen) void router.preloadRoute({ to: `/${props.to}` })
+    }),
+  )
+
   return (
     <Popover
       variant="scenery"

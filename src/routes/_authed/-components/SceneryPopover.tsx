@@ -33,19 +33,16 @@ interface PopoverItem<K extends string> {
   content: { ref: HTMLElement; component: Component }
 }
 
-interface ComponentsStore {
+interface RegistryState<K extends string> {
+  data: Record<K, PopoverItem<K>>
+  active: { current: K | undefined; last: K | undefined }
   anchors: Component[]
   markers: Component[]
   contents: Component[]
 }
 
-interface Active<K extends string> {
-  current: PopoverItem<K> | undefined
-  lastActive: PopoverItem<K> | undefined
-}
-
 interface SceneryPopoverState<K extends string> {
-  registry: Map<K, PopoverItem<K>>
+  registry: Store<RegistryState<K>>
   anchorRef: Accessor<HTMLElement | undefined>
   active: Accessor<PopoverItem<K> | undefined>
   lastActive: Accessor<PopoverItem<K> | undefined>
@@ -55,15 +52,22 @@ interface SceneryPopoverState<K extends string> {
   portalRef: HTMLElement
   backdropRef: HTMLElement
   positionerRef: HTMLElement
-  components: ComponentsStore
-  setComponents: SetStoreFunction<ComponentsStore>
+  getNode: (id: K) => SceneNodePopover
+  isOpen: (id: K) => Accessor<boolean>
 }
 
 const SceneryPopoverContext = createContext<SceneryPopoverState<string>>()
+const SceneryPopoverNodeContext = createContext<SceneNodePopover>()
 
 export function useSceneryPopover() {
   const ctx = useContext(SceneryPopoverContext)
   if (!ctx) throw new Error('useSceneryPopoverContext must be used within a SceneryPopoverProvider')
+  return ctx
+}
+
+export function useSceneryPopoverNode() {
+  const ctx = useContext(SceneryPopoverNodeContext)
+  if (!ctx) throw new Error('useSceneryPopoverNode must be used within a SceneryPopoverProvider')
   return ctx
 }
 
@@ -73,45 +77,51 @@ export function SceneryPopoverProvider<K extends string>(props: ParentProps) {
   let backdropRef!: HTMLElement
   let positionerRef!: HTMLElement
   const { nodes } = useGlobalState()
-  const [_active, _setActive] = createStore({ current: undefined as K | undefined, last: undefined as K | undefined })
-  const [components, setComponents] = createStore<ComponentsStore>({ anchors: [], markers: [], contents: [] })
+  const [registry, setRegistry] = createStore<RegistryState<K>>({
+    data: {} as Record<K, PopoverItem<K>>,
+    active: { current: undefined, last: undefined },
+    get anchors() {
+      console.log('get anchors')
+      return Object.values<PopoverItem<K>>(this.data).map((i) => i.anchor.component)
+    },
+    get markers() {
+      return Object.values<PopoverItem<K>>(this.data).map((i) => i.marker.component)
+    },
+    get contents() {
+      return Object.values<PopoverItem<K>>(this.data).map((i) => i.content.component)
+    },
+  })
 
-  const registry = new Map<K, PopoverItem<K>>()
-  const active = createMemo(() => (_active.current ? registry.get(_active.current)! : undefined))
-  const lastActive = createMemo(() => (_active.last ? registry.get(_active.last)! : undefined))
+  const active = createMemo(() => (registry.active.current ? registry.data[registry.active.current] : undefined))
+  const lastActive = createMemo(() => (registry.active.last ? registry.data[registry.active.last] : undefined))
 
   function register(data: PopoverItem<K>) {
-    registry.set(data.id, data)
+    setRegistry(produce((draft) => (draft.data[data.id] = data)))
     nodes.add(data.node)
 
-    setComponents(
-      produce((draft) => {
-        draft.anchors.push(data.anchor.component)
-        draft.markers.push(data.marker.component)
-        draft.contents.push(data.content.component)
-      }),
-    )
     // data.onNodeRegistered?.(data.node)
 
     onCleanup(() => {
       nodes.delete(data.node)
-      setComponents(
-        produce((draft) => {
-          draft.anchors = draft.anchors.filter((t) => t !== data.anchor.component)
-          draft.markers = draft.markers.filter((m) => m !== data.marker.component)
-          draft.contents = draft.contents.filter((c) => c !== data.content.component)
-        }),
-      )
+      setRegistry(produce((draft) => delete draft.data[data.id]))
     })
   }
 
   function setActive(id: K) {
-    _setActive({ current: id, last: _active.current })
+    setRegistry(produce((draft) => (draft.active.current = id)))
+  }
+
+  function getNode(id: K) {
+    return registry.data[id].node
+  }
+
+  function isOpen(id: K) {
+    return () => registry.data[id]?.node.actions.open.get()
   }
 
   const anchorRef = createMemo(() => {
-    if (_active.current) return registry.get(_active.current)!.anchor.ref
-    if (_active.last) return registry.get(_active.last)!.anchor.ref
+    if (registry.active.current) return registry.data[registry.active.current].anchor.ref
+    if (registry.active.last) return registry.data[registry.active.last].anchor.ref
     return undefined
   })
 
@@ -122,19 +132,17 @@ export function SceneryPopoverProvider<K extends string>(props: ParentProps) {
     lastActive,
     register,
     setActive,
-    components,
-    setComponents,
     popupRef,
     portalRef,
     backdropRef,
     positionerRef,
+    getNode,
+    isOpen,
   }
-
-  const isOpen = createMemo(() => active()?.node.actions.open.get() ?? false)
 
   return (
     <SceneryPopoverContext.Provider value={context}>
-      <PopoverPrimitive.Root open={isOpen()}>{props.children}</PopoverPrimitive.Root>
+      <PopoverPrimitive.Root open={active()?.node.actions.open.get() ?? false}>{props.children}</PopoverPrimitive.Root>
     </SceneryPopoverContext.Provider>
   )
 }
@@ -152,8 +160,8 @@ export function SceneryPopoverPortal() {
         ref={(el) => (ctx.backdropRef = el)}
       />
 
-      <For each={ctx.components.anchors}>{(anchor) => <Dynamic component={anchor} />}</For>
-      <For each={ctx.components.markers}>{(marker) => <Dynamic component={marker} />}</For>
+      <For each={ctx.registry.anchors}>{(anchor) => <Dynamic component={anchor} />}</For>
+      <For each={ctx.registry.markers}>{(marker) => <Dynamic component={marker} />}</For>
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
         <div class="z-1 fixed inset-0 translate-y-(--scene-offset-top)">
@@ -306,7 +314,7 @@ export function SceneryPopover<const K extends string>(
         return contentRef
       },
       component() {
-        return <>{props.children}</>
+        return <SceneryPopoverNodeContext.Provider value={node}>{props.children}</SceneryPopoverNodeContext.Provider>
       },
     },
     marker: {

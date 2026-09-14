@@ -2,6 +2,7 @@ import { defaultProps } from '@/lib/utils'
 import { assets, type Assets, type RouteAsset } from '@/routeAssets.gen'
 import { cn } from 'cn'
 import { splitProps, type JSX } from 'solid-js'
+import { useSceneryPopover } from './SceneryPopover'
 
 export interface AssetProps<
   K extends keyof Assets,
@@ -14,15 +15,24 @@ export interface AssetProps<
   width?: number
   height?: number
   scale?: number
+  nodeId?: string
 }
 
 export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(componentProps: AssetProps<K, A>) {
   const asset = assets[componentProps.routeId]![componentProps.asset] as RouteAsset
   const props = defaultProps(componentProps, { style: { 'background-image': `url(${asset.src})` } })
-  const [local, rest] = splitProps(props, ['routeId', 'asset', 'width', 'height', 'scale', 'class', 'x', 'y'])
+  const [local, rest] = splitProps(props, ['routeId', 'asset', 'width', 'height', 'scale', 'x', 'y', 'class', 'nodeId'])
+
+  const sceneryPopoverCtx = useSceneryPopover()
+  const isOpen = props.nodeId ? sceneryPopoverCtx.isOpen(props.nodeId) : null
+
   return (
     <div
-      class={cn('asset', local.class)}
+      class={cn(
+        'asset',
+        isOpen != null && cn('transition-opacity opacity-0 origin-center', isOpen() && 'opacity-100'),
+        local.class,
+      )}
       data-x={local.x}
       data-y={local.y}
       data-width={(local.width ?? asset.size.width) * (local.scale ?? 1)}
