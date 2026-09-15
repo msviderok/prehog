@@ -87,7 +87,6 @@ export function SceneryPopoverProvider<K extends string>(props: ParentProps) {
     data: {} as Record<K, PopoverItem<K>>,
     active: { current: undefined, last: undefined },
     get anchors() {
-      console.log('get anchors')
       return Object.values<PopoverItem<K>>(this.data).map((i) => i.anchor.component)
     },
     get markers() {

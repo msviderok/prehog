@@ -26,9 +26,9 @@ catalog:
   '@tailwindcss/typography': ^0.5.20
   '@tailwindcss/vite': ^4.3.3
   '@tanstack/solid-hotkeys': ^0.10.0
-  '@tanstack/solid-router': ^1.170.33
-  '@tanstack/solid-router-devtools': ^1.167.1
-  '@tanstack/solid-start': ^1.168.50
+  '@tanstack/solid-router': ^1.170.34
+  '@tanstack/solid-router-devtools': ^1.167.2
+  '@tanstack/solid-start': ^1.168.51
   '@total-typescript/ts-reset': ^0.6.1
   '@types/howler': ^2.2.13
   '@types/node': ^26.5.1

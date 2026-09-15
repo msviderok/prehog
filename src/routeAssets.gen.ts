@@ -163,6 +163,11 @@ export const assets = {
       size: { width: 193 as number, height: 196 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/temp1.png']!,
     },
+    'temp1_with_table.png': {
+      name: 'temp1_with_table.png',
+      size: { width: 224 as number, height: 328 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/temp1_with_table.png']!,
+    },
     'temp2.png': {
       name: 'temp2.png',
       size: { width: 318 as number, height: 353 as number },

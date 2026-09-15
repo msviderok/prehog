@@ -177,7 +177,7 @@ function PersonalStuff() {
 function Temp1() {
   return (
     <>
-      <Asset nodeId="temp1" x={83.46} y={45.8} scale={SCALE} routeId="/_authed/main/" asset="temp1.png" />
+      <Asset nodeId="temp1" x={82.65} y={46} scale={SCALE} routeId="/_authed/main/" asset="temp1_with_table.png" />
       <SceneryPopover
         id="temp1"
         side="left"
