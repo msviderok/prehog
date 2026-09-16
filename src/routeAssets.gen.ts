@@ -123,6 +123,36 @@ export const assets = {
       size: { width: 820 as number, height: 580 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/application.png']!,
     },
+    'building_1.png': {
+      name: 'building_1.png',
+      size: { width: 823 as number, height: 575 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/building_1.png']!,
+    },
+    'building_2.png': {
+      name: 'building_2.png',
+      size: { width: 656 as number, height: 575 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/building_2.png']!,
+    },
+    'building_3.png': {
+      name: 'building_3.png',
+      size: { width: 656 as number, height: 575 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/building_3.png']!,
+    },
+    'building_4.png': {
+      name: 'building_4.png',
+      size: { width: 616 as number, height: 575 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/building_4.png']!,
+    },
+    'building_5.png': {
+      name: 'building_5.png',
+      size: { width: 616 as number, height: 575 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/building_5.png']!,
+    },
+    'building_6.png': {
+      name: 'building_6.png',
+      size: { width: 923 as number, height: 732 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/building_6.png']!,
+    },
     'experience.png': {
       name: 'experience.png',
       size: { width: 281 as number, height: 313 as number },
@@ -143,6 +173,11 @@ export const assets = {
       size: { width: 4096 as number, height: 732 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/main_empty.png']!,
     },
+    'main_v2.png': {
+      name: 'main_v2.png',
+      size: { width: 6642 as number, height: 732 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/main_v2.png']!,
+    },
     'personal.png': {
       name: 'personal.png',
       size: { width: 860 as number, height: 580 as number },
@@ -153,10 +188,20 @@ export const assets = {
       size: { width: 264 as number, height: 312 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/pet.png']!,
     },
+    'shop_sign.png': {
+      name: 'shop_sign.png',
+      size: { width: 225 as number, height: 174 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/shop_sign.png']!,
+    },
     'sign.png': {
       name: 'sign.png',
-      size: { width: 275 as number, height: 74 as number },
+      size: { width: 273 as number, height: 72 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/sign.png']!,
+    },
+    'table.png': {
+      name: 'table.png',
+      size: { width: 204 as number, height: 230 as number },
+      src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/table.png']!,
     },
     'temp1.png': {
       name: 'temp1.png',

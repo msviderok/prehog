@@ -12,6 +12,7 @@ import call from './files/call.m4a'
 import dial from './files/dial.m4a'
 import end from './files/end.m4a'
 import reject from './files/reject.m4a'
+import oblivion_npc_piano from './files/oblpiano.mp3'
 
 const VOLUME = 1
 
@@ -21,6 +22,9 @@ export const SOUNDS = {
   end: new Howl({ src: end, loop: false, volume: VOLUME }),
   reject: new Howl({ src: reject, loop: false, volume: VOLUME }),
   accept: new Howl({ src: accept, loop: false, volume: VOLUME }),
+  music: {
+    oblivion_npc_piano: new Howl({ src: oblivion_npc_piano, loop: true, volume: VOLUME }),
+  },
 } as const
 
 const minimalPatch = {

@@ -22,7 +22,7 @@ const buttonVariants = cva(
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
         'game-action':
-          'shadow-button v-ph-background translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-3 bg-ph-mustard-yellow border-ph-background text-shade-ph-background/20 font-bold',
+          'shadow-button v-ph-background translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-3 bg-ph-warm-pink border-ph-background text-shade-ph-background/20 font-bold',
       },
       animate: {
         default: '',

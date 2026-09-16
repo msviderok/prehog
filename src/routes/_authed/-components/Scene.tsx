@@ -1,13 +1,9 @@
 import type { Assets } from '@/routeAssets.gen'
-import {
-  SceneryPopoverBackdrop,
-  SceneryPopoverMarkers,
-  SceneryPopoverPortal,
-} from '@/routes/_authed/-components/SceneryPopover'
+import { SceneryPopoverMarkers, SceneryPopoverPortal } from '@/routes/_authed/-components/SceneryPopover'
 import { cn } from 'cn'
 import { For, type JSX } from 'solid-js'
-import { useGlobalState } from './GlobalStateContext'
 import { Asset, type AssetProps } from './Asset'
+import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
 import { OtherPlayer } from './OtherPlayer'
 

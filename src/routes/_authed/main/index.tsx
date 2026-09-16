@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_authed/main/')({
   component() {
     return (
       <Scene.Root>
-        <Scene.Background routeId="/_authed/main/" asset="main_empty.png" />
+        <Scene.Background routeId="/_authed/main/" asset="main_v2.png" />
         <Scenery />
       </Scene.Root>
     )

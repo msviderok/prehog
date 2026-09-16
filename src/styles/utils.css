@@ -14,8 +14,15 @@
 
 @utility game-transform {
   will-change: transform;
-  transform: translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
-    rotateZ(var(--rz, 0deg)) skewX(var(--skx, 0deg)) skewY(var(--sky, 0deg))
+  /* oxfmt-ignore */
+  transform:
+    translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0))
+    perspective(var(--pp, none))
+    rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg))
+    rotateZ(var(--rz, 0deg))
+    skewX(var(--skx, 0deg))
+    skewY(var(--sky, 0deg))
     scale3d(var(--sx, 1), var(--sy, 1), var(--sz, 1));
 }
 

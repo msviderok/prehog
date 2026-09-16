@@ -1,32 +1,27 @@
+import { PopoverArrow, popoverVariants } from '@/components/ui/popover'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
-import { cn } from 'cn'
 import {
   createContext,
-  createEffect,
   createMemo,
   createSignal,
   For,
-  mergeProps,
   onCleanup,
   onMount,
-  splitProps,
   useContext,
   type Accessor,
   type Component,
   type JSX,
   type ParentProps,
 } from 'solid-js'
-import { createStore, produce, type SetStoreFunction, type Store } from 'solid-js/store'
+import { createStore, produce, type Store } from 'solid-js/store'
 import { Dynamic } from 'solid-js/web'
-import { EventMarker } from './EventMarker'
+import { EventMarker, type EventMarkerProps } from './EventMarker'
 import { useGlobalState } from './GlobalStateContext'
-import { popoverVariants } from '@/components/ui/popover'
-import { Motion, type MotionComponentProps, type MotionProxyComponent } from 'solid-motionone'
 
 const ANIMATION_DURATION_MS = 200
 
-interface PopoverItem<K extends string> {
-  id: K
+interface PopoverItem {
+  id: string
   node: SceneNodePopover
   anchor: {
     ref: HTMLElement
@@ -39,30 +34,30 @@ interface PopoverItem<K extends string> {
   content: { ref: HTMLElement; component: Component }
 }
 
-interface RegistryState<K extends string> {
-  data: Record<K, PopoverItem<K>>
-  active: { current: K | undefined; last: K | undefined }
+interface RegistryState {
+  data: Record<string, PopoverItem>
+  active: { current: string | undefined; last: string | undefined }
   anchors: Component[]
   markers: Component[]
   contents: Component[]
 }
 
-interface SceneryPopoverState<K extends string> {
-  registry: Store<RegistryState<K>>
+interface SceneryPopoverState {
+  registry: Store<RegistryState>
   anchorRef: Accessor<HTMLElement | undefined>
-  active: Accessor<PopoverItem<K> | undefined>
-  lastActive: Accessor<PopoverItem<K> | undefined>
-  register(data: PopoverItem<K>): void
-  setActive(id: K): void
+  active: Accessor<PopoverItem | undefined>
+  lastActive: Accessor<PopoverItem | undefined>
+  register(data: PopoverItem): void
+  setActive(id: string): void
   popupRef: HTMLElement
   portalRef: HTMLElement
   backdropRef: HTMLElement
   positionerRef: HTMLElement
-  getNode: (id: K) => SceneNodePopover
-  isOpen: (id: K) => Accessor<boolean>
+  getNode: (id: string) => SceneNodePopover | undefined
+  isOpen: (id: string) => Accessor<boolean>
 }
 
-const SceneryPopoverContext = createContext<SceneryPopoverState<string>>()
+const SceneryPopoverContext = createContext<SceneryPopoverState>()
 const SceneryPopoverNodeContext = createContext<SceneNodePopover>()
 
 export function useSceneryPopover() {
@@ -77,34 +72,32 @@ export function useSceneryPopoverNode() {
   return ctx
 }
 
-export function SceneryPopoverProvider<K extends string>(props: ParentProps) {
+export function SceneryPopoverProvider(props: ParentProps) {
   let popupRef!: HTMLElement
   let portalRef!: HTMLElement
   let backdropRef!: HTMLElement
   let positionerRef!: HTMLElement
   const { nodes } = useGlobalState()
-  const [registry, setRegistry] = createStore<RegistryState<K>>({
-    data: {} as Record<K, PopoverItem<K>>,
+  const [registry, setRegistry] = createStore<RegistryState>({
+    data: {},
     active: { current: undefined, last: undefined },
     get anchors() {
-      return Object.values<PopoverItem<K>>(this.data).map((i) => i.anchor.component)
+      return Object.values<PopoverItem>(this.data).map((i) => i.anchor.component)
     },
     get markers() {
-      return Object.values<PopoverItem<K>>(this.data).map((i) => i.marker.component)
+      return Object.values<PopoverItem>(this.data).map((i) => i.marker.component)
     },
     get contents() {
-      return Object.values<PopoverItem<K>>(this.data).map((i) => i.content.component)
+      return Object.values<PopoverItem>(this.data).map((i) => i.content.component)
     },
   })
 
   const active = createMemo(() => (registry.active.current ? registry.data[registry.active.current] : undefined))
   const lastActive = createMemo(() => (registry.active.last ? registry.data[registry.active.last] : undefined))
 
-  function register(data: PopoverItem<K>) {
+  function register(data: PopoverItem) {
     setRegistry(produce((draft) => (draft.data[data.id] = data)))
     nodes.add(data.node)
-
-    // data.onNodeRegistered?.(data.node)
 
     onCleanup(() => {
       nodes.delete(data.node)
@@ -112,25 +105,30 @@ export function SceneryPopoverProvider<K extends string>(props: ParentProps) {
     })
   }
 
-  function setActive(id: K) {
-    setRegistry(produce((draft) => (draft.active.current = id)))
+  function setActive(id: string) {
+    setRegistry(
+      produce((draft) => {
+        draft.active.last = draft.active.current
+        draft.active.current = id
+      }),
+    )
   }
 
-  function getNode(id: K) {
-    return registry.data[id].node
+  function getNode(id: string) {
+    return registry.data[id]?.node
   }
 
-  function isOpen(id: K) {
-    return () => registry.data[id]?.node.actions.open.get()
+  function isOpen(id: string) {
+    return () => registry.data[id]?.node.actions.open.get() ?? false
   }
 
   const anchorRef = createMemo(() => {
-    if (registry.active.current) return registry.data[registry.active.current].anchor.ref
-    if (registry.active.last) return registry.data[registry.active.last].anchor.ref
+    if (registry.active.current) return registry.data[registry.active.current]?.anchor.ref
+    if (registry.active.last) return registry.data[registry.active.last]?.anchor.ref
     return undefined
   })
 
-  const context: SceneryPopoverState<K> = {
+  const context: SceneryPopoverState = {
     registry,
     active,
     anchorRef,
@@ -155,7 +153,7 @@ export function SceneryPopoverProvider<K extends string>(props: ParentProps) {
 export function SceneryPopoverPortal() {
   const ctx = useSceneryPopover()
   const { scene } = useGlobalState()
-
+  const currentlyRenderedElement = createMemo(() => ctx.active() ?? ctx.lastActive())
   return (
     <>
       <SceneryPopoverBackdrop />
@@ -168,9 +166,9 @@ export function SceneryPopoverPortal() {
             <PopoverPrimitive.Positioner
               class="isolate z-50"
               arrowPadding={15}
-              align={ctx.active()?.anchor.align}
+              align={currentlyRenderedElement()?.anchor.align}
               alignOffset={0}
-              side={ctx.active()?.anchor.side}
+              side={currentlyRenderedElement()?.anchor.side}
               sideOffset={0}
               trackAnchor={true}
               anchor={ctx.anchorRef()}
@@ -183,7 +181,8 @@ export function SceneryPopoverPortal() {
                 class={popoverVariants({ variant: 'scenery' })}
                 ref={(el) => (ctx.popupRef = el)}
               >
-                <Dynamic component={ctx.active()?.content.component ?? ctx.lastActive()?.content.component} />
+                <PopoverArrow />
+                <Dynamic component={currentlyRenderedElement()?.content.component} />
               </PopoverPrimitive.Popup>
             </PopoverPrimitive.Positioner>
           </div>
@@ -213,10 +212,9 @@ export function SceneryPopoverMarkers() {
 export function SceneryPopover<const K extends string>(
   props: {
     id: K
-    markerPosition: Coords
-    anchorPosition: Coords
+    marker: { position: Coords } & EventMarkerProps
+    anchor: { position: Coords }
     children: JSX.Element
-    anchor?: PopoverPrimitive.Trigger.Props | undefined
   } & Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>,
 ) {
   let triggerRef!: HTMLElement
@@ -261,7 +259,7 @@ export function SceneryPopover<const K extends string>(
       return ctx.popupRef
     },
     get position() {
-      return props.anchorPosition
+      return props.anchor.position
     },
     size: {
       inWorldUnits: { width: 0, height: 0 },
@@ -269,7 +267,7 @@ export function SceneryPopover<const K extends string>(
     },
     hitbox: {
       get position() {
-        return props.markerPosition
+        return props.marker.position
       },
       inWorldUnits: { x1: 0, y1: 0, x2: 0, y2: 0 },
       inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
@@ -298,7 +296,7 @@ export function SceneryPopover<const K extends string>(
         return triggerRef
       },
       get position() {
-        return props.anchorPosition
+        return props.anchor.position
       },
       get side() {
         return props.side
@@ -307,26 +305,21 @@ export function SceneryPopover<const K extends string>(
         return props.align
       },
       component(p) {
-        const mergedProps = mergeProps(p, props.anchor)
-        const [local, rest] = splitProps(mergedProps, ['class', 'ref'])
         return (
           <PopoverPrimitive.Trigger
-            data-slot="popover-trigger"
+            {...p}
+            data-slot="poprover-trigger"
             render="div"
-            class={cn(
-              `absolute top-0 left-0 game-transform
-            [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--scene-world-unit-x))]
-            [--ty:calc(var(--node-anchor-y)*var(--scene-world-unit-y))]
-            `,
-              local.class,
-            )}
+            class={`
+              absolute top-0 left-0 game-transform
+              [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--scene-world-unit-x))]
+              [--ty:calc(var(--node-anchor-y)*var(--scene-world-unit-y))]
+            `}
             ref={(el) => {
               triggerRef = el
-              typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
-              el.style.setProperty('--node-anchor-x', `${props.anchorPosition.x}`)
-              el.style.setProperty('--node-anchor-y', `${props.anchorPosition.y}`)
+              el.style.setProperty('--node-anchor-x', `${props.anchor.position.x}`)
+              el.style.setProperty('--node-anchor-y', `${props.anchor.position.y}`)
             }}
-            {...rest}
           />
         )
       },
@@ -344,10 +337,14 @@ export function SceneryPopover<const K extends string>(
         return markerRef
       },
       get position() {
-        return props.markerPosition
+        return props.marker.position
       },
       component() {
-        return <EventMarker ref={(el) => (markerRef = el)} />
+        return (
+          <SceneryPopoverNodeContext.Provider value={node}>
+            <EventMarker ref={(el) => (markerRef = el)} {...props.marker} />
+          </SceneryPopoverNodeContext.Provider>
+        )
       },
     },
   })

@@ -73,3 +73,8 @@
   inherits: false;
   initial-value: 0deg;
 }
+@property --pp {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: none;
+}

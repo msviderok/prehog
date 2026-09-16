@@ -9,6 +9,7 @@ import { useGlobalState } from './-components/GlobalStateContext'
 import { GlobalStateProvider } from './-components/GlobalStateProvider'
 import { SceneryPopoverProvider } from './-components/SceneryPopover'
 import { runGameLoop } from './-gameloop'
+import { SOUNDS } from '@/audio'
 
 export const Route = createFileRoute('/_authed')({
   staticData: { scene: null },
@@ -17,6 +18,12 @@ export const Route = createFileRoute('/_authed')({
   },
   component() {
     useWatchPresence()
+
+    onMount(() => {
+      // SOUNDS.music.oblivion_npc_piano.play()
+
+      onCleanup(() => SOUNDS.music.oblivion_npc_piano.playing() && SOUNDS.music.oblivion_npc_piano.stop())
+    })
 
     return (
       <GlobalStateProvider>

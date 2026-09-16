@@ -425,7 +425,10 @@ export function GlobalStateProvider(props: ParentProps) {
   })
 
   if (import.meta.hot) {
-    import.meta.hot.on('vite:afterUpdate', () => calculate())
+    import.meta.hot.on('vite:afterUpdate', () => {
+      console.log('HMR')
+      calculate()
+    })
   }
 
   return (
