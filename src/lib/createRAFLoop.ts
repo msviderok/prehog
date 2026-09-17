@@ -30,7 +30,10 @@ export function createRAFLoop(options: {
 
   function gameLoop(timestamp: number) {
     if (!tickTimer) tickTimer = timestamp
-    if (timestamp - tickTimer < TICK_MS) return requestAnimationFrame(gameLoop)
+    if (timestamp - tickTimer < TICK_MS) {
+      mainGameLoop = requestAnimationFrame(gameLoop)
+      return
+    }
 
     runProcessingForSingleTick(timestamp)
     tickTimer += TICK_MS
@@ -49,6 +52,7 @@ export function createRAFLoop(options: {
   onCleanup(() => {
     if (mainGameLoop) {
       cancelAnimationFrame(mainGameLoop)
+      mainGameLoop = undefined
     }
   })
 }

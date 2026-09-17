@@ -1,7 +1,7 @@
 import { GameUI } from '@/components/game-ui/GameUI'
-import { Loading } from '@/routes/_authed/-components/Loading'
 import { api } from '@/convex/api'
 import { HEARTBEAT_MS } from '@/lib/constants'
+import { Loading } from '@/routes/_authed/-components/Loading'
 import { createFileRoute, Outlet, useBlocker, useRouter } from '@tanstack/solid-router'
 import { useMutation } from 'convex-solidjs'
 import { onCleanup, onMount, Show, type ParentProps } from 'solid-js'
@@ -9,7 +9,7 @@ import { useGlobalState } from './-components/GlobalStateContext'
 import { GlobalStateProvider } from './-components/GlobalStateProvider'
 import { SceneryPopoverProvider } from './-components/SceneryPopover'
 import { runGameLoop } from './-gameloop'
-import { SOUNDS } from '@/audio'
+import { useAudioManager } from '@/audio/useAudioManager'
 
 export const Route = createFileRoute('/_authed')({
   staticData: { scene: null },
@@ -18,12 +18,7 @@ export const Route = createFileRoute('/_authed')({
   },
   component() {
     useWatchPresence()
-
-    onMount(() => {
-      // SOUNDS.music.oblivion_npc_piano.play()
-
-      onCleanup(() => SOUNDS.music.oblivion_npc_piano.playing() && SOUNDS.music.oblivion_npc_piano.stop())
-    })
+    useAudioManager()
 
     return (
       <GlobalStateProvider>

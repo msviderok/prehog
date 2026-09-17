@@ -181,7 +181,7 @@ export function SceneryPopoverPortal() {
                 class={popoverVariants({ variant: 'scenery' })}
                 ref={(el) => (ctx.popupRef = el)}
               >
-                <PopoverArrow />
+                {/*<PopoverArrow />*/}
                 <Dynamic component={currentlyRenderedElement()?.content.component} />
               </PopoverPrimitive.Popup>
             </PopoverPrimitive.Positioner>

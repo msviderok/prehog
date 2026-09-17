@@ -24,20 +24,24 @@ const SCALE = 1.475
 export function Scenery() {
   return (
     <Scene.Elements>
-      <IntroV2 />
-      <ExperienceV2 />
+      <Intro />
+      <Experience />
+      <Wardrobe />
       <MyProjects />
       <WhyAmIGoodForARole />
+      <Wardrobe2 />
+      <Drawboard />
       <PersonalStuff />
       <Temp1 />
       <Temp2 />
+      <LastDoor />
 
       <Scene.Players />
     </Scene.Elements>
   )
 }
 
-function IntroV2() {
+function Intro() {
   return (
     <>
       <Asset nodeId="intro" routeId="/_authed/main/" asset="experience.png" x={8} y={51.8} scale={SCALE} />
@@ -58,7 +62,7 @@ function IntroV2() {
   )
 }
 
-function ExperienceV2() {
+function Experience() {
   return (
     <>
       <Asset
@@ -127,6 +131,29 @@ function ExperienceV2() {
   )
 }
 
+function Wardrobe() {
+  return (
+    <>
+      <Asset
+        nodeId="wardrobe"
+        routeId="/_authed/main/"
+        asset="building_3.png"
+        x={24.73}
+        y={-0.1}
+        scale={SCALE}
+        class="z-[-1]"
+      />
+      <SceneryPopover id="wardrobe" anchor={{ position: { x: 30, y: 46 } }} marker={{ position: { x: 29.5, y: 94 } }}>
+        <PopoverHeader>
+          <PopoverTitle>Wardrobe</PopoverTitle>
+        </PopoverHeader>
+
+        <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
+      </SceneryPopover>
+    </>
+  )
+}
+
 function MyProjects() {
   return (
     <>
@@ -134,7 +161,7 @@ function MyProjects() {
         nodeId="pet"
         routeId="/_authed/main/"
         asset="pet.png"
-        x={35}
+        x={40}
         y={51.5}
         scale={SCALE}
         class="[--ry:180deg]"
@@ -143,8 +170,8 @@ function MyProjects() {
         id="pet"
         side="top"
         align="end"
-        anchor={{ position: { x: 35.6, y: 52 } }}
-        marker={{ position: { x: 33, y: 94 } }}
+        anchor={{ position: { x: 40.6, y: 53 } }}
+        marker={{ position: { x: 38, y: 94 } }}
       >
         <PopoverHeader>
           <PopoverTitle>Personal Projects</PopoverTitle>
@@ -178,6 +205,46 @@ function WhyAmIGoodForARole() {
         <PopoverFooter>
           <PopoverActionDoor to="application">Explore</PopoverActionDoor>
         </PopoverFooter>
+      </SceneryPopover>
+    </>
+  )
+}
+
+function Wardrobe2() {
+  return (
+    <>
+      <Asset
+        nodeId="wardrobe2"
+        routeId="/_authed/main/"
+        asset="building_5.png"
+        x={54.12}
+        y={-0.1}
+        scale={SCALE}
+        class="z-[-1]"
+      />
+      <SceneryPopover id="wardrobe2" anchor={{ position: { x: 55, y: 46 } }} marker={{ position: { x: 60, y: 94 } }}>
+        <PopoverHeader>
+          <PopoverTitle>Wardrobe</PopoverTitle>
+        </PopoverHeader>
+
+        <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
+      </SceneryPopover>
+    </>
+  )
+}
+
+function Drawboard() {
+  return (
+    <>
+      <Asset nodeId="drawboard" routeId="/_authed/main/" asset="building_1.png" x={63.35} y={-0.1} scale={SCALE} />
+      <SceneryPopover id="drawboard" anchor={{ position: { x: 65, y: 46 } }} marker={{ position: { x: 65, y: 94 } }}>
+        <PopoverHeader>
+          <PopoverTitle>Drawboard</PopoverTitle>
+        </PopoverHeader>
+
+        <PopoverDescription>
+          I would expect you to be able to draw some random stuff over here, y'know
+        </PopoverDescription>
       </SceneryPopover>
     </>
   )
@@ -237,6 +304,20 @@ function Temp2() {
         marker={{ position: { x: 86, y: 94 } }}
       >
         <span>wassup, homie</span>
+      </SceneryPopover>
+    </>
+  )
+}
+
+function LastDoor() {
+  return (
+    <>
+      <SceneryPopover id="last-door" anchor={{ position: { x: 95, y: 46 } }} marker={{ position: { x: 95, y: 94 } }}>
+        <PopoverHeader>
+          <PopoverTitle>This is the end, my friend.</PopoverTitle>
+        </PopoverHeader>
+
+        <PopoverDescription>You can proceed with your life</PopoverDescription>
       </SceneryPopover>
     </>
   )

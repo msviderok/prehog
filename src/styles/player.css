@@ -68,6 +68,15 @@
     }
   }
 
+  @keyframes player-run {
+    from {
+      background-position-x: 0;
+    }
+    to {
+      background-position-x: calc(-1 * var(--player-width-scaled) * 14);
+    }
+  }
+
   @keyframes player-admin-hue {
     from {
       filter: hue-rotate(0deg);
@@ -103,7 +112,7 @@
   --animation-speed: 7000ms;
   --hue-speed: 500ms;
   --ty: var(--player-offset-y-scaled);
-  --skx: calc(var(--skx, 0deg) * var(--movement-speed));
+  --skx: calc(var(--is-running, 0) * var(--facing-dir, 0) * -1 * 10deg);
   --sx: var(--facing-dir, 1);
 
   position: absolute;
@@ -118,6 +127,7 @@
   background-size: cover;
   translate: -50% -50%;
   transform-origin: center bottom;
+  z-index: 10;
 
   &[data-is-admin='true'] {
     --is-admin: 1;
@@ -138,6 +148,19 @@
   background-image: url('../routes/_authed/-assets/hog-animations/default/walk.png');
   animation: player-walk calc(900ms / var(--movement-speed)) steps(11) infinite;
   /*player-admin-hue var(--hue-speed) infinite;*/
+
+  &:before {
+    @apply absolute inset-0;
+    content: '';
+    background-image: url('../routes/_authed/-assets/hog-animations/default/fire_effect.png');
+    animation: player-run 1500ms steps(14) infinite;
+    image-rendering: pixelated;
+    background-repeat: no-repeat;
+    box-sizing: content-box;
+    background-size: cover;
+    transform-origin: center bottom;
+    opacity: calc(var(--is-running, 0) * 0.5);
+  }
 
   & > .hat {
     --hat-offset: 0px;

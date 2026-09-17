@@ -13,8 +13,8 @@ allowBuilds:
   utf-8-validate: false
   'convex-solidjs@https://codeload.github.com/msviderok/convex-solidjs/tar.gz/b21f6332498bcac8b2b2a18bfe2ae78a0402bcc2': true
 catalog:
-  '@clerk/backend': ^3.17.2
-  '@clerk/ui': ^1.32.3
+  '@clerk/backend': ^3.18.1
+  '@clerk/ui': ^1.33.1
   '@convex-dev/crons': ^0.2.2
   '@dnd-kit/abstract': 0.5.0
   '@dnd-kit/dom': 0.5.0
@@ -31,7 +31,7 @@ catalog:
   '@tanstack/solid-start': ^1.168.52
   '@total-typescript/ts-reset': ^0.6.1
   '@types/howler': ^2.2.13
-  '@types/node': ^26.5.1
+  '@types/node': ^26.6.1
   '@web-kits/audio': ^0.2.0
   class-variance-authority: ^0.7.1
   clerk-solidjs-tanstack-start: ^0.0.3
@@ -46,7 +46,7 @@ catalog:
   motion: ^13.3.0
   nitro: npm:nitro-nightly@3.0.260903-beta
   oxfmt: ^0.68.0
-  posthog-js: ^1.433.3
+  posthog-js: ^1.433.5
   shadcn: ^4.21.0
   solid-js: 1.9.15
   solid-motionone: ^1.0.4

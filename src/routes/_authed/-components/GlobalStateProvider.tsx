@@ -340,7 +340,6 @@ export function GlobalStateProvider(props: ParentProps) {
 
   function updateGameStateIfChanged(cb: () => void) {
     return () => {
-      const prevIsRunning = player.isRunning
       const prevIsWalking = player.isWalking
       const prevDirection = player.direction
 
@@ -349,9 +348,6 @@ export function GlobalStateProvider(props: ParentProps) {
 
       if (prevIsWalking !== player.isWalking) {
         void setIsWalking.mutate({ isWalking: player.isWalking })
-      }
-      if (prevIsRunning !== player.isRunning) {
-        void setIsRunning.mutate({ isRunning: player.isRunning })
       }
       if (player.direction !== 0 && prevDirection !== player.direction) {
         void setDirection.mutate({ direction: player.direction })
@@ -412,6 +408,7 @@ export function GlobalStateProvider(props: ParentProps) {
       player.isRunning = shift
       player.speed = PLAYER_BASE_SPEED_PX_PER_SEC * (shift ? PLAYER_RUNNING_SPEED_MOD : 1)
       player.ref?.style.setProperty('--is-running', shift ? '1' : '0')
+      void setIsRunning.mutate({ isRunning: player.isRunning })
     }),
   )
 
@@ -426,7 +423,6 @@ export function GlobalStateProvider(props: ParentProps) {
 
   if (import.meta.hot) {
     import.meta.hot.on('vite:afterUpdate', () => {
-      console.log('HMR')
       calculate()
     })
   }

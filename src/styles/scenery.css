@@ -1,5 +1,5 @@
 @utility asset {
-  @apply game-transform;
+  @apply game-transform absolute top-0 left-0 origin-center;
   --attr-w: attr(data-width type(<number>), var(--w));
   --attr-h: attr(data-height type(<number>), var(--h));
   --attr-x: attr(data-x type(<number>), var(--x, 0));
@@ -8,28 +8,6 @@
   --ty: calc(var(--dty, 0) + var(--attr-y) * var(--scene-world-unit-y));
   width: calc(var(--dw, var(--attr-w)) * var(--scale, 1) * 1px);
   height: calc(var(--dh, var(--attr-h)) * var(--scale, 1) * 1px);
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  &:after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: var(--asset-url);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: top left;
-    image-rendering: pixelated;
-    will-change: transform, translate, scale;
-    transform-origin: top left;
-    transition-property: filter;
-  }
-
-  &[data-open='true']:after {
-    @apply shadow-glass-ph-mustard-yellow;
-    filter: drop-shadow(0px 0px 10px var(--tw-shadow-color));
-  }
 
   &:before {
     --mask: var(--asset-url) center / contain no-repeat;
@@ -46,8 +24,34 @@
     transition-property: opacity;
   }
 
-  &[data-open='true']:before {
-    opacity: 1;
+  &:after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--asset-url);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: top left;
+    image-rendering: pixelated;
+    will-change: transform, translate, scale;
+    transform-origin: top left;
+    transition-property: filter;
+    isolation: isolate;
+  }
+
+  &[data-open='true'] {
+    z-index: 1;
+    --sx: 1.02;
+    --sy: 1.02;
+
+    &:before {
+      opacity: 1;
+    }
+
+    &:after {
+      @apply shadow-glass-ph-mustard-yellow;
+      filter: drop-shadow(0px 0px 10px var(--tw-shadow-color));
+    }
   }
 }
 

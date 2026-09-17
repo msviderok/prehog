@@ -25,7 +25,7 @@ export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(compone
 
   const sceneryPopoverCtx = useSceneryPopover()
   const isOpen = createMemo(() => {
-    if (!props.nodeId) return false
+    if (!props.nodeId) return undefined
     const openAccessor = sceneryPopoverCtx.isOpen(props.nodeId)
     return openAccessor()
   })

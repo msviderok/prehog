@@ -164,3 +164,19 @@ export const currentScene = query({
     return { scene: state.scene, lastKnownXPosition: state.lastKnownXPosition?.[state.scene] }
   },
 })
+
+export const getMyIsWalking = query({
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+    return state.isWalking
+  },
+})
+
+export const getMyIsRunning = query({
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+    return state.isRunning
+  },
+})
