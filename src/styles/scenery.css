@@ -8,6 +8,7 @@
   --ty: calc(var(--dty, 0) + var(--attr-y) * var(--scene-world-unit-y));
   width: calc(var(--dw, var(--attr-w)) * var(--scale, 1) * 1px);
   height: calc(var(--dh, var(--attr-h)) * var(--scale, 1) * 1px);
+  z-index: -1;
 
   &:before {
     --mask: var(--asset-url) center / contain no-repeat;
@@ -40,9 +41,7 @@
   }
 
   &[data-open='true'] {
-    z-index: 1;
-    --sx: 1.02;
-    --sy: 1.02;
+    z-index: 0;
 
     &:before {
       opacity: 1;
@@ -116,7 +115,6 @@
   /* Prism side */
   & > * {
     @apply absolute will-change-transform bg-ph-mustard-yellow border-shade-ph-mustard-yellow/10;
-    /*@apply shadow-[0px_0px_10px_10px_var(--ph-mustard-yellow)];*/
     @apply animate-flactuate-height;
 
     --angle: calc(var(--i) * var(--single-side-angle));
@@ -149,6 +147,6 @@
 }
 
 @utility marker-floating-action {
-  @apply game-transform transition-opacity absolute top-0 left-1/2 flex flex-col items-center gap-4 -translate-x-1/2;
+  @apply game-transform transition-opacity absolute top-0 left-1/2 flex flex-col items-center gap-4 -translate-x-1/2 -z-1 isolate;
   opacity: var(--collided, 0);
 }

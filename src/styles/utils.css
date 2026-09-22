@@ -2,6 +2,26 @@
   --v-color: --value(--color-*, [*]);
 }
 
+@utility text-scaled-* {
+  font-size: calc(--value(--text-*, [length]) * var(--scale));
+}
+@utility w-scaled-* {
+  width: calc(--spacing(--value(integer)) * var(--scale));
+}
+
+@utility h-scaled-* {
+  height: calc(--spacing(--value(integer)) * var(--scale));
+}
+
+@utility size-scaled-* {
+  width: calc(--spacing(--value(integer)) * var(--scale));
+  height: calc(--spacing(--value(integer)) * var(--scale));
+}
+
+@utility border-scaled-* {
+  border-width: calc(--value(integer, [length]) * var(--scale) * 1px);
+}
+
 @utility typing {
   width: calc(min-content + 1rem);
   position: relative;
@@ -27,18 +47,25 @@
 }
 
 @utility comic {
-  @apply text-white;
-  --b80: color-mix(in oklch, currentColor, black 80%);
-  --b50: color-mix(in oklch, currentColor, black 50%);
-  --s: 0.02em;
+  --b80: color-mix(in oklch, var(--comic-color, currentColor), var(--comic-shadow-color, black) 80%);
+  --b50: color-mix(in oklch, var(--comic-color, currentColor), var(--comic-shadow-color, black) 50%);
+  --s: 0.015em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--comic-color, currentColor);
   text-shadow:
     var(--s) var(--s) 0 var(--b80),
     calc(var(--s) * 2) calc(var(--s) * 2) 0 var(--b50),
     calc(var(--s) * 3) calc(var(--s) * 3) 0 var(--b50),
     calc(var(--s) * 4) calc(var(--s) * 4) 0 var(--b50),
     calc(var(--s) * 5) calc(var(--s) * 5) 0 var(--b80);
+}
+
+@utility comic-* {
+  --comic-color: --value(--color-*, [*]);
+}
+@utility comic-shadow-* {
+  --comic-shadow-color: --value(--color-*, [*]);
 }
 
 @utility overlay {

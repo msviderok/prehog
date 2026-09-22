@@ -1,5 +1,6 @@
-import { PopoverArrow, popoverVariants } from '@/components/ui/popover'
+import { popoverVariants } from '@/components/ui/popover'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
+import { cn } from 'cn'
 import {
   createContext,
   createMemo,
@@ -18,8 +19,6 @@ import { Dynamic } from 'solid-js/web'
 import { EventMarker, type EventMarkerProps } from './EventMarker'
 import { useGlobalState } from './GlobalStateContext'
 
-const ANIMATION_DURATION_MS = 200
-
 interface PopoverItem {
   id: string
   node: SceneNodePopover
@@ -32,6 +31,7 @@ interface PopoverItem {
   }
   marker: { ref: HTMLElement; position: Coords; component: Component }
   content: { ref: HTMLElement; component: Component }
+  asset: { ref: HTMLElement; component: Component }
 }
 
 interface RegistryState {
@@ -40,6 +40,7 @@ interface RegistryState {
   anchors: Component[]
   markers: Component[]
   contents: Component[]
+  assets: Component[]
 }
 
 interface SceneryPopoverState {
@@ -89,6 +90,9 @@ export function SceneryPopoverProvider(props: ParentProps) {
     },
     get contents() {
       return Object.values<PopoverItem>(this.data).map((i) => i.content.component)
+    },
+    get assets() {
+      return Object.values<PopoverItem>(this.data).map((i) => i.asset.component)
     },
   })
 
@@ -154,11 +158,14 @@ export function SceneryPopoverPortal() {
   const ctx = useSceneryPopover()
   const { scene } = useGlobalState()
   const currentlyRenderedElement = createMemo(() => ctx.active() ?? ctx.lastActive())
+
   return (
     <>
       <SceneryPopoverBackdrop />
 
       <For each={ctx.registry.anchors}>{(anchor) => <Dynamic component={anchor} />}</For>
+
+      <For each={ctx.registry.assets}>{(asset) => <Dynamic component={asset} />}</For>
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
         <div class="z-1 fixed inset-0 translate-y-(--scene-offset-top)">
@@ -197,7 +204,6 @@ export function SceneryPopoverBackdrop() {
   return (
     <PopoverPrimitive.Backdrop
       data-slot="popover-backdrop"
-      style={{ 'animation-duration': `${ANIMATION_DURATION_MS}ms` }}
       class="fixed inset-0 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-open:opacity-50 ease-in-out"
       ref={(el) => (ctx.backdropRef = el)}
     />
@@ -214,12 +220,14 @@ export function SceneryPopover<const K extends string>(
     id: K
     marker: { position: Coords } & EventMarkerProps
     anchor: { position: Coords }
+    asset?: Component<{ nodeId: K }>
     children: JSX.Element
   } & Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>,
 ) {
   let triggerRef!: HTMLElement
   let contentRef!: HTMLElement
   let markerRef!: HTMLElement
+  let assetRef!: HTMLElement
   const ctx = useSceneryPopover()
   const [open, setOpen] = createSignal(true)
 
@@ -308,13 +316,13 @@ export function SceneryPopover<const K extends string>(
         return (
           <PopoverPrimitive.Trigger
             {...p}
-            data-slot="poprover-trigger"
+            data-slot="popover-trigger"
             render="div"
-            class={`
+            class={cn(`
               absolute top-0 left-0 game-transform
               [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--scene-world-unit-x))]
               [--ty:calc(var(--node-anchor-y)*var(--scene-world-unit-y))]
-            `}
+            `)}
             ref={(el) => {
               triggerRef = el
               el.style.setProperty('--node-anchor-x', `${props.anchor.position.x}`)
@@ -345,6 +353,14 @@ export function SceneryPopover<const K extends string>(
             <EventMarker ref={(el) => (markerRef = el)} {...props.marker} />
           </SceneryPopoverNodeContext.Provider>
         )
+      },
+    },
+    asset: {
+      get ref() {
+        return assetRef
+      },
+      component() {
+        return <Dynamic component={props.asset} nodeId={props.id} />
       },
     },
   })

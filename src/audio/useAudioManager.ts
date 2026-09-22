@@ -25,7 +25,7 @@ export function useAudioManager() {
 
   const bgMusic = SOUNDS.music.oblivion_npc_piano
   onMount(() => {
-    if (bgMusic.playing() === false) bgMusic.play()
+    // if (bgMusic.playing() === false) bgMusic.play()
     onCleanup(() => bgMusic.playing() && bgMusic.stop())
   })
 }

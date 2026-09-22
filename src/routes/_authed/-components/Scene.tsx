@@ -20,8 +20,12 @@ export function Root(props: { children: JSX.Element }) {
 }
 
 export function Elements(props: { children: JSX.Element }) {
+  const { scene } = useGlobalState()
   return (
-    <div class="absolute top-0 left-0 transform-3d w-(--scene-width-scaled) h-(--scene-height-scaled)">
+    <div
+      ref={(el) => (scene.elementsContainerRef = el)}
+      class="absolute top-0 left-0 transform-3d w-(--scene-width-scaled) h-(--scene-height-scaled)"
+    >
       {props.children}
     </div>
   )

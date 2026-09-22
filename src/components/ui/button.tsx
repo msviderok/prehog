@@ -3,7 +3,7 @@ import { defaultProps } from '@/lib/utils'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, splitProps } from 'solid-js'
+import { createEffect, createMemo, createSignal, onMount, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 import { usePopoverContext } from './popover'
 
@@ -22,7 +22,7 @@ const buttonVariants = cva(
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
         'game-action':
-          'shadow-button v-ph-background translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-3 bg-ph-warm-pink border-ph-background text-shade-ph-background/20 font-bold',
+          'shadow-button v-ph-warm-pink translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-scaled-8 bg-ph-warm-pink border-ph-background text-ph-warm-pink/50 font-bold comic size-scaled-26 text-scaled-6xl',
       },
       animate: {
         default: '',
@@ -37,7 +37,7 @@ const buttonVariants = cva(
         sm: 'h-6 p-3 text-xs [&_svg]:size-4',
         icon: 'size-8 [&_svg]:size-4.5',
         'icon-xs': 'size-6 [&_svg]:size-3.5',
-        action: 'size-16 text-4xl!',
+        action: 'size-14 text-scaled-6xl',
       },
     },
     defaultVariants: {

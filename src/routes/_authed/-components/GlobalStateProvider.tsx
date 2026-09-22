@@ -46,6 +46,7 @@ export interface GlobalState {
     ref: HTMLElement | undefined
     backgroundRef: HTMLElement | undefined
     popupContainerRef: HTMLElement | undefined
+    elementsContainerRef: HTMLElement | undefined
     scale: number
     worldUnit: Coords
     originalSize: Size
@@ -141,6 +142,7 @@ export function GlobalStateProvider(props: ParentProps) {
     ref: null as unknown as HTMLElement,
     backgroundRef: null as unknown as HTMLElement,
     popupContainerRef: null as unknown as HTMLElement,
+    elementsContainerRef: null as unknown as HTMLElement,
     scale: 1,
     worldUnit: { x: 0, y: 0 }, // scaled/100 in px
     originalSize: { width: 0, height: 0 },

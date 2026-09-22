@@ -34,8 +34,8 @@
   border-color: color-mix(in oklch, white, black calc(--value(integer) * 1%));
 }
 @utility border-glass-* {
-  border-color: color-mix(in oklch, --value(--color-*, [*]) calc(100% - --modifier(integer) * 1%), transparent);
-  border-color: color-mix(in oklch, white, transparent calc(--modifier(integer) * 1%));
+  border-color: rgb(from --value(--color-*, [*]) r g b / 70%);
+  border-color: rgb(from --value(--color-*, [*]) r g b / calc(100% - --modifier(integer) * 1%));
 }
 
 @utility decoration-tint-* {
