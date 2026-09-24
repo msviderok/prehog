@@ -22,7 +22,7 @@ const buttonVariants = cva(
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
         'game-action':
-          'shadow-button v-ph-warm-pink translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-scaled-8 bg-ph-warm-pink border-ph-background text-ph-warm-pink/50 font-bold comic size-scaled-26 text-scaled-6xl',
+          'shadow-button v-ph-warm-pink translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-6 bg-ph-warm-pink border-ph-background text-ph-warm-pink/50 font-bold comic size-16 text-4xl',
       },
       animate: {
         default: '',
@@ -37,7 +37,6 @@ const buttonVariants = cva(
         sm: 'h-6 p-3 text-xs [&_svg]:size-4',
         icon: 'size-8 [&_svg]:size-4.5',
         'icon-xs': 'size-6 [&_svg]:size-3.5',
-        action: 'size-14 text-scaled-6xl',
       },
     },
     defaultVariants: {
@@ -187,14 +186,7 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
 
 export function PressE(props: { onPress: HotkeyCallback; class?: string }) {
   return (
-    <Button
-      variant="game-action"
-      animate="scale"
-      size="action"
-      hotkey="E"
-      onHotkeyPress={props.onPress}
-      class={props.class}
-    >
+    <Button variant="game-action" animate="scale" hotkey="E" onHotkeyPress={props.onPress} class={props.class}>
       E
     </Button>
   )

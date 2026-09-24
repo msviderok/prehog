@@ -115,6 +115,10 @@
   h6 {
     @apply font-heading;
   }
+
+  * {
+    @apply text-pretty;
+  }
 }
 
 @custom-variant data-pressed (&[data-pressed]);

@@ -168,8 +168,8 @@ export function SceneryPopoverPortal() {
       <For each={ctx.registry.assets}>{(asset) => <Dynamic component={asset} />}</For>
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
-        <div class="z-1 fixed inset-0 translate-y-(--scene-offset-top)">
-          <div class="absolute top-0 left-0 translate-x-(--scene-tx) w-(--scene-width-scaled) h-(--scene-height-scaled)">
+        <div class="z-1 fixed inset-0">
+          <div class="absolute top-0 left-0 size-full translate-x-(--scene-tx)">
             <PopoverPrimitive.Positioner
               class="isolate z-50"
               arrowPadding={15}
@@ -266,8 +266,11 @@ export function SceneryPopover<const K extends string>(
     get popupRef() {
       return ctx.popupRef
     },
-    get position() {
+    get anchorPosition() {
       return props.anchor.position
+    },
+    get markerPosition() {
+      return props.marker.position
     },
     size: { width: 0, height: 0 },
     hitbox: { x1: 0, y1: 0, x2: 0, y2: 0 },

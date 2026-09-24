@@ -84,25 +84,30 @@
 
 @utility marker {
   @apply absolute perspective-midrange origin-center top-0 left-0 transform-3d;
-  width: calc(var(--node-width) * 1px);
-  height: calc(var(--node-height) * 1px);
-  transform: translate3d(calc((var(--node-tx) + var(--scene-tx)) * 1px), calc(var(--node-ty) * 1px), 0);
+  --node-width-px: calc(var(--node-width) * var(--wux));
+  --node-height-px: calc(var(--node-height) * var(--wuy));
+  --node-tx-px: calc(var(--node-tx) * var(--wux) + var(--scene-tx));
+  --node-ty-px: calc(var(--node-ty) * var(--wuy));
+
+  width: var(--node-width-px);
+  height: var(--node-height-px);
+  transform: translate3d(var(--node-tx-px), var(--node-ty-px), 0);
 }
 
 @utility marker-polygons {
   @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform transition-[scale] ease-in-out duration-300;
   @apply animate-spinY;
 
-  --rx: -20;
-  --prism-radius: calc(var(--node-width) / 2);
+  --rx: -15deg;
+  --prism-radius: calc(var(--node-width-px) / 2);
   --wave-phase: 0deg;
   --single-side-angle: calc(360deg / var(--len, 1));
 
-  --side-width: calc(var(--node-width) * sin(180deg / var(--len, 1)));
-  --side-offset: calc((var(--node-width) - var(--side-width)) / 2);
+  --side-width: calc(var(--node-width-px) * sin(180deg / var(--len, 1)));
+  --side-offset: calc((var(--node-width-px) - var(--side-width)) / 2);
   --side-apothem: calc(var(--prism-radius) * cos(180deg / var(--len, 1)) - 1px);
   --side-static-h-fraction: 0.7;
-  --side-static-h: var(--node-height) * var(--side-static-h-fraction);
+  --side-static-h: var(--node-height-px) * var(--side-static-h-fraction);
   --side-wave-amplitude: calc(1 - var(--side-static-h-fraction));
 
   scale: calc(1 + var(--collided, 0) * 0.15);
@@ -120,7 +125,7 @@
     --sy: calc(var(--side-static-h-fraction) + var(--wave) * var(--side-wave-amplitude));
     filter: brightness(110%);
     width: var(--side-width);
-    height: var(--node-height);
+    height: var(--node-height-px);
     transform-origin: bottom center;
     transform: translateX(var(--side-offset)) scaleY(var(--sy)) rotateY(var(--angle)) translateZ(var(--side-apothem));
     border-radius: 26px 26px 0 0;
@@ -134,10 +139,10 @@
   &:after {
     @apply absolute top-1/2 left-1/2 bg-ph-mustard-yellow;
     content: '';
-    width: calc(var(--node-width) * 1);
-    height: calc(var(--node-width) * 1);
+    width: calc(var(--node-width-px) * 1);
+    height: calc(var(--node-width-px) * 1);
     overflow: hidden;
-    transform: translate(-50%, -50%) translateY(calc(var(--node-height) / 2)) rotateX(90deg);
+    transform: translate(-50%, -50%) translateY(calc(var(--node-height-px) / 2)) rotateX(90deg);
     clip-path: var(--bottom-clip-path);
     filter: brightness(calc(120% + var(--collided, 0) * 20%));
   }

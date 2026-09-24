@@ -34,7 +34,7 @@ export function Root(props: { children: JSX.Element }) {
 export function Elements(props: { children: JSX.Element }) {
   const { scene } = useGlobalState()
   return (
-    <div ref={(el) => (scene.elementsContainerRef = el)} class="absolute top-0 left-0 size-[inherit]">
+    <div ref={(el) => (scene.elementsContainerRef = el)} class="absolute top-0 left-0 size-[inherit] transform-3d">
       {props.children}
     </div>
   )

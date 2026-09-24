@@ -23,17 +23,15 @@ export function runGameLoop() {
       player.hitbox.x1 = player.x - misc.player.size.halfWidth
       player.hitbox.x2 = player.x + misc.player.size.halfWidth
 
-      const isUserAtTheStart = player.x < scene.cameraStartTravelAtX
-      const isUserAtTheEnd = player.x > scene.cameraEndTravelAtX
-      const isUserLockedAtTheCentre = !isUserAtTheStart && !isUserAtTheEnd
-
       const cameraLeftX = clamp(0, player.x - scene.s50WU, scene.cameraEndTravelAtX - scene.s50WU)
       player.tx = (player.x - cameraLeftX) * scene.worldUnit.x
-      player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
-
-      scene.cameraCenterAtX = clamp(scene.cameraStartTravelAtX, player.x, scene.cameraEndTravelAtX)
       scene.tx = cameraLeftX * scene.worldUnit.x
+      player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
       scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
+
+      if (_debugTick) {
+        console.log(player.tx)
+      }
 
       /** Other players' movement */
       const renderTime = Date.now() - INTERPOLATION_DELAY_MS

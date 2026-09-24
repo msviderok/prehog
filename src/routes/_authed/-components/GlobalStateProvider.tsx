@@ -162,9 +162,6 @@ export function GlobalStateProvider(props: ParentProps) {
       misc.player.hitbox.y2 = sceneInitialState.playerInitialY + misc.player.size.halfHeight
       root.style.setProperty('--player-offset-y', `${sceneInitialState.playerInitialY}`)
 
-      misc.eventMarker.r = EVENT_MARKER_SIZE.width / scene.worldUnit.x
-      misc.eventMarker.h = EVENT_MARKER_SIZE.height / scene.worldUnit.y
-
       scene.originalSize.width = sceneInitialState.width
       scene.originalSize.height = sceneInitialState.height
       root.style.setProperty('--original-scene-width', `${scene.originalSize.width}px`)
@@ -248,12 +245,15 @@ export function GlobalStateProvider(props: ParentProps) {
     scene.cameraStartTravelAtX = scene.s50WU
     scene.cameraEndTravelAtX = 100 - scene.s50WU
 
+    misc.eventMarker.r = EVENT_MARKER_SIZE.width / scene.worldUnit.x
+    misc.eventMarker.h = EVENT_MARKER_SIZE.height / scene.worldUnit.y
+
     for (const node of nodes) {
       if (node.type === 'popover') {
-        node.hitbox.x1 = node.position.x - misc.eventMarker.r
-        node.hitbox.x2 = node.position.x + misc.eventMarker.r
-        node.hitbox.y1 = node.position.y - misc.eventMarker.h
-        node.hitbox.y2 = node.position.y + misc.eventMarker.h
+        node.hitbox.x1 = node.markerPosition.x - misc.eventMarker.r
+        node.hitbox.x2 = node.markerPosition.x + misc.eventMarker.r
+        node.hitbox.y1 = node.markerPosition.y - misc.eventMarker.h
+        node.hitbox.y2 = node.markerPosition.y + misc.eventMarker.h
         node.size.width = node.hitbox.x2 - node.hitbox.x1
         node.size.height = node.hitbox.y2 - node.hitbox.y1
       }

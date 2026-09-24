@@ -17,6 +17,7 @@ import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
 import { SceneryPopover } from '@/routes/_authed/-components/SceneryPopover'
+import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
 
 const SCALE = 1.475
@@ -25,16 +26,16 @@ export function Scenery() {
   return (
     <Scene.Elements>
       <Intro />
-      {/*<Experience />*/}
-      {/*<Wardrobe />*/}
-      {/*<MyProjects />*/}
-      {/*<WhyAmIGoodForARole />*/}
-      {/*<Wardrobe2 />*/}
-      {/*<Drawboard />*/}
-      {/*<PersonalStuff />*/}
-      {/*<Temp1 />*/}
-      {/*<Temp2 />*/}
-      {/*<LastDoor />*/}
+      <Experience />
+      <Wardrobe />
+      <MyProjects />
+      <WhyAmIGoodForARole />
+      <Wardrobe2 />
+      <Drawboard />
+      <PersonalStuff />
+      <Temp1 />
+      <Temp2 />
+      <LastDoor />
 
       <Scene.Players />
     </Scene.Elements>
@@ -54,7 +55,6 @@ function Intro() {
       <PopoverHeader>
         <PopoverTitle>Oh, hey there! Welcome!</PopoverTitle>
       </PopoverHeader>
-
       <PopoverDescription>Here you can get to know me better.</PopoverDescription>
     </SceneryPopover>
   )
@@ -77,14 +77,22 @@ function Experience() {
             y={15}
             scale={SCALE}
             width={assets['/_authed/main/']['intro.png'].size.width * 0.5}
-            class={`
+            class={cn(`
               z-1 origin-bottom transition-transform
               [--pp:500px] [--rx:30deg] [--tz:100px] [--dtx:calc(var(--scene-tx)*-1+50%)]
               group-data-open:[--sy:1.3]
-              group-data-open:[--rx:0]
-            `}
+              group-data-open:[--rx:0deg]
+              group-data-open:after:bg-ph-warm-pink
+            `)}
           >
-            <span class="game-transform transition-transform overlay z-1 comic text-5xl flex items-center justify-center tracking-[0.2em] group-data-open:[--sy:0.8]">
+            <span
+              class={cn(`
+              game-transform transition-transform overlay z-1 comic text-[70px] flex items-center justify-center tracking-[0.2em]
+              group-data-open:[--sy:0.8]
+              group-data-open:text-ph-mustard-yellow
+              group-data-open:brightness-150
+            `)}
+            >
               Experience
             </span>
           </Asset>
@@ -168,7 +176,7 @@ function WhyAmIGoodForARole() {
       side="right"
       align="end"
       anchor={{ position: { x: 54.34, y: 46 } }}
-      marker={{ position: { x: 47, y: 94 } }}
+      marker={{ position: { x: 47, y: 94 }, onInteract: () => {}, label: 'Interact' }}
       asset={(p) => <Asset {...p} routeId="/_authed/main/" asset="application.png" x={43.1} y={-0.1} scale={SCALE} />}
     >
       <PopoverHeader>
@@ -176,10 +184,6 @@ function WhyAmIGoodForARole() {
       </PopoverHeader>
 
       <PopoverDescription>This is my job application for the Posthog Product engineer position.</PopoverDescription>
-
-      <PopoverFooter>
-        <PopoverActionDoor to="application">Explore</PopoverActionDoor>
-      </PopoverFooter>
     </SceneryPopover>
   )
 }
@@ -227,7 +231,7 @@ function PersonalStuff() {
       side="right"
       align="end"
       anchor={{ position: { x: 83, y: 48 } }}
-      marker={{ position: { x: 77.8, y: 94 } }}
+      marker={{ position: { x: 77.8, y: 94 }, onInteract: () => {}, label: 'Interact' }}
       asset={(p) => <Asset {...p} x={74.46} y={-0.3} scale={SCALE} routeId="/_authed/main/" asset="personal.png" />}
     >
       <PopoverHeader>
@@ -235,10 +239,6 @@ function PersonalStuff() {
       </PopoverHeader>
 
       <PopoverDescription>Here you can get to know me better.</PopoverDescription>
-
-      <PopoverFooter>
-        <PopoverActionDoor to="pet">Get to know me</PopoverActionDoor>
-      </PopoverFooter>
     </SceneryPopover>
   )
 }

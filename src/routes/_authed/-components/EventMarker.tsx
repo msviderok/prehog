@@ -1,8 +1,8 @@
-import { PressE } from '@/components/ui/button';
-import { createPolygonClipPath, random } from '@/lib/utils';
-import { assets } from '@/routeAssets.gen';
-import { Index, Show, type Ref } from 'solid-js';
-import { useGlobalState } from './GlobalStateContext';
+import { PressE } from '@/components/ui/button'
+import { createPolygonClipPath, random } from '@/lib/utils'
+import { assets } from '@/routeAssets.gen'
+import { Index, Show, type Ref } from 'solid-js'
+import { useGlobalState } from './GlobalStateContext'
 
 const POLYGON_SIDES = 14
 const POLYGON_ARR = Array.from({ length: POLYGON_SIDES }, (_, i) => i)
@@ -16,7 +16,7 @@ export interface EventMarkerProps {
 }
 
 export function EventMarker(props: EventMarkerProps) {
-  const { misc } = useGlobalState()
+  const { misc, scene } = useGlobalState()
   return (
     <div class="marker" style={{ '--delay': random(1, 10) }} ref={props.ref}>
       <div
@@ -28,16 +28,13 @@ export function EventMarker(props: EventMarkerProps) {
 
       <Show when={props.onInteract && props.label}>
         <div
-          class="marker-floating-action bg-glass-black/20 border-glass-black/20 border-2 rounded-xl bg-size-[100%]"
+          class="marker-floating-action"
           style={{
-            'background-image': `url(${assets['//']['bg_pattern.png'].src})`,
-            '--ty': `-${misc.player.size.height * 1.3}px`,
+            '--ty': `-${misc.player.size.height * scene.worldUnit.y * 1.3}px`,
           }}
         >
           <PressE onPress={() => props.onInteract?.()} />
-          <span class="comic text-scaled-3xl comic-ph-light-cornflower-blue comic-shadow-ph-dark-cornflower-blue">
-            {props.label ?? 'Interact'}
-          </span>
+          <span class="comic text-3xl comic-ph-warm-pink">{props.label ?? 'Interact'}</span>
         </div>
       </Show>
     </div>

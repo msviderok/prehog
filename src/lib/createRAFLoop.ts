@@ -3,7 +3,7 @@ import { defaultProps } from './utils'
 import { BATCHING_INTERVAL_MS, SAMPLING_INTERVAL_MS } from './constants'
 
 const TICK_MS = 16.66666666 // 60 fps;
-const DEBUG_TICK_INTERVAL_MS = 100
+const DEBUG_TICK_INTERVAL_MS = 1000
 
 export function createRAFLoop(options: {
   autostart?: boolean

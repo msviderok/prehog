@@ -58,7 +58,6 @@ declare global {
   interface BaseSceneNodeProps {
     rootRef: HTMLElement | undefined
     size: { width: number; height: number }
-    position: { x: number; y: number }
     readonly hitbox: { x1: number; y1: number; x2: number; y2: number }
     actions: {
       open: NodeAction<boolean>
@@ -68,7 +67,8 @@ declare global {
   interface SceneNodePopover extends BaseSceneNodeProps {
     type: 'popover'
     popupRef: HTMLElement | undefined
-    position: { x: number; y: number }
+    anchorPosition: { x: number; y: number }
+    markerPosition: { x: number; y: number }
   }
 
   interface SceneNodePlayer extends BaseSceneNodeProps {
