@@ -55,7 +55,7 @@
       background-position-x: 0;
     }
     to {
-      background-position-x: calc(-1 * var(--player-width-scaled) * 86);
+      background-position-x: calc(-1 * var(--original-player-width) * 86);
     }
   }
 
@@ -64,7 +64,7 @@
       background-position-x: 0;
     }
     to {
-      background-position-x: calc(-1 * var(--player-width-scaled) * 11);
+      background-position-x: calc(-1 * var(--original-player-width) * 11);
     }
   }
 
@@ -73,7 +73,7 @@
       background-position-x: 0;
     }
     to {
-      background-position-x: calc(-1 * var(--player-width-scaled) * 14);
+      background-position-x: calc(-1 * var(--original-player-width) * 14);
     }
   }
 
@@ -93,13 +93,18 @@
   left: 0;
   box-sizing: content-box;
   background-position-y: 0;
-  background-position-x: calc(-1 * var(--player-width-scaled) * var(--hat-index, 0) + var(--hat-offset, 0));
+  background-position-x: calc(-1 * var(--original-player-width) * var(--hat-index, 0) + var(--hat-offset, 0));
   image-rendering: pixelated;
-  width: var(--player-width-scaled);
-  height: var(--player-height-scaled);
+  width: var(--original-player-width);
+  height: var(--original-player-height);
   background-repeat: no-repeat;
   background-size: cover;
   transform-origin: center bottom;
+
+  /*&:after {
+    @apply absolute top-full left-1/2 -translate-x-1/2 w-0.5 h-10 bg-red-500;
+    content: '';
+  }*/
 }
 
 @utility player {
@@ -111,7 +116,7 @@
   --hat-offset: 3px;
   --animation-speed: 7000ms;
   --hue-speed: 500ms;
-  --ty: var(--player-offset-y-scaled);
+  --ty: calc(var(--player-offset-y) * var(--wuy));
   --skx: calc(var(--is-running, 0) * var(--facing-dir, 0) * -1 * 10deg);
   --sx: var(--facing-dir, 1);
 
@@ -121,8 +126,8 @@
   box-sizing: content-box;
   background-position-y: 0;
   image-rendering: pixelated;
-  width: var(--player-width-scaled);
-  height: var(--player-height-scaled);
+  width: var(--original-player-width);
+  height: var(--original-player-height);
   background-repeat: no-repeat;
   background-size: cover;
   translate: -50% -50%;

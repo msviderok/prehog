@@ -61,7 +61,6 @@ export const Route = createRootRouteWithContext()({
             </ClientOnly>
           </Suspense>
 
-          <TanStackRouterDevtools />
           <Scripts />
         </body>
       </html>

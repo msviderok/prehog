@@ -11,7 +11,7 @@ import { Hat } from './Hat'
 export function OtherPlayer(props: { id: Id<'users'> }) {
   let ref!: HTMLDivElement
   let sceneNode: SceneNodePlayer | undefined
-  const { scene, nodes, misc, otherPlayers } = useGlobalState()
+  const { nodes, misc, otherPlayers } = useGlobalState()
   const [nodeOpen, setNodeOpen] = createSignal(false)
 
   const getInitialState = useMutation(api.gameState.getInitialState)
@@ -33,17 +33,9 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
         return ref
       },
       x: 0,
-      realX: 0,
       batchQueue: [],
-      size: {
-        inPX: { width: 0, height: 0 },
-        inWorldUnits: { width: 0, height: 0 },
-      },
-      hitbox: {
-        position: { x: 0, y: 0 },
-        inPX: { x1: 0, x2: 0, y1: 0, y2: 0 },
-        inWorldUnits: { x1: 0, x2: 0, y1: 0, y2: 0 },
-      },
+      size: { width: 0, height: 0 },
+      hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
     }
 
     otherPlayers.hashmap.set(props.id, newOtherPlayer)
@@ -57,6 +49,7 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
           set: setNodeOpen,
         },
       },
+      position: { x: 0, y: 0 },
       size: newOtherPlayer.size,
       hitbox: newOtherPlayer.hitbox,
       get rootRef() {
@@ -104,18 +97,13 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
   onMount(() => {
     getInitialState.mutate({ userId: props.id }).then((s) => {
       otherPlayer().x = s.x
-      otherPlayer().realX = s.x * scene.worldUnit.x
 
-      otherPlayer().hitbox.inWorldUnits.x1 = s.x - misc.player.size.inWorldUnits.halfWidth
-      otherPlayer().hitbox.inWorldUnits.x2 = s.x + misc.player.size.inWorldUnits.halfWidth
-      otherPlayer().hitbox.inWorldUnits.y1 = misc.player.hitbox.inWorldUnits.y1
-      otherPlayer().hitbox.inWorldUnits.y2 = misc.player.hitbox.inWorldUnits.y2
+      otherPlayer().hitbox.x1 = s.x - misc.player.size.halfWidth
+      otherPlayer().hitbox.x2 = s.x + misc.player.size.halfWidth
+      otherPlayer().hitbox.y1 = misc.player.hitbox.y1
+      otherPlayer().hitbox.y2 = misc.player.hitbox.y2
 
-      otherPlayer().hitbox.inPX.x1 = otherPlayer().realX - misc.player.size.inPX.halfWidth
-      otherPlayer().hitbox.inPX.x2 = otherPlayer().realX + misc.player.size.inPX.halfWidth
-      otherPlayer().hitbox.inPX.y1 = misc.player.hitbox.inPX.y1
-      otherPlayer().hitbox.inPX.y2 = misc.player.hitbox.inPX.y2
-      ref?.style.setProperty('--tx', `${otherPlayer().realX}px`)
+      ref?.style.setProperty('--tx', `${otherPlayer().x}px`)
     })
   })
 

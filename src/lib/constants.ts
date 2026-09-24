@@ -37,11 +37,10 @@ export const BATCHING_INTERVAL_MS = 100
 export const INTERPOLATION_DELAY_MS = 200
 export const HEARTBEAT_MS = 10_000
 
-/** @description in "world units" per every frame, 0 to 100 */
-export const PLAYER_BASE_SPEED_PX_PER_SEC = 4
+export const PLAYER_BASE_SPEED_PX_PER_SEC = 1000
 export const PLAYER_RUNNING_SPEED_MOD = 2.0
-export const PLAYER_SIZE = { width: 300, height: 300 }
-export const PLAYER_HITBOX_SIZE = { width: 200, height: 300 }
+export const PLAYER_SIZE = { width: 300, height: 300 } as const
+export const PLAYER_HITBOX_SIZE = { width: 200, height: 300 } as const
 
 export const COMMON_SCENE_HEIGHT = 1080
 export const SCENE: Record<
@@ -57,11 +56,11 @@ export const SCENE: Record<
     playerInitialY: number
   }
 > = {
-  main: { width: 9780, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 83 },
+  main: { width: 9785, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 83 },
   tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
   application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 62 },
   pet: { width: 5000, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 80 },
   personal: { width: 0, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 0 },
 }
 
-export const EVENT_MARKER_SIZE = { width: 80, height: 16 }
+export const EVENT_MARKER_SIZE = { width: 80, height: 16 } as const

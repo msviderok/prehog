@@ -57,15 +57,9 @@ declare global {
 
   interface BaseSceneNodeProps {
     rootRef: HTMLElement | undefined
-    size: {
-      inWorldUnits: Size
-      inPX: Size
-    }
-    hitbox: {
-      position: Coords
-      inWorldUnits: Hitbox
-      inPX: Hitbox
-    }
+    size: { width: number; height: number }
+    position: { x: number; y: number }
+    readonly hitbox: { x1: number; y1: number; x2: number; y2: number }
     actions: {
       open: NodeAction<boolean>
     }
@@ -74,7 +68,7 @@ declare global {
   interface SceneNodePopover extends BaseSceneNodeProps {
     type: 'popover'
     popupRef: HTMLElement | undefined
-    position: Coords
+    position: { x: number; y: number }
   }
 
   interface SceneNodePlayer extends BaseSceneNodeProps {
@@ -84,7 +78,6 @@ declare global {
   interface OtherPlayer {
     ref: HTMLDivElement | undefined
     x: number
-    realX: number
     batchQueue: GameEventBatch
     size: BaseSceneNodeProps['size']
     hitbox: BaseSceneNodeProps['hitbox']
@@ -93,6 +86,20 @@ declare global {
   type CurrentScene = Doc<'game_user_state'>['scene']
 
   type LoadingStatus = 'not-initiated' | 'signed-out' | 'loading-clerk' | 'loading-game-state' | UserData
+
+  interface CSSStyleDeclaration {
+    '--original-scene-width'?: string
+    '--original-scene-height'?: string
+    '--player-offset-y'?: string
+    '--original-player-width'?: string
+    '--original-player-height'?: string
+    '--original-player-hitbox-width'?: string
+    '--original-player-hitbox-height'?: string
+    '--scale'?: string
+    '--scene-offset-top'?: string
+    '--wux'?: string
+    '--wuy'?: string
+  }
 }
 
 export {}

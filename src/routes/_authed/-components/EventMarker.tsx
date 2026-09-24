@@ -1,9 +1,8 @@
-import { PressE } from '@/components/ui/button'
-import { createPolygonClipPath, random } from '@/lib/utils'
-import { Index, Show, type Ref } from 'solid-js'
-import { useGlobalState } from './GlobalStateContext'
-import { Portal } from 'solid-js/web'
-import { assets } from '@/routeAssets.gen'
+import { PressE } from '@/components/ui/button';
+import { createPolygonClipPath, random } from '@/lib/utils';
+import { assets } from '@/routeAssets.gen';
+import { Index, Show, type Ref } from 'solid-js';
+import { useGlobalState } from './GlobalStateContext';
 
 const POLYGON_SIDES = 14
 const POLYGON_ARR = Array.from({ length: POLYGON_SIDES }, (_, i) => i)
@@ -32,7 +31,7 @@ export function EventMarker(props: EventMarkerProps) {
           class="marker-floating-action bg-glass-black/20 border-glass-black/20 border-2 rounded-xl bg-size-[100%]"
           style={{
             'background-image': `url(${assets['//']['bg_pattern.png'].src})`,
-            '--ty': `-${misc.player.size.inPX.height * 1.3}px`,
+            '--ty': `-${misc.player.size.height * 1.3}px`,
           }}
         >
           <PressE onPress={() => props.onInteract?.()} />

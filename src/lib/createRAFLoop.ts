@@ -3,11 +3,18 @@ import { defaultProps } from './utils'
 import { BATCHING_INTERVAL_MS, SAMPLING_INTERVAL_MS } from './constants'
 
 const TICK_MS = 16.66666666 // 60 fps;
-const DT_MOD = 10
+const DEBUG_TICK_INTERVAL_MS = 100
 
 export function createRAFLoop(options: {
   autostart?: boolean
-  fn: (timestamp: number, dt: number, samplingTick: boolean, batchingTick: boolean, msSinceBatchStart: number) => void
+  fn: (
+    timestamp: number,
+    dt: number,
+    samplingTick: boolean,
+    batchingTick: boolean,
+    msSinceBatchStart: number,
+    debugTick: boolean,
+  ) => void
 }) {
   const props = defaultProps(options, { autostart: true })
 
@@ -16,16 +23,19 @@ export function createRAFLoop(options: {
   let lastTimestamp = performance.now()
   let batchingStartTime = 0
   let samplingStartTime = 0
+  let debugTickStartTime = 0
 
   function runProcessingForSingleTick(timestamp: number) {
-    const dt = (timestamp - lastTimestamp) / DT_MOD
+    const dt = (timestamp - lastTimestamp) / 1000
     lastTimestamp = timestamp
     const msSinceBatchStart = timestamp - batchingStartTime
     const batchingTick = msSinceBatchStart >= BATCHING_INTERVAL_MS
     const samplingTick = timestamp - samplingStartTime >= SAMPLING_INTERVAL_MS
-    props.fn(timestamp, dt, samplingTick, batchingTick, msSinceBatchStart)
+    const debugTick = timestamp - debugTickStartTime >= DEBUG_TICK_INTERVAL_MS
+    props.fn(timestamp, dt, samplingTick, batchingTick, msSinceBatchStart, debugTick)
     if (samplingTick) samplingStartTime = timestamp
     if (batchingTick) batchingStartTime = timestamp
+    if (debugTick) debugTickStartTime = timestamp
   }
 
   function gameLoop(timestamp: number) {

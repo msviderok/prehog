@@ -269,17 +269,8 @@ export function SceneryPopover<const K extends string>(
     get position() {
       return props.anchor.position
     },
-    size: {
-      inWorldUnits: { width: 0, height: 0 },
-      inPX: { width: 0, height: 0 },
-    },
-    hitbox: {
-      get position() {
-        return props.marker.position
-      },
-      inWorldUnits: { x1: 0, y1: 0, x2: 0, y2: 0 },
-      inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
-    },
+    size: { width: 0, height: 0 },
+    hitbox: { x1: 0, y1: 0, x2: 0, y2: 0 },
     actions: {
       open: {
         value: open(),
@@ -320,8 +311,8 @@ export function SceneryPopover<const K extends string>(
             render="div"
             class={cn(`
               absolute top-0 left-0 game-transform
-              [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--scene-world-unit-x))]
-              [--ty:calc(var(--node-anchor-y)*var(--scene-world-unit-y))]
+              [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--wux))]
+              [--ty:calc(var(--node-anchor-y)*var(--wuy))]
             `)}
             ref={(el) => {
               triggerRef = el

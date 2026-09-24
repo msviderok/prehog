@@ -1,9 +1,9 @@
-import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
-import { INTERPOLATION_DELAY_MS } from '@/lib/constants'
+import { INTERPOLATION_DELAY_MS, PLAYER_BASE_SPEED_PX_PER_SEC } from '@/lib/constants'
 import { createRAFLoop } from '@/lib/createRAFLoop'
 import { clamp, lerp } from '@/lib/utils'
+import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { useMutation } from 'convex-solidjs'
 
 export function runGameLoop() {
@@ -11,41 +11,29 @@ export function runGameLoop() {
   const sendBatch = useMutation(api.gameState.sendMyBatch)
   let eventBatch: Doc<'game_event_batches'>['batch'] = []
 
+  let loggedOnce = false // declare above the loop
+
   createRAFLoop({
     autostart: true,
-    fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart) => {
-      const velocity = player.direction * player.speed
-      const distanceThisFrameInPX = velocity * dt
-      const distanceThisFrame = distanceThisFrameInPX / scene.worldUnit.x
+    fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart, _debugTick) => {
+      const velocity = (player.direction * player.speed * dt) / 100
+      const distanceThisFrameWU = velocity * PLAYER_BASE_SPEED_PX_PER_SEC
 
-      /** Scene/camera movement */
-      const shouldLockPlayerInPlace = player.realX > scene.cameraStartMovingX && player.realX < scene.cameraEndMovingX
-      const shouldMoveSceneCamera =
-        shouldLockPlayerInPlace && player.realX > scene.s50 && player.realX < scene.scaled.width
+      player.x = clamp(scene.walkableMinX, player.x + distanceThisFrameWU, scene.walkableMaxX)
+      player.hitbox.x1 = player.x - misc.player.size.halfWidth
+      player.hitbox.x2 = player.x + misc.player.size.halfWidth
 
-      const smoothing = 1 - Math.exp(-10 * dt)
-      const targetCameraX = shouldMoveSceneCamera
-        ? clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
-        : scene.cameraX
-      scene.cameraX += (targetCameraX - scene.cameraX) * smoothing
-      scene.cameraXNormalized = -Math.round(scene.cameraX)
-      document.documentElement.style.setProperty('--scene-tx', `${scene.cameraXNormalized}px`)
+      const isUserAtTheStart = player.x < scene.cameraStartTravelAtX
+      const isUserAtTheEnd = player.x > scene.cameraEndTravelAtX
+      const isUserLockedAtTheCentre = !isUserAtTheStart && !isUserAtTheEnd
 
-      /** My player movement */
-      player.x = clamp(scene.walkableMinX, player.x + distanceThisFrame, scene.walkableMaxX)
-      player.realX = player.x * scene.worldUnit.x
+      const cameraLeftX = clamp(0, player.x - scene.s50WU, scene.cameraEndTravelAtX - scene.s50WU)
+      player.tx = (player.x - cameraLeftX) * scene.worldUnit.x
+      player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
 
-      player.hitbox.inWorldUnits.x1 = player.x - misc.player.size.inWorldUnits.halfWidth
-      player.hitbox.inWorldUnits.x2 = player.x + misc.player.size.inWorldUnits.halfWidth
-      player.hitbox.inPX.x1 = player.realX - misc.player.size.inPX.halfWidth
-      player.hitbox.inPX.x2 = player.realX + misc.player.size.inPX.halfWidth
-
-      player.cameraX = clamp(
-        player.cameraMinX,
-        player.cameraX + (shouldLockPlayerInPlace ? 0 : distanceThisFrameInPX),
-        player.cameraMaxX,
-      )
-      player.ref?.style.setProperty('--tx', `${player.cameraX}px`)
+      scene.cameraCenterAtX = clamp(scene.cameraStartTravelAtX, player.x, scene.cameraEndTravelAtX)
+      scene.tx = cameraLeftX * scene.worldUnit.x
+      scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
 
       /** Other players' movement */
       const renderTime = Date.now() - INTERPOLATION_DELAY_MS
@@ -59,12 +47,10 @@ export function runGameLoop() {
         const b = batch[1]!
         const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
         otherPlayer.x = lerp(a.x, b.x, alpha)
-        otherPlayer.realX = otherPlayer.x * scene.worldUnit.x
-        otherPlayer.hitbox.inWorldUnits.x1 = otherPlayer.x - misc.player.size.inWorldUnits.halfWidth
-        otherPlayer.hitbox.inWorldUnits.x2 = otherPlayer.hitbox.inWorldUnits.x1 + misc.player.size.inWorldUnits.width
-        otherPlayer.hitbox.inPX.x1 = otherPlayer.realX - misc.player.size.inPX.halfWidth
-        otherPlayer.hitbox.inPX.x2 = otherPlayer.hitbox.inPX.x1 + misc.player.size.inPX.width
-        otherPlayer.ref?.style.setProperty('--tx', `${otherPlayer.realX}px`)
+        otherPlayer.hitbox.x1 = otherPlayer.x - misc.player.size.halfWidth
+        otherPlayer.hitbox.x2 = otherPlayer.x + misc.player.size.halfWidth
+        const otherPlayerPaintX = Math.round(otherPlayer.x * scene.worldUnit.x)
+        otherPlayer.ref?.style.setProperty('--tx', `${otherPlayerPaintX}px`)
       }
 
       /** SAMPLING */
@@ -82,15 +68,32 @@ export function runGameLoop() {
         eventBatch = []
       }
 
+      if (_debugTick) {
+        // inside the loop, after the setProperty lines
+        const s = scene.ref?.getBoundingClientRect()
+        const p = player.ref?.getBoundingClientRect()
+        if (s && p && !loggedOnce) {
+          loggedOnce = true
+          console.log({
+            playerX: player.x,
+            cameraLeftX,
+            expectedPlayerCenterPx: (player.x - cameraLeftX) * scene.worldUnit.x * scene.scale,
+            actualPlayerCenterPx: p.left + p.width / 2,
+            expectedSceneLeftPx: -cameraLeftX * scene.worldUnit.x * scene.scale,
+            actualSceneLeftPx: s.left,
+            windowScrollX: window.scrollX,
+            viewportScrollLeft: document.querySelector('[data-viewport]')?.scrollLeft,
+          })
+        }
+      }
+
       let collided = false
       for (const node of nodes) {
-        const nodeCollided = collisionDetected(player.hitbox.inWorldUnits, node.hitbox.inWorldUnits)
-        const v = nodeCollided ? '1' : '0'
-        node.rootRef?.style.setProperty('--collided', v)
-
+        const nodeCollided = collisionDetected(player.hitbox, node.hitbox)
         if (node.actions.open.value !== nodeCollided) {
           node.actions.open.value = nodeCollided
           node.actions.open.set(nodeCollided)
+          node.rootRef?.style.setProperty('--collided', nodeCollided ? '1' : '0')
         }
 
         if (nodeCollided) collided = true

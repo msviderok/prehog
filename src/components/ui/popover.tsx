@@ -181,8 +181,8 @@ export function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
         local.class,
         ctx.variant === 'scenery' &&
           `absolute top-0 left-0 game-transform
-          [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--scene-world-unit-x))]
-          [--ty:calc(var(--node-anchor-y)*var(--scene-world-unit-y))]
+          [--tx:calc(var(--scene-tx)+var(--node-anchor-x)*var(--wux))]
+          [--ty:calc(var(--node-anchor-y)*var(--wuy))]
           `,
       )}
       ref={(el) => {

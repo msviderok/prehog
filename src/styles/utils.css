@@ -1,27 +1,6 @@
 @utility v-* {
   --v-color: --value(--color-*, [*]);
 }
-
-@utility text-scaled-* {
-  font-size: calc(--value(--text-*, [length]) * var(--scale));
-}
-@utility w-scaled-* {
-  width: calc(--spacing(--value(integer)) * var(--scale));
-}
-
-@utility h-scaled-* {
-  height: calc(--spacing(--value(integer)) * var(--scale));
-}
-
-@utility size-scaled-* {
-  width: calc(--spacing(--value(integer)) * var(--scale));
-  height: calc(--spacing(--value(integer)) * var(--scale));
-}
-
-@utility border-scaled-* {
-  border-width: calc(--value(integer, [length]) * var(--scale) * 1px);
-}
-
 @utility typing {
   width: calc(min-content + 1rem);
   position: relative;

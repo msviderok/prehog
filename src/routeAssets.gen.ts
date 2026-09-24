@@ -175,7 +175,7 @@ export const assets = {
     },
     'main_v2.png': {
       name: 'main_v2.png',
-      size: { width: 6642 as number, height: 732 as number },
+      size: { width: 6636 as number, height: 732 as number },
       src: globPaths['/_authed/main/']['/src/routes/_authed/main/-assets/main_v2.png']!,
     },
     'personal.png': {

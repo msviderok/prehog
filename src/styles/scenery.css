@@ -4,10 +4,10 @@
   --attr-h: attr(data-height type(<number>), var(--h));
   --attr-x: attr(data-x type(<number>), var(--x, 0));
   --attr-y: attr(data-y type(<number>), var(--y, 0));
-  --tx: calc(var(--scene-tx, 0) + var(--dtx, 0) + (var(--attr-x) * var(--scene-world-unit-x)));
-  --ty: calc(var(--dty, 0) + var(--attr-y) * var(--scene-world-unit-y));
-  width: calc(var(--dw, var(--attr-w)) * var(--scale, 1) * 1px);
-  height: calc(var(--dh, var(--attr-h)) * var(--scale, 1) * 1px);
+  --tx: calc(var(--scene-tx, 0) + var(--dtx, 0) + (var(--attr-x) * var(--wux)));
+  --ty: calc(var(--dty, 0) + var(--attr-y) * var(--wuy));
+  width: calc(var(--dw, var(--attr-w)) * 1px);
+  height: calc(var(--dh, var(--attr-h)) * 1px);
   z-index: -1;
 
   &:before {
@@ -17,9 +17,9 @@
     position: absolute;
     inset: -5px;
     mask: var(--mask);
-    image-rendering: pixelated;
     -webkit-mask: var(--mask);
     will-change: filter, transform, translate, scale, opacity;
+    image-rendering: pixelated;
     transform-origin: top left;
     opacity: 0;
     transition-property: opacity;
@@ -69,12 +69,10 @@
 
   &.player {
     &:after {
-      --phw: var(--player-hitbox-width-scaled, 100%);
-      --phh: var(--player-hitbox-height-scaled, 100%);
-      top: calc((var(--player-height-scaled) - var(--phh)) / 2);
-      left: calc((var(--player-width-scaled) - var(--phw)) / 2);
-      width: var(--phw);
-      height: var(--phh);
+      top: calc((var(--original-player-height) - var(--original-player-hitbox-height)) / 2);
+      left: calc((var(--original-player-width) - var(--original-player-hitbox-width)) / 2);
+      width: var(--original-player-hitbox-width);
+      height: var(--original-player-hitbox-height);
     }
 
     &[data-me='true']:after {
@@ -86,17 +84,16 @@
 
 @utility marker {
   @apply absolute perspective-midrange origin-center top-0 left-0 transform-3d;
-
-  width: var(--node-width);
-  height: var(--node-height);
-  transform: translate3d(calc(var(--node-tx) + var(--scene-tx)), var(--node-ty), 0);
+  width: calc(var(--node-width) * 1px);
+  height: calc(var(--node-height) * 1px);
+  transform: translate3d(calc((var(--node-tx) + var(--scene-tx)) * 1px), calc(var(--node-ty) * 1px), 0);
 }
 
 @utility marker-polygons {
   @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform transition-[scale] ease-in-out duration-300;
   @apply animate-spinY;
 
-  --rx: -20deg;
+  --rx: -20;
   --prism-radius: calc(var(--node-width) / 2);
   --wave-phase: 0deg;
   --single-side-angle: calc(360deg / var(--len, 1));

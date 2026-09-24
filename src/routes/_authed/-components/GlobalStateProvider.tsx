@@ -4,15 +4,12 @@ import {
   COMMON_SCENE_HEIGHT,
   EVENT_MARKER_SIZE,
   GAME_CONTENT_HEIGHT_RATIO,
-  PLAYER_BASE_SPEED_PX_PER_SEC,
   PLAYER_HITBOX_SIZE,
-  PLAYER_RUNNING_SPEED_MOD,
   PLAYER_SIZE,
   SCENE,
   type Hat,
 } from '@/lib/constants'
 import { useStableQuery } from '@/lib/useStableQuery'
-import { clamp, fastRound } from '@/lib/utils'
 import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
 import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
@@ -22,6 +19,7 @@ import {
   createMemo,
   createSignal,
   on,
+  onCleanup,
   onMount,
   type Accessor,
   type ParentProps,
@@ -43,27 +41,38 @@ export interface GlobalState {
     vh: number
   }
   readonly scene: {
+    /** Ref to the scene container element */
     ref: HTMLElement | undefined
+    /** Ref to the scene background element */
     backgroundRef: HTMLElement | undefined
+    /** Ref to the scene popup container element */
     popupContainerRef: HTMLElement | undefined
+    /** Ref to the scene elements container element */
     elementsContainerRef: HTMLElement | undefined
-    scale: number
-    worldUnit: Coords
-    originalSize: Size
-    offsetTop: number
-    scaled: Size
-    walkableMinX: number
-    walkableMaxX: number
-    cameraX: number
-    cameraXNormalized: number
-    cameraStartMovingX: number
-    cameraEndMovingX: number
-    s50: number // 50% of the screen width
-    /*
-     * Scrollable width of the screen to allow free player movement at the first/last 50%
-     * of the viewport width at the start/end of the scene
+    /**
+     * Scale of the scene calculated by the formula:
+     * Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1)
      */
-    cameraViewportWidth: number
+    scale: number
+    /** The size of a single world unit in px */
+    worldUnit: { x: number; y: number }
+    /** The original size of the scene in px */
+    originalSize: { width: number; height: number }
+    /** `DEBUG ONLY`: The scaled size of the scene in px. */
+    scaledSize: { width: number; height: number }
+    /** Min world unit X of the scene the player should be able to move to */
+    walkableMinX: number
+    /** Max world unit X of the scene the player should be able to move to */
+    walkableMaxX: number
+    /** The current position of the viewport a.k.a. "camera" showing the portion of the scene in world units */
+    tx: number
+    cameraCenterAtX: number
+    /** 50% of the current viewport width in world units */
+    s50PX: number
+    s50WU: number
+    cameraStartTravelAtX: number
+    cameraEndTravelAtX: number
+    /** The current scene the player is in */
     currentScene: CurrentScene
   }
   readonly otherPlayers: {
@@ -72,15 +81,9 @@ export interface GlobalState {
   }
   readonly player: {
     ref: HTMLElement | undefined
-    hitbox: {
-      inWorldUnits: Hitbox
-      inPX: Hitbox
-    }
+    hitbox: { x1: number; y1: number; x2: number; y2: number }
     x: number
-    realX: number
-    cameraX: number
-    cameraMinX: number
-    cameraMaxX: number
+    tx: number
     direction: 1 | 0 | -1 // 1 – right, 0 – stopped, -1 – left
     isWalking: boolean
     isRunning: boolean
@@ -93,23 +96,15 @@ export interface GlobalState {
   }
   readonly misc: {
     player: {
-      size: {
-        inWorldUnits: { width: number; height: number; halfWidth: number; halfHeight: number }
-        inPX: { width: number; height: number; halfWidth: number; halfHeight: number }
-      }
-      hitbox: {
-        inWorldUnits: { y1: number; y2: number }
-        inPX: { y1: number; y2: number }
-      }
+      size: { width: number; height: number; halfWidth: number; halfHeight: number }
+      hitbox: { y1: number; y2: number }
     }
-    eventMarker: {
-      radius: {
-        inWorldUnits: { w: number; h: number }
-        inPX: { w: number; h: number }
-      }
-    }
+    eventMarker: { r: number; h: number }
   }
+  debugData: Accessor<DebugData>
 }
+
+type DebugData = Pick<GlobalState, 'scene' | 'player'>
 
 export function GlobalStateProvider(props: ParentProps) {
   const clerk = useClerk()
@@ -120,21 +115,10 @@ export function GlobalStateProvider(props: ParentProps) {
   const viewport: GlobalState['viewport'] = { width: 0, height: 0, vw: 0, vh: 0 }
   const misc: GlobalState['misc'] = {
     player: {
-      size: {
-        inWorldUnits: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
-        inPX: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
-      },
-      hitbox: {
-        inWorldUnits: { y1: 0, y2: 0 },
-        inPX: { y1: 0, y2: 0 },
-      },
+      size: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
+      hitbox: { y1: 0, y2: 0 },
     },
-    eventMarker: {
-      radius: {
-        inWorldUnits: { w: 0, h: 0 },
-        inPX: { w: 0, h: 0 },
-      },
-    },
+    eventMarker: { r: 0, h: 0 },
   }
 
   const { data: currentScene } = useStableQuery(api.gameState.currentScene)
@@ -146,45 +130,59 @@ export function GlobalStateProvider(props: ParentProps) {
     scale: 1,
     worldUnit: { x: 0, y: 0 }, // scaled/100 in px
     originalSize: { width: 0, height: 0 },
-    scaled: { width: 0, height: 0 },
-    offsetTop: 0,
+    scaledSize: { width: 0, height: 0 },
     walkableMinX: 0,
     walkableMaxX: 0,
-    cameraX: 0,
-    cameraXNormalized: 0,
-    cameraStartMovingX: 0,
-    cameraEndMovingX: 0,
-    s50: 0,
-    cameraViewportWidth: 0,
+    tx: 0,
+    cameraCenterAtX: 0,
+    s50PX: 0,
+    s50WU: 0,
+    cameraStartTravelAtX: 0,
+    cameraEndTravelAtX: 0,
     currentScene: 'main',
   }
   createEffect(
     on([() => currentScene()?.scene, () => currentScene()?.lastKnownXPosition], ([sceneValue, lastKnownX]) => {
       if (sceneValue == null) return
+
+      const root = document.documentElement
       const sceneInitialState = SCENE[sceneValue]
 
-      misc.player.size.inWorldUnits.width = (PLAYER_HITBOX_SIZE.width / sceneInitialState.width) * 100
-      misc.player.size.inWorldUnits.height = (PLAYER_HITBOX_SIZE.height / sceneInitialState.height) * 100
-      misc.player.size.inWorldUnits.halfWidth = misc.player.size.inWorldUnits.width / 2
-      misc.player.size.inWorldUnits.halfHeight = misc.player.size.inWorldUnits.height / 2
-      misc.player.hitbox.inWorldUnits.y1 = sceneInitialState.playerInitialY
-      misc.player.hitbox.inWorldUnits.y2 = sceneInitialState.playerInitialY + misc.player.size.inWorldUnits.height
+      misc.player.size.width = (PLAYER_HITBOX_SIZE.width / sceneInitialState.width) * 100
+      misc.player.size.height = (PLAYER_HITBOX_SIZE.height / sceneInitialState.height) * 100
+      misc.player.size.halfWidth = misc.player.size.width / 2
+      misc.player.size.halfHeight = misc.player.size.height / 2
+      console.log(misc.player.size)
+      root.style.setProperty('--original-player-width', `${PLAYER_SIZE.width}px`)
+      root.style.setProperty('--original-player-height', `${PLAYER_SIZE.height}px`)
+      root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)
+      root.style.setProperty('--original-player-hitbox-height', `${PLAYER_HITBOX_SIZE.height}px`)
+
+      misc.player.hitbox.y1 = sceneInitialState.playerInitialY - misc.player.size.halfHeight
+      misc.player.hitbox.y2 = sceneInitialState.playerInitialY + misc.player.size.halfHeight
+      root.style.setProperty('--player-offset-y', `${sceneInitialState.playerInitialY}`)
+
+      misc.eventMarker.r = EVENT_MARKER_SIZE.width / scene.worldUnit.x
+      misc.eventMarker.h = EVENT_MARKER_SIZE.height / scene.worldUnit.y
 
       scene.originalSize.width = sceneInitialState.width
       scene.originalSize.height = sceneInitialState.height
-      scene.walkableMinX = misc.player.size.inWorldUnits.halfWidth
-      scene.walkableMaxX = 100 - misc.player.size.inWorldUnits.halfWidth
-
-      player.x = lastKnownX ?? sceneInitialState.playerInitialX
-      player.hitbox.inWorldUnits.x1 = sceneInitialState.playerInitialX
-      player.hitbox.inWorldUnits.x2 = sceneInitialState.playerInitialX + misc.player.size.inWorldUnits.width
-      player.hitbox.inWorldUnits.y1 = misc.player.hitbox.inWorldUnits.y1
-      player.hitbox.inWorldUnits.y2 = misc.player.hitbox.inWorldUnits.y2
-
-      const root = document.documentElement
       root.style.setProperty('--original-scene-width', `${scene.originalSize.width}px`)
       root.style.setProperty('--original-scene-height', `${scene.originalSize.height}px`)
-      root.style.setProperty('--player-offset-y', `${sceneInitialState.playerInitialY}`)
+
+      scene.worldUnit.x = scene.originalSize.width / 100
+      scene.worldUnit.y = scene.originalSize.height / 100
+      root.style.setProperty('--wux', `${scene.worldUnit.x}px`)
+      root.style.setProperty('--wuy', `${scene.worldUnit.y}px`)
+
+      scene.walkableMinX = misc.player.size.halfWidth
+      scene.walkableMaxX = 100 - misc.player.size.halfWidth
+
+      player.x = lastKnownX ?? sceneInitialState.playerInitialX
+      player.hitbox.x1 = sceneInitialState.playerInitialX
+      player.hitbox.x2 = sceneInitialState.playerInitialX + misc.player.size.width
+      player.hitbox.y1 = misc.player.hitbox.y1
+      player.hitbox.y2 = misc.player.hitbox.y2
 
       navigate({ to: `/${sceneValue}` })
       queueMicrotask(() => calculate())
@@ -198,19 +196,13 @@ export function GlobalStateProvider(props: ParentProps) {
   const player: GlobalState['player'] = {
     ref: null as unknown as HTMLElement,
     x: 0,
-    realX: 0,
-    cameraX: 0,
-    cameraMinX: 0,
-    cameraMaxX: 0,
-    hitbox: {
-      inWorldUnits: { x1: 0, x2: 0, y1: 0, y2: 0 },
-      inPX: { x1: 0, x2: 0, y1: 0, y2: 0 },
-    },
+    tx: 0,
+    hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
     direction: 0,
     isWalking: false,
     isRunning: false,
     facing: 'right',
-    speed: PLAYER_BASE_SPEED_PX_PER_SEC,
+    speed: 1,
     shouldSendBatches: false,
     hat,
     setHat,
@@ -239,90 +231,38 @@ export function GlobalStateProvider(props: ParentProps) {
   )
 
   function calculate() {
-    const root = document.documentElement
-    const gameContentHeight = window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
-    root.style.setProperty('--window-inner-height', `${window.innerHeight}px`)
-
     viewport.width = window.innerWidth
     viewport.height = window.innerHeight
     viewport.vw = viewport.width / 100
     viewport.vh = viewport.height / 100
 
-    scene.scale = Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1) // --scale
+    const root = document.documentElement
+    const gameContentHeight = window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
+    scene.scale = Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1)
     root?.style.setProperty('--scale', `${scene.scale}`)
 
-    scene.scaled.width = scene.originalSize.width * scene.scale // --scene-width-scaled
-    scene.scaled.height = Math.min(gameContentHeight, scene.originalSize.height) // --scene-height-scaled
-    scene.worldUnit.x = scene.scaled.width / 100 // --scene-world-unit-x
-    scene.worldUnit.y = scene.scaled.height / 100 // --scene-world-unit-y
-
-    scene.offsetTop = (viewport.height - scene.scaled.height) / 2
-    root?.style.setProperty('--scene-offset-top', `${scene.offsetTop}px`)
-
-    const playableWidth = Math.min(window.innerWidth, scene.scaled.width)
-    scene.s50 = playableWidth / 2 // 50% of the screen width
-    scene.cameraViewportWidth = scene.scaled.width - playableWidth
-    scene.cameraStartMovingX = scene.s50
-    scene.cameraEndMovingX = scene.scaled.width - scene.s50
-
-    misc.eventMarker.radius.inPX.w = EVENT_MARKER_SIZE.width * scene.scale
-    misc.eventMarker.radius.inPX.h = EVENT_MARKER_SIZE.height * scene.scale
-    misc.eventMarker.radius.inWorldUnits.w = misc.eventMarker.radius.inPX.w / scene.worldUnit.x
-    misc.eventMarker.radius.inWorldUnits.h = misc.eventMarker.radius.inPX.h / scene.worldUnit.y
-
-    misc.player.size.inPX.width = misc.player.size.inWorldUnits.width * scene.worldUnit.x // --player-width-scaled
-    misc.player.size.inPX.height = misc.player.size.inWorldUnits.height * scene.worldUnit.y // --player-height-scaled
-    misc.player.size.inPX.halfWidth = misc.player.size.inPX.width / 2
-    misc.player.size.inPX.halfHeight = misc.player.size.inPX.height / 2
-    misc.player.hitbox.inPX.y1 = misc.player.hitbox.inWorldUnits.y1 * scene.worldUnit.y // --player-offset-y-scaled
-    misc.player.hitbox.inPX.y2 = misc.player.hitbox.inPX.y1 + misc.player.size.inPX.height
-
-    player.realX = player.x * scene.worldUnit.x
-    player.hitbox.inPX.x1 = player.realX - misc.player.size.inPX.halfWidth
-    player.hitbox.inPX.x2 = player.realX + misc.player.size.inPX.halfWidth
-    player.cameraMinX = scene.walkableMinX * scene.worldUnit.x
-    player.cameraMaxX = playableWidth - misc.player.size.inPX.halfWidth
-
-    scene.cameraX = clamp(0, player.realX - scene.s50, scene.cameraViewportWidth)
-
-    const atStart = player.realX < scene.s50
-    const playerViewportX = player.realX - scene.cameraViewportWidth
-    const atEnd = player.realX >= scene.s50 && playerViewportX >= scene.s50
-    player.cameraX = clamp(
-      atStart ? player.cameraMinX : scene.s50,
-      atStart ? player.realX : player.realX - scene.cameraViewportWidth,
-      atEnd ? player.cameraMaxX : scene.s50,
-    )
-
-    for (const [, otherPlayer] of otherPlayers.hashmap) {
-      otherPlayer.realX = otherPlayer.x * scene.worldUnit.x
-    }
+    scene.scaledSize.width = scene.originalSize.width * scene.scale
+    scene.scaledSize.height = scene.originalSize.height * scene.scale
+    scene.s50PX = Math.min(window.innerWidth, scene.scaledSize.width) / 2
+    scene.s50WU = (scene.s50PX / scene.scaledSize.width) * 100
+    scene.cameraStartTravelAtX = scene.s50WU
+    scene.cameraEndTravelAtX = 100 - scene.s50WU
 
     for (const node of nodes) {
       if (node.type === 'popover') {
-        const xPX = node.hitbox.position.x * scene.worldUnit.x
-        const yPX = node.hitbox.position.y * scene.worldUnit.y
-
-        node.hitbox.inPX.x1 = xPX - misc.eventMarker.radius.inPX.w
-        node.hitbox.inPX.x2 = xPX + misc.eventMarker.radius.inPX.w
-        node.hitbox.inPX.y1 = yPX - misc.eventMarker.radius.inPX.h
-        node.hitbox.inPX.y2 = yPX + misc.eventMarker.radius.inPX.h
-        node.size.inPX.width = node.hitbox.inPX.x2 - node.hitbox.inPX.x1
-        node.size.inPX.height = node.hitbox.inPX.y2 - node.hitbox.inPX.y1
-
-        node.hitbox.inWorldUnits.x1 = node.hitbox.inPX.x1 / scene.worldUnit.x
-        node.hitbox.inWorldUnits.x2 = node.hitbox.inPX.x2 / scene.worldUnit.x
-        node.hitbox.inWorldUnits.y1 = node.hitbox.inPX.y1 / scene.worldUnit.y
-        node.hitbox.inWorldUnits.y2 = node.hitbox.inPX.y2 / scene.worldUnit.y
-        node.size.inWorldUnits.width = node.hitbox.inWorldUnits.x2 - node.hitbox.inWorldUnits.x1
-        node.size.inWorldUnits.height = node.hitbox.inWorldUnits.y2 - node.hitbox.inWorldUnits.y1
+        node.hitbox.x1 = node.position.x - misc.eventMarker.r
+        node.hitbox.x2 = node.position.x + misc.eventMarker.r
+        node.hitbox.y1 = node.position.y - misc.eventMarker.h
+        node.hitbox.y2 = node.position.y + misc.eventMarker.h
+        node.size.width = node.hitbox.x2 - node.hitbox.x1
+        node.size.height = node.hitbox.y2 - node.hitbox.y1
       }
 
       if (node.type === 'popover') {
-        node.rootRef?.style.setProperty('--node-tx', `${fastRound(node.hitbox.inPX.x1)}px`)
-        node.rootRef?.style.setProperty('--node-ty', `${fastRound(node.hitbox.inPX.y1)}px`)
-        node.rootRef?.style.setProperty('--node-width', `${fastRound(node.size.inPX.width)}px`)
-        node.rootRef?.style.setProperty('--node-height', `${fastRound(node.size.inPX.height)}px`)
+        node.rootRef?.style.setProperty('--node-tx', `${node.hitbox.x1}`)
+        node.rootRef?.style.setProperty('--node-ty', `${node.hitbox.y1}`)
+        node.rootRef?.style.setProperty('--node-width', `${node.size.width}`)
+        node.rootRef?.style.setProperty('--node-height', `${node.size.height}`)
       }
     }
     updatePlayerAnimations()
@@ -408,7 +348,7 @@ export function GlobalStateProvider(props: ParentProps) {
   createEffect(
     on(isShiftHeld, (shift) => {
       player.isRunning = shift
-      player.speed = PLAYER_BASE_SPEED_PX_PER_SEC * (shift ? PLAYER_RUNNING_SPEED_MOD : 1)
+      player.speed = shift ? 2.0 : 1.0
       player.ref?.style.setProperty('--is-running', shift ? '1' : '0')
       void setIsRunning.mutate({ isRunning: player.isRunning })
     }),
@@ -417,10 +357,6 @@ export function GlobalStateProvider(props: ParentProps) {
   onMount(() => {
     const root = document.documentElement
     root.style.setProperty('--game-content-height-ratio', `${GAME_CONTENT_HEIGHT_RATIO}`)
-    root.style.setProperty('--original-player-width', `${PLAYER_SIZE.width}px`)
-    root.style.setProperty('--original-player-height', `${PLAYER_SIZE.height}px`)
-    root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)
-    root.style.setProperty('--original-player-hitbox-height', `${PLAYER_HITBOX_SIZE.height}px`)
   })
 
   if (import.meta.hot) {
@@ -428,6 +364,19 @@ export function GlobalStateProvider(props: ParentProps) {
       calculate()
     })
   }
+
+  const [debugData, setDebugData] = createSignal<DebugData>({ scene, player })
+  const getScene = () => scene
+  const getPlayer = () => player
+
+  onMount(() => {
+    const i = setInterval(() => {
+      const s = getScene()
+      const p = getPlayer()
+      setDebugData({ scene: s, player: p })
+    }, 100)
+    onCleanup(() => clearInterval(i))
+  })
 
   return (
     <GlobalStateContext.Provider
@@ -440,6 +389,7 @@ export function GlobalStateProvider(props: ParentProps) {
         player,
         misc,
         viewport,
+        debugData,
       }}
     >
       {props.children}

@@ -25,16 +25,16 @@ export function Scenery() {
   return (
     <Scene.Elements>
       <Intro />
-      <Experience />
-      <Wardrobe />
-      <MyProjects />
-      <WhyAmIGoodForARole />
-      <Wardrobe2 />
-      <Drawboard />
-      <PersonalStuff />
-      <Temp1 />
-      <Temp2 />
-      <LastDoor />
+      {/*<Experience />*/}
+      {/*<Wardrobe />*/}
+      {/*<MyProjects />*/}
+      {/*<WhyAmIGoodForARole />*/}
+      {/*<Wardrobe2 />*/}
+      {/*<Drawboard />*/}
+      {/*<PersonalStuff />*/}
+      {/*<Temp1 />*/}
+      {/*<Temp2 />*/}
+      {/*<LastDoor />*/}
 
       <Scene.Players />
     </Scene.Elements>
