@@ -98,9 +98,6 @@
   --color-ph-pure-white: var(--ph-pure-white);
 
   --font-sans: 'Grandstander', sans-serif;
-  --spacing-boxShadowY: 6px;
-  --shadow-button: 0px var(--boxShadowY-dynamic, var(--spacing-boxShadowY)) 0px 0px
-    color-mix(in oklch, var(--v-color, var(--border)), black var(--v-shade, 45%));
   --radius-base: 6px;
   --font-weight-base: 500;
   --font-weight-heading: 800;

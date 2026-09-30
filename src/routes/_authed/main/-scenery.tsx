@@ -81,15 +81,16 @@ function Experience() {
               [--pp:500px] [--rx:30deg] [--tz:100px] [--dtx:calc(var(--scene-tx)*-1+50%)]
               group-data-open:[--sy:1.3]
               group-data-open:[--rx:0deg]
-              group-data-open:after:bg-ph-warm-pink
+              group-data-open:after:bg-ph-background
             `)}
           >
             <span
               class={cn(`
-              game-transform transition-transform overlay z-1 comic text-[70px] flex items-center justify-center tracking-[0.2em]
+              game-transform transition-transform overlay z-1 comic text-[70px] flex items-center justify-center tracking-[0.15em]
               group-data-open:[--sy:0.8]
               group-data-open:text-ph-mustard-yellow
-              group-data-open:brightness-150
+              group-data-open:comic-shadow-black
+              group-data-open:animate-blink-neon-sign
             `)}
             >
               Experience

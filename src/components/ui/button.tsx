@@ -21,8 +21,17 @@ const buttonVariants = cva(
           'aria-expanded:bg-(--v-color) not-aria-expanded:bg-muted aria-expanded:opacity-100 not-aria-expanded:opacity-50 aria-expanded:border-tint-(--v-color)/50 not-aria-expanded:border-tint-muted/30',
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
-        'game-action':
-          'bg-shade-ph-dark-cornflower-blue/60 border-ph-cornflower-blue! rounded-full text-xl! flex items-center justify-center gap-4 h-20 p-10!',
+        'game-action': `
+          bg-white border-black/20! relative isolate size-8! text-shade-ph-dark-cornflower-blue/50 text-xl!
+          origin-center
+          [--s:0.2em]
+          -top-(--s)
+          [--boxShadowY-dynamic:var(--s)]
+          shadow-white/30
+          [box-shadow:0_var(--boxShadowY-dynamic)_0_0_var(--tw-shadow-color)]
+          data-[pressed=true]:[--boxShadowY-dynamic:0]
+          data-[pressed=true]:translate-y-(--s)
+        `,
       },
       animate: {
         default: '',
@@ -121,16 +130,8 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
     }
   })
 
-  createEffect(() => {
-    if (pressed()) ref.style.setProperty('--boxShadowY-dynamic', '0px')
-    else ref.style.removeProperty('--boxShadowY-dynamic')
-  })
-
-  createEffect(() => {
-    if (disabled() && pressed()) {
-      setPressed(false)
-    }
-  })
+  createEffect(() => ref.setAttribute('data-pressed', pressed() ? 'true' : 'false'))
+  createEffect(() => disabled() && pressed() && setPressed(false))
 
   onMount(() => {
     if (local.variant === 'game-action') {
@@ -186,12 +187,14 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
 
 export function InteractButton(props: { onPress: HotkeyCallback; label?: string }) {
   return (
-    <Button variant="game-action" hotkey="E" onHotkeyPress={props.onPress} class="animate-pulseY">
-      <div class="bg-white text-shade-ph-dark-cornflower-blue/60 size-[1.7em] flex items-center justify-center rounded-lg shadow-button translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] shadow-white/70 text-2xl -top-1! relative">
-        E
+    <div class="animate-pulseY">
+      <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue">
+        <Button variant="game-action" hotkey="E" onHotkeyPress={props.onPress}>
+          E
+        </Button>
+        <span class="comic text-xl">{props.label ?? 'Interact'}</span>
       </div>
-      <span class="comic text-2xl">{props.label ?? 'Interact'}</span>
-    </Button>
+    </div>
   )
 }
 

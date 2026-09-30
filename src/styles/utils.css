@@ -26,7 +26,7 @@
 }
 
 @utility comic {
-  --b80: color-mix(in oklch, var(--comic-color, currentColor), var(--comic-shadow-color, black) 80%);
+  --b80: color-mix(in oklch, var(--comic-color, currentColor), black 80%);
   --b50: color-mix(in oklch, var(--comic-color, currentColor), var(--comic-shadow-color, black) 50%);
   --s: 0.015em;
   -webkit-font-smoothing: antialiased;

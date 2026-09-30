@@ -37,6 +37,29 @@
   border-color: rgb(from --value(--color-*, [*]) r g b / 70%);
   border-color: rgb(from --value(--color-*, [*]) r g b / calc(100% - --modifier(integer) * 1%));
 }
+@utility border-glow-* {
+  &:before {
+    @apply absolute inset-0 brightness-130 animate-spinZ;
+    content: '';
+    z-index: 0;
+    animation-duration: 5s;
+    animation-timing-function: ease-in-out;
+    border: inherit;
+    border-color: transparent;
+    border-radius: inherit;
+    pointer-events: none;
+    background: conic-gradient(
+        from var(--rz, 0),
+        color-mix(in oklch, --value(--color- *, [*]), black 70%) 50%,
+        --value(--color- *, [*]) 100%
+      )
+      border-box;
+    mask:
+      linear-gradient(#000 0 0) padding-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+}
 
 @utility decoration-tint-* {
   text-decoration-color: color-mix(in oklch, --value(--color-*, [*]), white calc(--modifier(integer) * 1%));

@@ -62,6 +62,7 @@
   --animate-blink-bright: blinkBright 2s linear infinite;
   --animate-blink-neon:
     blinkNeon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, blinkBright 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-blink-neon-sign: blinkNeonSign 5s linear infinite;
   --animate-blink-neon-text: blinkNeonText 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-truckMoving: truckMoving 30s ease-in-out infinite;
   --animate-truckWheelSpin: truckWheelSpin 30s ease-in-out infinite;
@@ -138,6 +139,68 @@
   }
   50% {
     box-shadow: 0 0 20px 8px var(--ph-mustard-yellow);
+  }
+}
+
+@keyframes blinkNeonSign {
+  0% {
+    filter: drop-shadow(0 0 5px var(--ph-mustard-yellow));
+  }
+
+  7% {
+    filter: drop-shadow(1px -1px 11px var(--ph-mustard-yellow));
+  }
+
+  13% {
+    filter: drop-shadow(-2px 1px 6px var(--ph-mustard-yellow));
+  }
+
+  21% {
+    filter: drop-shadow(2px 0 16px var(--ph-mustard-yellow));
+  }
+
+  29% {
+    filter: drop-shadow(-1px -2px 8px var(--ph-mustard-yellow));
+  }
+
+  38% {
+    filter: drop-shadow(2px 1px 13px var(--ph-mustard-yellow));
+  }
+
+  46% {
+    filter: drop-shadow(-2px 0 1px var(--ph-mustard-yellow));
+  }
+
+  48% {
+    filter: drop-shadow(3px -1px 14px var(--ph-mustard-yellow));
+  }
+
+  54% {
+    filter: drop-shadow(1px 2px 18px var(--ph-mustard-yellow));
+  }
+
+  63% {
+    filter: drop-shadow(-1px -1px 9px var(--ph-mustard-yellow));
+  }
+
+  71% {
+    filter: drop-shadow(2px -1px 14px var(--ph-mustard-yellow));
+  }
+
+  79% {
+    filter: drop-shadow(-2px 1px 6px var(--ph-mustard-yellow));
+  }
+
+  88% {
+    filter: drop-shadow(1px 0 12px var(--ph-mustard-yellow));
+  }
+
+  94% {
+    filter: drop-shadow(-1px -2px 7px var(--ph-mustard-yellow));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 5px var(--ph-mustard-yellow));
   }
 }
 
