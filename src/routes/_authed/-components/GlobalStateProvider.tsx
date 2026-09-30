@@ -152,7 +152,6 @@ export function GlobalStateProvider(props: ParentProps) {
       misc.player.size.height = (PLAYER_HITBOX_SIZE.height / sceneInitialState.height) * 100
       misc.player.size.halfWidth = misc.player.size.width / 2
       misc.player.size.halfHeight = misc.player.size.height / 2
-      console.log(misc.player.size)
       root.style.setProperty('--original-player-width', `${PLAYER_SIZE.width}px`)
       root.style.setProperty('--original-player-height', `${PLAYER_SIZE.height}px`)
       root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)

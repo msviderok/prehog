@@ -52,7 +52,7 @@ export function Door(props: {
           <PopoverPopup>
             <PopoverFooter>
               <PopoverAction class="flex flex-col items-center gap-4">
-                <PressE onPress={() => void setScene.mutate({ scene: props.to, x: player.x })} class="animate-pulseY" />
+                <PressE onPress={() => void setScene.mutate({ scene: props.to, x: player.x })} />
                 <span class="comic text-2xl text-ph-mustard-yellow animate-pulseY delay-200">
                   {props.label ?? 'Go Back'}
                 </span>

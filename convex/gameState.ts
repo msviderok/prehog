@@ -180,3 +180,13 @@ export const getMyIsRunning = query({
     return state.isRunning
   },
 })
+
+export const updateMyPosition = mutation({
+  args: {
+    x: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await Users.getCurrentUser(ctx)
+    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: args.x })
+  },
+})

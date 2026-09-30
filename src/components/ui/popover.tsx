@@ -114,16 +114,10 @@ export function Popover(componentProps: PopoverPrimitive.Root.Props & PopoverExt
         },
         type: 'popover',
         popupRef: undefined,
-        position: local.sceneryProps.anchorPosition,
-        size: {
-          inWorldUnits: { width: 0, height: 0 },
-          inPX: { width: 0, height: 0 },
-        },
-        hitbox: {
-          position: local.sceneryProps.hitboxPosition,
-          inWorldUnits: { x1: 0, y1: 0, x2: 0, y2: 0 },
-          inPX: { x1: 0, y1: 0, x2: 0, y2: 0 },
-        },
+        anchorPosition: local.sceneryProps.anchorPosition,
+        markerPosition: local.sceneryProps.hitboxPosition,
+        size: { width: 0, height: 0 },
+        hitbox: { x1: 0, y1: 0, x2: 0, y2: 0 },
         actions: {
           open: {
             value: DEBUG ? true : false,

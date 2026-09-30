@@ -1,7 +1,6 @@
-import { PressE } from '@/components/ui/button'
+import { InteractButton } from '@/components/ui/button'
 import { createPolygonClipPath, random } from '@/lib/utils'
-import { assets } from '@/routeAssets.gen'
-import { Index, Show, type Ref } from 'solid-js'
+import { createMemo, Index, Show, type Ref } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
 
 const POLYGON_SIDES = 14
@@ -13,10 +12,19 @@ export interface EventMarkerProps {
   onInteract?: () => void
   /** @default "Interact" */
   label?: string
+  /**
+   * @default Positioned based on the marker position:
+   *  - x = marker position `x`
+   *  - y = marker position `y` - (player height * 1.3 WUy)
+   */
+  interactPillPosition?: Coords
 }
 
 export function EventMarker(props: EventMarkerProps) {
   const { misc, scene } = useGlobalState()
+  const y = createMemo(() => (props.interactPillPosition?.y ?? misc.player.size.height * 1.3 * -1) * scene.worldUnit.y)
+  const x = createMemo(() => (props.interactPillPosition?.x ?? 0) * scene.worldUnit.x)
+
   return (
     <div class="marker" style={{ '--delay': random(1, 10) }} ref={props.ref}>
       <div
@@ -26,15 +34,9 @@ export function EventMarker(props: EventMarkerProps) {
         <Index each={POLYGON_ARR}>{(_, idx) => <span style={{ '--i': `${idx}` }} />}</Index>
       </div>
 
-      <Show when={props.onInteract && props.label}>
-        <div
-          class="marker-floating-action"
-          style={{
-            '--ty': `-${misc.player.size.height * scene.worldUnit.y * 1.3}px`,
-          }}
-        >
-          <PressE onPress={() => props.onInteract?.()} />
-          <span class="comic text-3xl comic-ph-warm-pink">{props.label ?? 'Interact'}</span>
+      <Show when={props.onInteract}>
+        <div class="marker-floating-action" style={{ '--ty': `${y()}px`, '--tx': `${x()}px` }}>
+          <InteractButton onPress={() => props.onInteract?.()} label={props.label} />
         </div>
       </Show>
     </div>

@@ -2,6 +2,7 @@ import { api } from '@/convex/api'
 import type { Doc } from '@/convex/dataModel'
 import { INTERPOLATION_DELAY_MS, PLAYER_BASE_SPEED_PX_PER_SEC } from '@/lib/constants'
 import { createRAFLoop } from '@/lib/createRAFLoop'
+import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { clamp, lerp } from '@/lib/utils'
 import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { useMutation } from 'convex-solidjs'
@@ -9,13 +10,12 @@ import { useMutation } from 'convex-solidjs'
 export function runGameLoop() {
   const { scene, player, misc, nodes, otherPlayers } = useGlobalState()
   const sendBatch = useMutation(api.gameState.sendMyBatch)
+  const updateMyPosition = useSingleFlightMutation(api.gameState.updateMyPosition)
   let eventBatch: Doc<'game_event_batches'>['batch'] = []
-
-  let loggedOnce = false // declare above the loop
 
   createRAFLoop({
     autostart: true,
-    fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart, _debugTick) => {
+    fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart, _debugTick, offlinePositionUpdateTick) => {
       const velocity = (player.direction * player.speed * dt) / 100
       const distanceThisFrameWU = velocity * PLAYER_BASE_SPEED_PX_PER_SEC
 
@@ -28,10 +28,6 @@ export function runGameLoop() {
       scene.tx = cameraLeftX * scene.worldUnit.x
       player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
       scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
-
-      if (_debugTick) {
-        console.log(player.tx)
-      }
 
       /** Other players' movement */
       const renderTime = Date.now() - INTERPOLATION_DELAY_MS
@@ -66,22 +62,9 @@ export function runGameLoop() {
         eventBatch = []
       }
 
-      if (_debugTick) {
-        // inside the loop, after the setProperty lines
-        const s = scene.ref?.getBoundingClientRect()
-        const p = player.ref?.getBoundingClientRect()
-        if (s && p && !loggedOnce) {
-          loggedOnce = true
-          console.log({
-            playerX: player.x,
-            cameraLeftX,
-            expectedPlayerCenterPx: (player.x - cameraLeftX) * scene.worldUnit.x * scene.scale,
-            actualPlayerCenterPx: p.left + p.width / 2,
-            expectedSceneLeftPx: -cameraLeftX * scene.worldUnit.x * scene.scale,
-            actualSceneLeftPx: s.left,
-            windowScrollX: window.scrollX,
-            viewportScrollLeft: document.querySelector('[data-viewport]')?.scrollLeft,
-          })
+      if (player.shouldSendBatches === false) {
+        if (offlinePositionUpdateTick) {
+          void updateMyPosition.mutate({ x: player.x })
         }
       }
 

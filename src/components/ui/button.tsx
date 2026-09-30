@@ -22,7 +22,7 @@ const buttonVariants = cva(
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
         'game-action':
-          'shadow-button v-ph-warm-pink translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] [--v-shade:20%] border-6 bg-ph-warm-pink border-ph-background text-ph-warm-pink/50 font-bold comic size-16 text-4xl',
+          'bg-shade-ph-dark-cornflower-blue/60 border-ph-cornflower-blue! rounded-full text-xl! flex items-center justify-center gap-4 h-20 p-10!',
       },
       animate: {
         default: '',
@@ -184,12 +184,15 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   )
 }
 
-export function PressE(props: { onPress: HotkeyCallback; class?: string }) {
+export function InteractButton(props: { onPress: HotkeyCallback; label?: string }) {
   return (
-    <Button variant="game-action" animate="scale" hotkey="E" onHotkeyPress={props.onPress} class={props.class}>
-      E
+    <Button variant="game-action" hotkey="E" onHotkeyPress={props.onPress} class="animate-pulseY">
+      <div class="bg-white text-shade-ph-dark-cornflower-blue/60 size-[1.7em] flex items-center justify-center rounded-lg shadow-button translate-y-[calc(var(--spacing-boxShadowY)-var(--boxShadowY-dynamic))] shadow-white/70 text-2xl -top-1! relative">
+        E
+      </div>
+      <span class="comic text-2xl">{props.label ?? 'Interact'}</span>
     </Button>
   )
 }
 
-export { Button, buttonVariants, type ExtraButtonProps }
+export { Button, buttonVariants, type ExtraButtonProps, InteractButton as PressE }

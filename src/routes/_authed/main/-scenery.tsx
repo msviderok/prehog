@@ -1,10 +1,4 @@
-import {
-  PopoverActionDoor,
-  PopoverDescription,
-  PopoverFooter,
-  PopoverHeader,
-  PopoverTitle,
-} from '@/components/ui/popover'
+import { PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import {
   Tooltip,
   TooltipArrow,
@@ -67,7 +61,12 @@ function Experience() {
       side="bottom"
       align="center"
       anchor={{ position: { x: 21.5, y: 80 } }}
-      marker={{ position: { x: 15.9, y: 94 }, onInteract: () => {}, label: 'Interact' }}
+      marker={{
+        position: { x: 15.9, y: 94 },
+        onInteract: () => {},
+        label: 'Explore',
+        interactPillPosition: { x: 0.1, y: -43 },
+      }}
       asset={(p) => (
         <Asset {...p} routeId="/_authed/main/" asset="intro.png" x={12.48} y={-0.1} scale={SCALE} class="group">
           <Asset

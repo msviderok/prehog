@@ -29,7 +29,11 @@ interface PopoverItem {
     side: PopoverPrimitive.Positioner.Props['side']
     align: PopoverPrimitive.Positioner.Props['align']
   }
-  marker: { ref: HTMLElement; position: Coords; component: Component }
+  marker: {
+    ref: HTMLElement
+    position: Coords
+    component: Component
+  }
   content: { ref: HTMLElement; component: Component }
   asset: { ref: HTMLElement; component: Component }
 }
@@ -164,7 +168,6 @@ export function SceneryPopoverPortal() {
       <SceneryPopoverBackdrop />
 
       <For each={ctx.registry.anchors}>{(anchor) => <Dynamic component={anchor} />}</For>
-
       <For each={ctx.registry.assets}>{(asset) => <Dynamic component={asset} />}</For>
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
