@@ -134,12 +134,12 @@ export const setIsRunning = mutation({
 export const setScene = mutation({
   args: {
     scene: sceneSchema,
-    x: v.number(),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
     const sceneInitialData = SCENE[args.scene]
     const currentState = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+    const currentPosition = (await ctx.db.get('game_user_positions', user.gameUserPositionId))!
 
     await ctx.db.patch('game_user_state', user.gameUserStateId, {
       scene: args.scene,
@@ -147,7 +147,10 @@ export const setScene = mutation({
       isWalking: false,
       movementDir: 'right',
       y: sceneInitialData.playerInitialY,
-      lastKnownXPosition: { ...currentState.lastKnownXPosition, [currentState.scene]: args.x },
+      lastKnownXPosition: {
+        ...currentState.lastKnownXPosition,
+        [currentState.scene]: currentPosition.x,
+      },
     })
 
     await ctx.db.patch('game_event_batches', user.gameEventBatchesId, { batch: [] })

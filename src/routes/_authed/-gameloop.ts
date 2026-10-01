@@ -15,74 +15,90 @@ export function runGameLoop() {
 
   createRAFLoop({
     autostart: true,
-    fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart, _debugTick, offlinePositionUpdateTick) => {
-      const velocity = (player.direction * player.speed * dt) / 100
-      const distanceThisFrameWU = velocity * PLAYER_BASE_SPEED_PX_PER_SEC
+    fn: (_timestamp, dt, samplingTick, batchingTick, msSinceBatchStart, debugTick, offlinePositionUpdateTick) => {
+      movePlayerAndCamera(dt)
+      moveOtherPlayers()
 
-      player.x = clamp(scene.walkableMinX, player.x + distanceThisFrameWU, scene.walkableMaxX)
-      player.hitbox.x1 = player.x - misc.player.size.halfWidth
-      player.hitbox.x2 = player.x + misc.player.size.halfWidth
+      if (samplingTick) sampling(msSinceBatchStart)
+      if (batchingTick) batching()
+      if (debugTick) debugging()
 
-      const cameraLeftX = clamp(0, player.x - scene.s50WU, scene.cameraEndTravelAtX - scene.s50WU)
-      player.tx = (player.x - cameraLeftX) * scene.worldUnit.x
-      scene.tx = cameraLeftX * scene.worldUnit.x
-      player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
-      scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
-
-      /** Other players' movement */
-      const renderTime = Date.now() - INTERPOLATION_DELAY_MS
-      for (const [, otherPlayer] of otherPlayers.hashmap) {
-        const batch = otherPlayer.batchQueue
-        if (batch.length < 2) continue
-
-        while (batch.length > 2 && batch[1]!.t <= renderTime) batch.shift()
-
-        const a = batch[0]!
-        const b = batch[1]!
-        const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
-        otherPlayer.x = lerp(a.x, b.x, alpha)
-        otherPlayer.hitbox.x1 = otherPlayer.x - misc.player.size.halfWidth
-        otherPlayer.hitbox.x2 = otherPlayer.x + misc.player.size.halfWidth
-        const otherPlayerPaintX = Math.round(otherPlayer.x * scene.worldUnit.x)
-        otherPlayer.ref?.style.setProperty('--tx', `${otherPlayerPaintX}px`)
-      }
-
-      /** SAMPLING */
-      if (samplingTick) {
-        if (player.shouldSendBatches && player.direction !== 0) {
-          eventBatch.push({ type: 'move', x: player.x, t: msSinceBatchStart })
-        }
-      }
-
-      /** BATCHING */
-      if (batchingTick) {
-        if (player.shouldSendBatches && eventBatch.length > 0) {
-          void sendBatch.mutate({ batch: eventBatch })
-        }
-        eventBatch = []
-      }
-
-      if (player.shouldSendBatches === false) {
-        if (offlinePositionUpdateTick) {
-          void updateMyPosition.mutate({ x: player.x })
-        }
-      }
-
-      let collided = false
-      for (const node of nodes) {
-        const nodeCollided = collisionDetected(player.hitbox, node.hitbox)
-        if (node.actions.open.value !== nodeCollided) {
-          node.actions.open.value = nodeCollided
-          node.actions.open.set(nodeCollided)
-          node.rootRef?.style.setProperty('--collided', nodeCollided ? '1' : '0')
-        }
-
-        if (nodeCollided) collided = true
-      }
-
-      player.ref?.style.setProperty('--collided', collided ? '1' : '0')
+      processMyOfflineMovement(offlinePositionUpdateTick)
+      checkCollisions()
     },
   })
+
+  function movePlayerAndCamera(dt: number) {
+    const velocity = player.direction * player.speed * dt
+    const distanceThisFrameWU = (velocity * PLAYER_BASE_SPEED_PX_PER_SEC) / scene.worldUnit.x
+
+    player.x = clamp(scene.walkableMinX, player.x + distanceThisFrameWU, scene.walkableMaxX)
+    player.hitbox.x1 = player.x - misc.player.size.halfWidth
+    player.hitbox.x2 = player.x + misc.player.size.halfWidth
+
+    const cameraLeftX = clamp(0, player.x - scene.s50WU, scene.cameraEndTravelAtX - scene.s50WU)
+    player.tx = (player.x - cameraLeftX) * scene.worldUnit.x
+    scene.tx = cameraLeftX * scene.worldUnit.x
+    player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
+    scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
+  }
+
+  function moveOtherPlayers() {
+    const renderTime = Date.now() - INTERPOLATION_DELAY_MS
+    for (const [, otherPlayer] of otherPlayers.hashmap) {
+      const batch = otherPlayer.batchQueue
+      if (batch.length < 2) continue
+
+      while (batch.length > 2 && batch[1]!.t <= renderTime) batch.shift()
+
+      const a = batch[0]!
+      const b = batch[1]!
+      const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
+      otherPlayer.x = lerp(a.x, b.x, alpha)
+      otherPlayer.hitbox.x1 = otherPlayer.x - misc.player.size.halfWidth
+      otherPlayer.hitbox.x2 = otherPlayer.x + misc.player.size.halfWidth
+      const otherPlayerPaintX = Math.round(otherPlayer.x * scene.worldUnit.x)
+      otherPlayer.ref?.style.setProperty('--tx', `${otherPlayerPaintX}px`)
+    }
+  }
+
+  function sampling(msSinceBatchStart: number) {
+    if (player.shouldSendBatches && player.direction !== 0) {
+      eventBatch.push({ type: 'move', x: player.x, t: msSinceBatchStart })
+    }
+  }
+
+  function batching() {
+    if (player.shouldSendBatches && eventBatch.length > 0) {
+      void sendBatch.mutate({ batch: eventBatch })
+    }
+    eventBatch = []
+  }
+
+  function debugging() {}
+
+  function processMyOfflineMovement(offlinePositionUpdateTick: boolean) {
+    if (player.shouldSendBatches === false) {
+      if (offlinePositionUpdateTick) {
+        void updateMyPosition.mutate({ x: player.x })
+      }
+    }
+  }
+
+  function checkCollisions() {
+    let collided = false
+    for (const node of nodes) {
+      const nodeCollided = collisionDetected(player.hitbox, node.hitbox)
+      if (node.actions.open.value !== nodeCollided) {
+        node.actions.open.value = nodeCollided
+        node.actions.open.set(nodeCollided)
+      }
+
+      if (nodeCollided) collided = true
+    }
+
+    player.ref?.style.setProperty('--collided', collided ? '1' : '0')
+  }
 }
 
 function collisionDetected(a: Hitbox, b: Hitbox) {

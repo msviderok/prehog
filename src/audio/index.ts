@@ -6,15 +6,15 @@ import {
   type VoiceHandle,
   definePatch,
 } from '@web-kits/audio'
-import { Howl, Howler } from 'howler'
+import { Howl } from 'howler'
 import accept from './files/accept.m4a'
 import call from './files/call.m4a'
 import dial from './files/dial.m4a'
 import end from './files/end.m4a'
-import reject from './files/reject.m4a'
-import oblivion_npc_piano from './files/oblpiano.mp3'
-import footstepsConcrete from './files/foley_footstep_concrete.webm'
 import fire from './files/fire.webm'
+import footstepsConcrete from './files/foley_footstep_concrete.webm'
+import oblivion_npc_piano from './files/oblpiano.mp3'
+import reject from './files/reject.m4a'
 
 const VOLUME = 1
 

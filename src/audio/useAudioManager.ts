@@ -3,6 +3,8 @@ import { useStableQuery } from '@/lib/useStableQuery'
 import { createEffect, on, onCleanup, onMount } from 'solid-js'
 import { SOUNDS } from '.'
 
+const PLAY_BG_MUSIC = true
+
 export function useAudioManager() {
   const { data: isWalking } = useStableQuery(api.gameState.getMyIsWalking)
   const soundWalking = SOUNDS.footsteps.concrete
@@ -25,7 +27,8 @@ export function useAudioManager() {
 
   const bgMusic = SOUNDS.music.oblivion_npc_piano
   onMount(() => {
-    // if (bgMusic.playing() === false) bgMusic.play()
+    if (!PLAY_BG_MUSIC) return
+    if (bgMusic.playing() === false) bgMusic.play()
     onCleanup(() => bgMusic.playing() && bgMusic.stop())
   })
 }

@@ -14,95 +14,10 @@ import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/soli
 import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  on,
-  onCleanup,
-  onMount,
-  type Accessor,
-  type ParentProps,
-  type Setter,
-} from 'solid-js'
+import { createEffect, createMemo, createSignal, on, onCleanup, onMount, type ParentProps } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { createRtcState } from '../../../lib/createRtcState'
 import { GlobalStateContext } from './GlobalStateContext'
-
-export interface GlobalState {
-  recalculate: () => void
-
-  readonly nodes: Set<SceneNode>
-  readonly rtc: ReturnType<typeof createRtcState>
-  readonly viewport: {
-    width: number
-    height: number
-    vw: number
-    vh: number
-  }
-  readonly scene: {
-    /** Ref to the scene container element */
-    ref: HTMLElement | undefined
-    /** Ref to the scene background element */
-    backgroundRef: HTMLElement | undefined
-    /** Ref to the scene popup container element */
-    popupContainerRef: HTMLElement | undefined
-    /** Ref to the scene elements container element */
-    elementsContainerRef: HTMLElement | undefined
-    /**
-     * Scale of the scene calculated by the formula:
-     * Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1)
-     */
-    scale: number
-    /** The size of a single world unit in px */
-    worldUnit: { x: number; y: number }
-    /** The original size of the scene in px */
-    originalSize: { width: number; height: number }
-    /** `DEBUG ONLY`: The scaled size of the scene in px. */
-    scaledSize: { width: number; height: number }
-    /** Min world unit X of the scene the player should be able to move to */
-    walkableMinX: number
-    /** Max world unit X of the scene the player should be able to move to */
-    walkableMaxX: number
-    /** The current position of the viewport a.k.a. "camera" showing the portion of the scene in world units */
-    tx: number
-    cameraCenterAtX: number
-    /** 50% of the current viewport width in world units */
-    s50PX: number
-    s50WU: number
-    cameraStartTravelAtX: number
-    cameraEndTravelAtX: number
-    /** The current scene the player is in */
-    currentScene: CurrentScene
-  }
-  readonly otherPlayers: {
-    list: Accessor<Array<Id<'users'>>>
-    hashmap: Map<Id<'users'>, OtherPlayer>
-  }
-  readonly player: {
-    ref: HTMLElement | undefined
-    hitbox: { x1: number; y1: number; x2: number; y2: number }
-    x: number
-    tx: number
-    direction: 1 | 0 | -1 // 1 – right, 0 – stopped, -1 – left
-    isWalking: boolean
-    isRunning: boolean
-    facing: 'left' | 'right'
-    speed: number
-    shouldSendBatches: boolean
-    hat: Accessor<Hat>
-    setHat: Setter<Hat>
-    isAdmin: Accessor<boolean>
-  }
-  readonly misc: {
-    player: {
-      size: { width: number; height: number; halfWidth: number; halfHeight: number }
-      hitbox: { y1: number; y2: number }
-    }
-    eventMarker: { r: number; h: number }
-  }
-  debugData: Accessor<DebugData>
-}
 
 type DebugData = Pick<GlobalState, 'scene' | 'player'>
 

@@ -37,6 +37,7 @@
   --ring: oklch(0.986 0.001 106.42);
   --shadow-color: oklch(0 0 0);
 
+  --ph-very-dark-cornflower-blue: oklch(0.2062 0.0385 263.23);
   --ph-dark-cornflower-blue: oklch(0.481 0.096 252.15);
   --ph-dark-grey: oklch(0.46 0 0);
   --ph-cornflower-blue: oklch(0.662 0.13 256.35);
@@ -80,6 +81,7 @@
   --color-shadow-color: var(--shadow-color);
 
   --color-ph-pure-black: var(--ph-pure-black);
+  --color-ph-very-dark-cornflower-blue: var(--ph-very-dark-cornflower-blue);
   --color-ph-dark-cornflower-blue: var(--ph-dark-cornflower-blue);
   --color-ph-dark-grey: var(--ph-dark-grey);
   --color-ph-cornflower-blue: var(--ph-cornflower-blue);

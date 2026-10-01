@@ -1,4 +1,3 @@
-import { popoverVariants } from '@/components/ui/popover'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { cn } from 'cn'
 import {
@@ -18,11 +17,12 @@ import { createStore, produce, type Store } from 'solid-js/store'
 import { Dynamic } from 'solid-js/web'
 import { EventMarker, type EventMarkerProps } from './EventMarker'
 import { useGlobalState } from './GlobalStateContext'
+import { PopoverArrowIcon } from '@/components/PopoverArrow'
 
 interface PopoverItem {
   id: string
   node: SceneNodePopover
-  anchor: {
+  anchor?: {
     ref: HTMLElement
     position: Coords
     component: Component
@@ -63,7 +63,7 @@ interface SceneryPopoverState {
 }
 
 const SceneryPopoverContext = createContext<SceneryPopoverState>()
-const SceneryPopoverNodeContext = createContext<SceneNodePopover>()
+export const SceneryPopoverNodeContext = createContext<SceneNodePopover>()
 
 export function useSceneryPopover() {
   const ctx = useContext(SceneryPopoverContext)
@@ -87,7 +87,9 @@ export function SceneryPopoverProvider(props: ParentProps) {
     data: {},
     active: { current: undefined, last: undefined },
     get anchors() {
-      return Object.values<PopoverItem>(this.data).map((i) => i.anchor.component)
+      return Object.values<PopoverItem>(this.data)
+        .map((i) => i.anchor?.component)
+        .filter((i) => !!i)
     },
     get markers() {
       return Object.values<PopoverItem>(this.data).map((i) => i.marker.component)
@@ -104,7 +106,11 @@ export function SceneryPopoverProvider(props: ParentProps) {
   const lastActive = createMemo(() => (registry.active.last ? registry.data[registry.active.last] : undefined))
 
   function register(data: PopoverItem) {
-    setRegistry(produce((draft) => (draft.data[data.id] = data)))
+    setRegistry(
+      produce((draft) => {
+        draft.data[data.id] = data
+      }),
+    )
     nodes.add(data.node)
 
     onCleanup(() => {
@@ -131,8 +137,8 @@ export function SceneryPopoverProvider(props: ParentProps) {
   }
 
   const anchorRef = createMemo(() => {
-    if (registry.active.current) return registry.data[registry.active.current]?.anchor.ref
-    if (registry.active.last) return registry.data[registry.active.last]?.anchor.ref
+    if (registry.active.current) return registry.data[registry.active.current]?.anchor?.ref
+    if (registry.active.last) return registry.data[registry.active.last]?.anchor?.ref
     return undefined
   })
 
@@ -175,23 +181,26 @@ export function SceneryPopoverPortal() {
           <div class="absolute top-0 left-0 size-full translate-x-(--scene-tx)">
             <PopoverPrimitive.Positioner
               class="isolate z-50"
+              align={currentlyRenderedElement()?.anchor?.align}
+              side={currentlyRenderedElement()?.anchor?.side}
+              anchor={ctx.anchorRef()}
               arrowPadding={15}
-              align={currentlyRenderedElement()?.anchor.align}
               alignOffset={0}
-              side={currentlyRenderedElement()?.anchor.side}
               sideOffset={0}
               trackAnchor={true}
-              anchor={ctx.anchorRef()}
               collisionAvoidance={{ align: 'none', side: 'none', fallbackAxisSide: 'none' }}
               ref={(el) => (ctx.positionerRef = el)}
             >
               <PopoverPrimitive.Popup
                 data-slot="popover-content"
-                data-variant="scenery"
-                class={popoverVariants({ variant: 'scenery' })}
                 ref={(el) => (ctx.popupRef = el)}
+                class={cn(
+                  'group z-50 rounded-lg origin-(--transform-origin) p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all bg-glass-ph-very-dark-cornflower-blue/5 text-ph-light-cornflower-blue [--arrow-offset:0px] data-starting-style:opacity-0 data-ending-style:opacity-0 data-closed:opacity-0 duration-200 ease-out border-2 [--bc:var(--ph-light-cornflower-blue)] border-(--bc) animate-pulseY delay-100',
+                )}
               >
-                {/*<PopoverArrow />*/}
+                <PopoverPrimitive.Arrow data-slot="popover-arrow">
+                  <PopoverArrowIcon />
+                </PopoverPrimitive.Arrow>
                 <Dynamic component={currentlyRenderedElement()?.content.component} />
               </PopoverPrimitive.Popup>
             </PopoverPrimitive.Positioner>
@@ -222,9 +231,9 @@ export function SceneryPopover<const K extends string>(
   props: {
     id: K
     marker: { position: Coords } & EventMarkerProps
-    anchor: { position: Coords }
+    anchor?: { position: Coords }
     asset?: Component<{ nodeId: K }>
-    children: JSX.Element
+    children?: JSX.Element
   } & Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>,
 ) {
   let triggerRef!: HTMLElement
@@ -232,34 +241,7 @@ export function SceneryPopover<const K extends string>(
   let markerRef!: HTMLElement
   let assetRef!: HTMLElement
   const ctx = useSceneryPopover()
-  const [open, setOpen] = createSignal(true)
-
-  onMount(() => {
-    let transformOrigin = 'center center'
-
-    switch (true) {
-      case props.side === 'top' && props.align === 'start':
-        transformOrigin = 'bottom left'
-        break
-      case props.side === 'left' && props.align === 'end':
-        transformOrigin = 'bottom right'
-        break
-      case props.side === 'right' && props.align === 'center':
-        transformOrigin = 'left'
-        break
-      case props.side === 'top' && props.align === 'end':
-        transformOrigin = 'bottom right'
-        break
-      case props.side === 'left' && props.align === 'start':
-        transformOrigin = 'top right'
-        break
-      case props.side === 'bottom' && props.align === 'end':
-        transformOrigin = 'top right'
-        break
-    }
-
-    ctx.popupRef.style.transformOrigin = transformOrigin
-  })
+  const [open, setOpen] = createSignal(false)
 
   const node: SceneNodePopover = {
     type: 'popover',
@@ -270,7 +252,7 @@ export function SceneryPopover<const K extends string>(
       return ctx.popupRef
     },
     get anchorPosition() {
-      return props.anchor.position
+      return props.anchor?.position
     },
     get markerPosition() {
       return props.marker.position
@@ -301,7 +283,7 @@ export function SceneryPopover<const K extends string>(
         return triggerRef
       },
       get position() {
-        return props.anchor.position
+        return props.anchor?.position
       },
       get side() {
         return props.side
@@ -322,8 +304,8 @@ export function SceneryPopover<const K extends string>(
             `)}
             ref={(el) => {
               triggerRef = el
-              el.style.setProperty('--node-anchor-x', `${props.anchor.position.x}`)
-              el.style.setProperty('--node-anchor-y', `${props.anchor.position.y}`)
+              el.style.setProperty('--node-anchor-x', `${props.anchor?.position.x}`)
+              el.style.setProperty('--node-anchor-y', `${props.anchor?.position.y}`)
             }}
           />
         )

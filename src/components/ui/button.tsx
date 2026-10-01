@@ -1,11 +1,11 @@
 import { UIAudio } from '@/audio'
 import { defaultProps } from '@/lib/utils'
+import { SceneryPopoverNodeContext } from '@/routes/_authed/-components/SceneryPopover'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { createEffect, createMemo, createSignal, onMount, splitProps } from 'solid-js'
+import { createEffect, createMemo, createSignal, onMount, splitProps, useContext } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
-import { usePopoverContext } from './popover'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
@@ -80,7 +80,7 @@ type ExtraButtonProps = (VariantOther | VariantGameAction) & SoundProps
 
 function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   let ref!: HTMLButtonElement
-  const popoverCtx = usePopoverContext()
+  const sceneryNode = useContext(SceneryPopoverNodeContext)
   const [pressed, setPressed] = createSignal(false)
   const props = defaultProps(componentProps, {
     variant: 'outline',
@@ -100,9 +100,8 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
   ])
 
   const disabled = createMemo(() => {
-    return popoverCtx != null && popoverCtx.variant === 'scenery'
-      ? popoverCtx.node?.actions.open.get() !== true
-      : local.disabled
+    if (sceneryNode == null) return local.disabled
+    return sceneryNode.actions.open.get() !== true
   })
 
   async function handleSound(soundKey: ConfigurableSound | UIAudio.SoundKey) {
@@ -188,7 +187,7 @@ function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
 export function InteractButton(props: { onPress: HotkeyCallback; label?: string }) {
   return (
     <div class="animate-pulseY">
-      <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue">
+      <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue w-max">
         <Button variant="game-action" hotkey="E" onHotkeyPress={props.onPress}>
           E
         </Button>
@@ -198,4 +197,4 @@ export function InteractButton(props: { onPress: HotkeyCallback; label?: string 
   )
 }
 
-export { Button, buttonVariants, type ExtraButtonProps, InteractButton as PressE }
+export { Button, buttonVariants, InteractButton as PressE, type ExtraButtonProps }

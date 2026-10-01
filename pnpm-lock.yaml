@@ -108,11 +108,11 @@ settings:
 catalogs:
   default:
     '@clerk/backend':
-      specifier: ^3.20.1
-      version: 3.20.1
+      specifier: ^3.21.0
+      version: 3.21.0
     '@clerk/ui':
-      specifier: ^1.36.0
-      version: 1.36.0
+      specifier: ^1.37.0
+      version: 1.37.0
     '@convex-dev/crons':
       specifier: ^0.2.2
       version: 0.2.2
@@ -195,11 +195,11 @@ catalogs:
       specifier: ^6.38.0
       version: 6.38.0
     lucide-solid:
-      specifier: ^1.48.0
-      version: 1.48.0
+      specifier: ^1.49.0
+      version: 1.49.0
     motion:
-      specifier: ^13.4.5
-      version: 13.4.5
+      specifier: ^13.4.6
+      version: 13.4.6
     nitro:
       specifier: npm:nitro-nightly@3.0.260903-beta
       version: 3.0.260903-beta
@@ -207,8 +207,8 @@ catalogs:
       specifier: ^0.71.0
       version: 0.71.0
     posthog-js:
-      specifier: ^1.434.17
-      version: 1.434.17
+      specifier: ^1.435.1
+      version: 1.435.1
     shadcn:
       specifier: ^4.21.0
       version: 4.21.0
@@ -219,8 +219,8 @@ catalogs:
       specifier: ^1.0.4
       version: 1.0.4
     svix:
-      specifier: ^2.5.0
-      version: 2.5.0
+      specifier: ^2.6.0
+      version: 2.6.0
     tailwindcss:
       specifier: ^4.3.3
       version: 4.3.3
@@ -252,7 +252,7 @@ importers:
     dependencies:
       '@clerk/ui':
         specifier: 'catalog:'
-        version: 1.36.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(bufferutil@4.1.0)(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@8.1.1)(typescript@7.0.2)(utf-8-validate@6.0.6)
+        version: 1.37.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(bufferutil@4.1.0)(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@8.1.1)(typescript@7.0.2)(utf-8-validate@6.0.6)
       '@convex-dev/crons':
         specifier: 'catalog:'
         version: 0.2.2(convex@1.46.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))
@@ -300,7 +300,7 @@ importers:
         version: 0.7.1
       clerk-solidjs-tanstack-start:
         specifier: 'catalog:'
-        version: 0.0.3(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(@tanstack/solid-router@1.170.37(solid-js@1.9.15))(@tanstack/solid-start@1.168.56(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.5.0)
+        version: 0.0.3(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(@tanstack/solid-router@1.170.37(solid-js@1.9.15))(@tanstack/solid-start@1.168.56(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.6.0)
       cn:
         specifier: 'catalog:'
         version: 0.4.0
@@ -321,16 +321,16 @@ importers:
         version: 2.2.4
       lucide-solid:
         specifier: 'catalog:'
-        version: 1.48.0(solid-js@1.9.15)
+        version: 1.49.0(solid-js@1.9.15)
       motion:
         specifier: 'catalog:'
-        version: 13.4.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 13.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nitro:
         specifier: 'catalog:'
         version: nitro-nightly@3.0.260903-beta
       posthog-js:
         specifier: 'catalog:'
-        version: 1.434.17(react@19.2.8)
+        version: 1.435.1(react@19.2.8)
       solid-js:
         specifier: 'catalog:'
         version: 1.9.15
@@ -339,7 +339,7 @@ importers:
         version: 1.0.4(solid-js@1.9.15)
       svix:
         specifier: 'catalog:'
-        version: 2.5.0
+        version: 2.6.0
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3
@@ -352,7 +352,7 @@ importers:
     devDependencies:
       '@clerk/backend':
         specifier: 'catalog:'
-        version: 3.20.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 3.21.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)
@@ -551,12 +551,12 @@ packages:
     resolution: {integrity: sha512-I5Lkui1cPweLGlXCRBQJv1UY8wugD1iXtJDXzERQ0xYjBXGUbKgVh7/lu+v81TA6N0rG9m4+Wo6aFadFcJnSkg==}
     engines: {node: '>=18.17.0'}
 
-  '@clerk/backend@3.20.1':
-    resolution: {integrity: sha512-s07oW5yoFtnMbIzzjX61E+s8p278IBNlbPH2obEqNKNVLVb3SNR+UWERBiT1LgTp2LL3cdJmdNCvIaVTaGKMEA==}
+  '@clerk/backend@3.21.0':
+    resolution: {integrity: sha512-X00c3MpUoXwpdW7TAEqtzPQamww2gCAh26+rwvcPaQmWOtbp66DvNsUnrUxKgbz0jysIynTOjXMGhRqPN9AEtg==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/localizations@4.20.0':
-    resolution: {integrity: sha512-2JKJHSvfhtXiJXckCZRuy5sRNlJVXv7zKg42Z1G0IPUJKAhsVu5WtH4q6y3kDUxOkIibabx8Oe1BEYc/Kdp8rw==}
+  '@clerk/localizations@4.21.0':
+    resolution: {integrity: sha512-3CWoGd5F5/eaFwljkNZl3ZlCwg74KHeyUvUt1kHWs0kvAF9pvao5zrEh/A8vvBFRu5ZkhMfcZ14WhH5fhr/SYQ==}
     engines: {node: '>=20.9.0'}
 
   '@clerk/shared@2.22.1':
@@ -595,8 +595,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/shared@4.36.0':
-    resolution: {integrity: sha512-K0RAZxGe2otl5FDl6NkhmwI05deN/lO2KFqaObhCRvtw8L1DJMaXUQVfvsJ8D7eDu+0ORiYeC3FcY8cHgI/2Mg==}
+  '@clerk/shared@4.37.0':
+    resolution: {integrity: sha512-WyPU9zU4Rrs+etNvtN7ev8bi1INs44jZv1aSXb3TSvGQ8XWnlwuphGMbbnPK0fyqifmU6scOQk6wm+KwDejy/g==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -617,8 +617,8 @@ packages:
     engines: {node: '>=18.17.0'}
     deprecated: 'This package is no longer supported. Please import types from @clerk/shared/types instead. See the upgrade guide for more info: https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3'
 
-  '@clerk/ui@1.36.0':
-    resolution: {integrity: sha512-uI96zYCh5jISLOt1mdpIPy/Y31P0kwFxjUFOxLUwFfTHFmGUcRjbqN6bbb+75tdI2Bz6ARGws3rhspDer+xIfQ==}
+  '@clerk/ui@1.37.0':
+    resolution: {integrity: sha512-hp83MamsdaTsZL6vCu+V6hqyF3ZLjJ36pV8B7gSwkqQnw6z7I2YlqLox9wEVra3S6Q9ByBC/OvoJx+6Ed75B9w==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -1801,6 +1801,9 @@ packages:
 
   '@posthog/types@1.412.4':
     resolution: {integrity: sha512-Q7lV9O9TbLngjOYw1ucm3bS3tn48xb1B4ZQdDy8gv7yfKe99hCTeWYG4xZ36nJM80VxpTF9TriiJt5hngDOkBg==}
+
+  '@posthog/types@1.413.0':
+    resolution: {integrity: sha512-tYAVzNojWckuG/wxBB0fwE70sFruQQq4xbhkci7eH2ARU3mMfUTkvpN1HwBMpm0AtbxidLiH0IFvagmdJ8opPw==}
 
   '@preact/signals-core@1.14.4':
     resolution: {integrity: sha512-HNB6HYeYKhQbJ1aKl+YRjrS4+QWHLKX6qKoUsfS/m0vqzsVaEBiZiaKbG/e+NKk2ch5ALQr/ihWaMHxiCuuWHA==}
@@ -4282,8 +4285,8 @@ packages:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
 
-  framer-motion@13.4.5:
-    resolution: {integrity: sha512-iXRMQ0Dp9cNf2k/1bNCguTgEOjqKjYgFmez/HA5NmAeuarzuj24jcDCZRnTAHXfMZZjOBXCE196ni3hmOGDIMA==}
+  framer-motion@13.4.6:
+    resolution: {integrity: sha512-TwKWt2CC8rjhARzwV00TZIh04ipumSAqyKM/JZmS+urdncSHg6wTF/mfj/Fd6Oi2W01TZSWsiA3uxXDrXZtKyw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -4898,8 +4901,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-solid@1.48.0:
-    resolution: {integrity: sha512-tes5UEPXUpMYwk8MRgFS9EtV90miJ8P/19H8NR4hhaiVDBfZY39YG0zm7Ofxv3YVNNdKP95XckdYXXc0CtQaoQ==}
+  lucide-solid@1.49.0:
+    resolution: {integrity: sha512-ULoV0vXTdfZOODX/FdS/h2V7gj6BnxKfK++XY0NhiX3f7TR8jYdE1pw0gfHBctdfSIqZZB3BnIiOUuSbYGpf9Q==}
     peerDependencies:
       solid-js: ^1.4.7
 
@@ -5080,8 +5083,8 @@ packages:
   motion-utils@13.3.0:
     resolution: {integrity: sha512-sgSschQp7EseHInIlR7hBbMuvet3RA0bs28KPZAXJcGKGdxHGvh1ogpYDilY3bOMtl73EqPNmp75sAKHYPU5sg==}
 
-  motion@13.4.5:
-    resolution: {integrity: sha512-PfSAiAqsmBYfX7Jgu698pakn6ifJEkixtftHBJyZR02CIEnz0/0e0E9GtK7GhWFeAYkeS50Iix863oZag+nePg==}
+  motion@13.4.6:
+    resolution: {integrity: sha512-zDXi6lIdyhda6wZlTsv9QgT2ed6UExAfRegtl/akQmZb5iaeLlArXr9Gmo/hx3iTx2y4R7tmdb9k9koFQmV+NQ==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -5379,8 +5382,8 @@ packages:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.434.17:
-    resolution: {integrity: sha512-R5Tb+YrDnZLVtMKXASXklXpfPwzwJ6YJKvcdL/UWV8OHigLm+ZveXtSsz3zwfidMpmSXHI0g2PJkeArO51qnAA==}
+  posthog-js@1.435.1:
+    resolution: {integrity: sha512-uDGP3wJToUALjpKe2Lh+ZaxVkDjG2LzE+YNURgVBC6FpXcbeH1EHQlibleFWRsZCuHmPn0SnZeJOJznW6NYU6Q==}
     peerDependencies:
       '@types/react': '>=16.8.0'
       react: '>=16.8.0'
@@ -5637,12 +5640,6 @@ packages:
     peerDependencies:
       seroval: ^1.0
 
-  seroval-plugins@1.6.4:
-    resolution: {integrity: sha512-R0f1U9hmn38+dFMz6b6ab8lwucmw4AtiY7St+JPWudy1dm+Bs3g884nyrsH9Cy6rKpZKLYayXuMda9GZ/fl8JQ==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      seroval: ^1.0
-
   seroval-plugins@1.6.8:
     resolution: {integrity: sha512-N7mWAMydj89EnYTHtRpS3LBrAz3J9O6oVrqpuXuvlAHfAUG8WEKqtbAd7SBiJNY5NfCAFhSdyAh7wI4Shjqy4g==}
     engines: {node: '>=10'}
@@ -5651,10 +5648,6 @@ packages:
 
   seroval@1.5.6:
     resolution: {integrity: sha512-rVQVWjjSvlINzaQPZH5JFqsqEsIWdTxY3iJZCnTL/5gQbXIRooVZKI60tVCkOVfzcRPejboxO2t0P89dg5mQaA==}
-    engines: {node: '>=10'}
-
-  seroval@1.6.4:
-    resolution: {integrity: sha512-LErWMNS2RRFdu2RMA5u/PA59/IWs0XsikyEXGQ2/36iEWFrdG0ABmg17E17cikrv76891kOAMq3TkTFXpwAHXw==}
     engines: {node: '>=10'}
 
   seroval@1.6.8:
@@ -5899,8 +5892,8 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  svix@2.5.0:
-    resolution: {integrity: sha512-mqcwCPKL6J5yqC2EQy5ZqE5XEJriCZffy49EGBDCsnrQ7RAYF4kZLJhKfXrB0n21S+3M9qYmQ9YjzrNjRlIuCw==}
+  svix@2.6.0:
+    resolution: {integrity: sha512-VYfF6HF6TqbjJhLN1hkjhzpK0OCEzMe2vBW2MGXBkQDb8HSHvYogPHOC/xwhX9d5DvL9Wj1/eIf0I3nWUVrrBw==}
     engines: {node: '>=22'}
 
   swr@2.3.4:
@@ -6611,7 +6604,7 @@ snapshots:
       picocolors: 1.1.1
       sisteransi: 1.0.5
 
-  '@clerk/backend@1.34.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svix@2.5.0)':
+  '@clerk/backend@1.34.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svix@2.6.0)':
     dependencies:
       '@clerk/shared': 3.47.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/types': 4.101.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -6619,7 +6612,7 @@ snapshots:
       snakecase-keys: 8.0.1
       tslib: 2.8.1
     optionalDependencies:
-      svix: 2.5.0
+      svix: 2.6.0
     transitivePeerDependencies:
       - react
       - react-dom
@@ -6634,18 +6627,18 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/backend@3.20.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/backend@3.21.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@clerk/shared': 4.36.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.37.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       standardwebhooks: 1.1.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@clerk/localizations@4.20.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/localizations@4.21.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@clerk/shared': 4.36.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.37.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -6686,7 +6679,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@clerk/shared@4.36.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/shared@4.37.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@tanstack/query-core': 5.102.8
       dequal: 2.0.3
@@ -6710,10 +6703,10 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/ui@1.36.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(bufferutil@4.1.0)(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@8.1.1)(typescript@7.0.2)(utf-8-validate@6.0.6)':
+  '@clerk/ui@1.37.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(bufferutil@4.1.0)(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@8.1.1)(typescript@7.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@clerk/localizations': 4.20.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@clerk/shared': 4.36.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/localizations': 4.21.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.37.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@emotion/cache': 11.11.0
       '@emotion/react': 11.11.1(react@19.2.8)(supports-color@8.1.1)
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -7538,7 +7531,7 @@ snapshots:
 
   '@posthog/browser-common@0.9.0':
     dependencies:
-      '@posthog/core': 1.55.1
+      '@posthog/core': 1.55.2
       '@posthog/types': 1.412.4
 
   '@posthog/convex@2.1.5(convex@1.46.0(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))':
@@ -7558,6 +7551,8 @@ snapshots:
       '@posthog/types': 1.412.4
 
   '@posthog/types@1.412.4': {}
+
+  '@posthog/types@1.413.0': {}
 
   '@preact/signals-core@1.14.4': {}
 
@@ -8526,8 +8521,8 @@ snapshots:
       path-to-regexp: 8.4.2
       pathe: 2.0.3
       radix3: 1.1.2
-      seroval: 1.6.4
-      seroval-plugins: 1.6.4(seroval@1.6.4)
+      seroval: 1.6.8
+      seroval-plugins: 1.6.8(seroval@1.6.8)
       shiki: 4.4.3
       solid-js: 1.9.15
       srvx: 0.12.7
@@ -8912,7 +8907,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 26.6.3
 
   '@types/deep-eql@4.0.2': {}
 
@@ -8961,7 +8956,7 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 26.6.3
 
   '@types/ws@8.18.1':
     dependencies:
@@ -9499,14 +9494,14 @@ snapshots:
     dependencies:
       clsx: 2.1.1
 
-  clerk-solidjs-tanstack-start@0.0.3(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(@tanstack/solid-router@1.170.37(solid-js@1.9.15))(@tanstack/solid-start@1.168.56(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.5.0):
+  clerk-solidjs-tanstack-start@0.0.3(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(@tanstack/solid-router@1.170.37(solid-js@1.9.15))(@tanstack/solid-start@1.168.56(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.6.0):
     dependencies:
       '@clerk/backend': 2.33.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/shared': 3.47.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/types': 4.101.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tanstack/solid-router': 1.170.37(solid-js@1.9.15)
       '@tanstack/solid-start': 1.168.56(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(esbuild@0.27.0)(rolldown@1.2.6)(solid-js@1.9.15)(supports-color@8.1.1)(vite-plugin-solid@2.11.14(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(solid-js@1.9.15)(supports-color@8.1.1))
-      clerk-solidjs: 2.0.10(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.5.0)
+      clerk-solidjs: 2.0.10(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.6.0)
       solid-js: 1.9.15
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -9516,9 +9511,9 @@ snapshots:
       - react-dom
       - svix
 
-  clerk-solidjs@2.0.10(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.5.0):
+  clerk-solidjs@2.0.10(@solidjs/router@0.15.4(solid-js@1.9.15))(@solidjs/start@2.0.4(@solidjs/router@0.15.4(solid-js@1.9.15))(@voidzero-dev/vite-plus-core@1.0.0(@types/node@26.6.3)(esbuild@0.27.0)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.12(srvx@1.0.3))(ocache@0.3.0)(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.15)(svix@2.6.0):
     dependencies:
-      '@clerk/backend': 1.34.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svix@2.5.0)
+      '@clerk/backend': 1.34.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svix@2.6.0)
       '@clerk/shared': 2.22.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@solid-primitives/context': 0.2.3(solid-js@1.9.15)
       '@solid-primitives/destructure': 0.1.17(solid-js@1.9.15)
@@ -10065,7 +10060,7 @@ snapshots:
 
   forwarded@0.2.0: {}
 
-  framer-motion@13.4.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  framer-motion@13.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       motion-dom: 13.4.5
       motion-utils: 13.3.0
@@ -10577,7 +10572,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-solid@1.48.0(solid-js@1.9.15):
+  lucide-solid@1.49.0(solid-js@1.9.15):
     dependencies:
       solid-js: 1.9.15
 
@@ -10855,9 +10850,9 @@ snapshots:
 
   motion-utils@13.3.0: {}
 
-  motion@13.4.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  motion@13.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
-      framer-motion: 13.4.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      framer-motion: 13.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       tslib: 2.8.1
     optionalDependencies:
       react: 19.2.8
@@ -11233,11 +11228,11 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.434.17(react@19.2.8):
+  posthog-js@1.435.1(react@19.2.8):
     dependencies:
       '@posthog/browser-common': 0.9.0
       '@posthog/core': 1.55.2
-      '@posthog/types': 1.412.4
+      '@posthog/types': 1.413.0
       core-js: 3.50.0
       dompurify: 3.4.14
       fflate: 0.4.9
@@ -11566,17 +11561,11 @@ snapshots:
     dependencies:
       seroval: 1.5.6
 
-  seroval-plugins@1.6.4(seroval@1.6.4):
-    dependencies:
-      seroval: 1.6.4
-
   seroval-plugins@1.6.8(seroval@1.6.8):
     dependencies:
       seroval: 1.6.8
 
   seroval@1.5.6: {}
-
-  seroval@1.6.4: {}
 
   seroval@1.6.8: {}
 
@@ -11856,7 +11845,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svix@2.5.0:
+  svix@2.6.0:
     dependencies:
       standardwebhooks: 1.1.1
 

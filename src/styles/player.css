@@ -2,7 +2,7 @@
   @keyframes hat-idle {
     0%,
     89.5% {
-      top: 0;
+      top: 0px;
     }
 
     /* duck */
@@ -92,8 +92,8 @@
   top: 0;
   left: 0;
   box-sizing: content-box;
-  background-position-y: 0;
-  background-position-x: calc(-1 * var(--original-player-width) * var(--hat-index, 0) + var(--hat-offset, 0));
+  background-position-y: -2px;
+  background-position-x: calc(-1 * var(--original-player-width) * var(--hat-index, 0) + var(--hat-offset, 0) + 2px);
   image-rendering: pixelated;
   width: var(--original-player-width);
   height: var(--original-player-height);
@@ -134,6 +134,19 @@
   transform-origin: center bottom;
   z-index: 10;
 
+  &:before {
+    @apply absolute inset-0;
+    content: '';
+    background-image: url('../routes/_authed/-assets/hog-animations/default/fire_effect.png');
+    animation: player-run 1500ms steps(14) infinite;
+    image-rendering: pixelated;
+    background-repeat: no-repeat;
+    box-sizing: content-box;
+    background-size: cover;
+    transform-origin: center bottom;
+    opacity: calc(var(--is-running, 0) * 0.5);
+  }
+
   &[data-is-admin='true'] {
     --is-admin: 1;
   }
@@ -153,19 +166,6 @@
   background-image: url('../routes/_authed/-assets/hog-animations/default/walk.png');
   animation: player-walk calc(900ms / var(--movement-speed)) steps(11) infinite;
   /*player-admin-hue var(--hue-speed) infinite;*/
-
-  &:before {
-    @apply absolute inset-0;
-    content: '';
-    background-image: url('../routes/_authed/-assets/hog-animations/default/fire_effect.png');
-    animation: player-run 1500ms steps(14) infinite;
-    image-rendering: pixelated;
-    background-repeat: no-repeat;
-    box-sizing: content-box;
-    background-size: cover;
-    transform-origin: center bottom;
-    opacity: calc(var(--is-running, 0) * 0.5);
-  }
 
   & > .hat {
     --hat-offset: 0px;

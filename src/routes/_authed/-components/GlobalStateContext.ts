@@ -1,5 +1,4 @@
 import { createContext, useContext } from 'solid-js'
-import type { GlobalState } from './GlobalStateProvider'
 
 export const GlobalStateContext = createContext<GlobalState>()
 

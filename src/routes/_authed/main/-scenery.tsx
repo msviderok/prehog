@@ -1,4 +1,5 @@
 import { PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
+import { Separator } from '@/components/ui/separator'
 import {
   Tooltip,
   TooltipArrow,
@@ -7,6 +8,8 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { api } from '@/convex/api'
+import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
@@ -55,6 +58,7 @@ function Intro() {
 }
 
 function Experience() {
+  const setScene = useSingleFlightMutation(api.gameState.setScene)
   return (
     <SceneryPopover
       id="experience"
@@ -63,9 +67,10 @@ function Experience() {
       anchor={{ position: { x: 21.5, y: 80 } }}
       marker={{
         position: { x: 15.9, y: 94 },
-        onInteract: () => {},
+        onInteract: () => setScene.mutate({ scene: 'tour' }),
         label: 'Explore',
         interactPillPosition: { x: 0.1, y: -43 },
+        preloadRoute: 'tour',
       }}
       asset={(p) => (
         <Asset {...p} routeId="/_authed/main/" asset="intro.png" x={12.48} y={-0.1} scale={SCALE} class="group">
@@ -81,7 +86,7 @@ function Experience() {
               [--pp:500px] [--rx:30deg] [--tz:100px] [--dtx:calc(var(--scene-tx)*-1+50%)]
               group-data-open:[--sy:1.3]
               group-data-open:[--rx:0deg]
-              group-data-open:after:bg-ph-background
+              group-data-open:after:bg-black
             `)}
           >
             <span
@@ -163,20 +168,26 @@ function MyProjects() {
       </PopoverHeader>
 
       <PopoverDescription>
-        This should list all of my (a single one lol) personal projects to show-off.
+        d This should list all of my (a single one lol) personal projects to show-off.
       </PopoverDescription>
     </SceneryPopover>
   )
 }
 
 function WhyAmIGoodForARole() {
+  const setScene = useSingleFlightMutation(api.gameState.setScene)
   return (
     <SceneryPopover
       id="application"
-      side="right"
+      side="bottom"
       align="end"
-      anchor={{ position: { x: 54.34, y: 46 } }}
-      marker={{ position: { x: 47, y: 94 }, onInteract: () => {}, label: 'Interact' }}
+      anchor={{ position: { x: 54, y: 80 } }}
+      marker={{
+        position: { x: 47, y: 94 },
+        onInteract: () => setScene.mutate({ scene: 'application' }),
+        label: 'Explore',
+        interactPillPosition: { x: 5.5, y: -22.2 },
+      }}
       asset={(p) => <Asset {...p} routeId="/_authed/main/" asset="application.png" x={43.1} y={-0.1} scale={SCALE} />}
     >
       <PopoverHeader>
