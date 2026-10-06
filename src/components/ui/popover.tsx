@@ -39,7 +39,13 @@ export function PopoverContent(props: PopoverPrimitive.Popup.Props) {
 
 export function PopoverHeader(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
-  return <div data-slot="popover-header" class={cn('flex flex-col gap-1 text-base', local.class)} {...rest} />
+  return (
+    <div
+      data-slot="popover-header"
+      class={cn('flex flex-col gap-1 group-data-[variant=scenery]:gap-2', local.class)}
+      {...rest}
+    />
+  )
 }
 
 export function PopoverFooter(props: ComponentProps<'div'>) {

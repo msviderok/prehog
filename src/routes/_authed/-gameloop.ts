@@ -89,11 +89,7 @@ export function runGameLoop() {
     let collided = false
     for (const node of nodes) {
       const nodeCollided = collisionDetected(player.hitbox, node.hitbox)
-      if (node.actions.open.value !== nodeCollided) {
-        node.actions.open.value = nodeCollided
-        node.actions.open.set(nodeCollided)
-      }
-
+      if (node.collided.value !== nodeCollided) node.collided.set(nodeCollided)
       if (nodeCollided) collided = true
     }
 

@@ -1,7 +1,8 @@
-import type { Accessor } from 'solid-js'
-import type { Doc } from '../convex/_generated/dataModel'
-import type { api } from '../convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
+import type { Accessor } from 'solid-js'
+import type { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
+import type { RtcState } from './lib/createRtcState'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -53,15 +54,16 @@ declare global {
     set: Setter<T>
   }
 
+  type SceneNodeStatus = { type: 'not-started' } | { type: 'in-progress' }
+
   type SceneNode = SceneNodePopover | SceneNodePlayer
 
   interface BaseSceneNodeProps {
     rootRef: HTMLElement | undefined
     size: { width: number; height: number }
-    readonly hitbox: { x1: number; y1: number; x2: number; y2: number }
-    actions: {
-      open: NodeAction<boolean>
-    }
+    hitbox: { x1: number; y1: number; x2: number; y2: number }
+    collided: NodeAction<boolean>
+    status: NodeAction<SceneNodeStatus>
   }
 
   interface SceneNodePopover extends BaseSceneNodeProps {
@@ -86,20 +88,6 @@ declare global {
   type CurrentScene = Doc<'game_user_state'>['scene']
 
   type LoadingStatus = 'not-initiated' | 'signed-out' | 'loading-clerk' | 'loading-game-state' | UserData
-
-  interface CSSStyleDeclaration {
-    '--original-scene-width'?: string
-    '--original-scene-height'?: string
-    '--player-offset-y'?: string
-    '--original-player-width'?: string
-    '--original-player-height'?: string
-    '--original-player-hitbox-width'?: string
-    '--original-player-hitbox-height'?: string
-    '--scale'?: string
-    '--scene-offset-top'?: string
-    '--wux'?: string
-    '--wuy'?: string
-  }
 
   interface MyPlayer {
     ref: HTMLElement | undefined
@@ -166,7 +154,7 @@ declare global {
     scene: Scene
     nodes: Set<SceneNode>
     player: MyPlayer
-    rtc: ReturnType<typeof createRtcState>
+    rtc: RtcState
     otherPlayers: {
       list: Accessor<Array<Id<'users'>>>
       hashmap: Map<Id<'users'>, OtherPlayer>

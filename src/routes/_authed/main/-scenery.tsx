@@ -1,3 +1,4 @@
+import { Prose } from '@/components/Prose'
 import { PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -43,16 +44,28 @@ function Intro() {
   return (
     <SceneryPopover
       id="intro"
-      side="left"
-      align="end"
-      anchor={{ position: { x: 9, y: 55 } }}
-      marker={{ position: { x: 6, y: 94 } }}
+      side="top"
+      align="center"
+      anchor={{ position: { x: 10, y: 50 } }}
+      openOnInteraction
+      marker={{
+        position: { x: 6, y: 94 },
+        onInteract: (node) => {
+          console.log(node.collided.get())
+        },
+      }}
       asset={(p) => <Asset {...p} routeId="/_authed/main/" asset="experience.png" x={8} y={51.8} scale={SCALE} />}
     >
       <PopoverHeader>
-        <PopoverTitle>Oh, hey there! Welcome!</PopoverTitle>
+        <PopoverTitle>Hawg</PopoverTitle>
+        <Separator />
       </PopoverHeader>
-      <PopoverDescription>Here you can get to know me better.</PopoverDescription>
+      <PopoverDescription>
+        <Prose>
+          <p>Hey there, welcome! I'm Hawg.</p>
+          <p>Would you like me to give you a tour of this place or do you wanna wonder on your own?</p>
+        </Prose>
+      </PopoverDescription>
     </SceneryPopover>
   )
 }

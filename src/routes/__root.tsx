@@ -1,17 +1,17 @@
-import { ClerkProvider } from '@/routes/-components/ClerkProvider'
-import { ConvexClerkProvider } from '@/routes/-components/ConvexClerkProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { api } from '@/convex/api'
 import { env } from '@/env'
 import { authClerkServerFn } from '@/lib/server.functions'
+import { assets } from '@/routeAssets.gen'
+import { ClerkProvider } from '@/routes/-components/ClerkProvider'
+import { ConvexClerkProvider } from '@/routes/-components/ConvexClerkProvider'
 import { ClientOnly, createRootRouteWithContext, HeadContent, Outlet, redirect, Scripts } from '@tanstack/solid-router'
-import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
 import { setupConvexHttp } from 'convex-solidjs'
 import posthog from 'posthog-js'
 import { onMount, Suspense, type ParentProps } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
-import { assets } from '@/routeAssets.gen'
+import { AudioManagerProvider } from '@/audio/AudioManagerProvider'
 
 export const Route = createRootRouteWithContext()({
   staticData: { scene: null },
@@ -53,7 +53,9 @@ export const Route = createRootRouteWithContext()({
                 <TooltipProvider>
                   <ClerkProvider>
                     <ConvexClerkProvider>
-                      <Outlet />
+                      <AudioManagerProvider>
+                        <Outlet />
+                      </AudioManagerProvider>
                     </ConvexClerkProvider>
                   </ClerkProvider>
                 </TooltipProvider>

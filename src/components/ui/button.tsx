@@ -1,10 +1,10 @@
-import { UIAudio } from '@/audio'
+import { SOUNDS } from '@/audio'
 import { defaultProps } from '@/lib/utils'
-import { SceneryPopoverNodeContext } from '@/routes/_authed/-components/SceneryPopover'
+import { useSceneryPopoverNode } from '@/routes/_authed/-components/SceneryPopoverContext'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
-import { ensureReady } from '@web-kits/audio'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { createEffect, createMemo, createSignal, onMount, splitProps, useContext } from 'solid-js'
+import { cn } from 'cn'
+import { createEffect, createMemo, createSignal, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 
 const buttonVariants = cva(
@@ -21,7 +21,7 @@ const buttonVariants = cva(
           'aria-expanded:bg-(--v-color) not-aria-expanded:bg-muted aria-expanded:opacity-100 not-aria-expanded:opacity-50 aria-expanded:border-tint-(--v-color)/50 not-aria-expanded:border-tint-muted/30',
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
-        'game-action': `
+        keycap: cn(`
           bg-white border-black/20! relative isolate size-8! text-shade-ph-dark-cornflower-blue/50 text-xl!
           origin-center
           [--s:0.2em]
@@ -31,7 +31,7 @@ const buttonVariants = cva(
           [box-shadow:0_var(--boxShadowY-dynamic)_0_0_var(--tw-shadow-color)]
           data-[pressed=true]:[--boxShadowY-dynamic:0]
           data-[pressed=true]:translate-y-(--s)
-        `,
+        `),
       },
       animate: {
         default: '',
@@ -56,139 +56,68 @@ const buttonVariants = cva(
   },
 )
 
-type InferredButtonVariantProps = VariantProps<typeof buttonVariants>
-
-interface VariantOther extends Omit<InferredButtonVariantProps, 'variant'> {
-  variant?: Exclude<InferredButtonVariantProps['variant'], 'game-action'>
-  hotkey?: never
-  onHotkeyPress?: never
+function Button(componentProps: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  const props = defaultProps(componentProps, { variant: 'outline', animate: 'default' })
+  const [local, rest] = splitProps(props, ['class', 'size', 'variant', 'animate'])
+  return <ButtonPrimitive data-slot="button" class={cn(buttonVariants(local))} {...rest} />
 }
 
-export interface VariantGameAction extends Omit<InferredButtonVariantProps, 'variant'> {
-  variant: Extract<InferredButtonVariantProps['variant'], 'game-action'>
-  hotkey: Hotkey
-  onHotkeyPress: HotkeyCallback
-}
-
-interface SoundProps {
-  sound?: 'off' | { click?: UIAudio.SoundKey; tap?: UIAudio.SoundKey }
-}
-
-type ConfigurableSound = keyof Extract<SoundProps['sound'], object>
-
-type ExtraButtonProps = (VariantOther | VariantGameAction) & SoundProps
-
-function Button(componentProps: ButtonPrimitive.Props & ExtraButtonProps) {
+export function InteractButton(componentProps: {
+  /** @default "E" */
+  hotkey?: Hotkey
+  label?: string
+  onPress: HotkeyCallback
+}) {
   let ref!: HTMLButtonElement
-  const sceneryNode = useContext(SceneryPopoverNodeContext)
+  const props = defaultProps(componentProps, { hotkey: 'E' })
   const [pressed, setPressed] = createSignal(false)
-  const props = defaultProps(componentProps, {
-    variant: 'outline',
-    size: 'default',
-    animate: 'default',
-  })
-  const [local, rest] = splitProps(props, [
-    'class',
-    'size',
-    'variant',
-    'animate',
-    'ref',
-    'sound',
-    'hotkey',
-    'onHotkeyPress',
-    'disabled',
-  ])
 
-  const disabled = createMemo(() => {
-    if (sceneryNode == null) return local.disabled
-    return sceneryNode.actions.open.get() !== true
-  })
-
-  async function handleSound(soundKey: ConfigurableSound | UIAudio.SoundKey) {
-    if (local.sound === 'off') return
-    await ensureReady()
-    const sound = local.sound?.[soundKey as ConfigurableSound] ?? (UIAudio.get(soundKey) ? soundKey : 'click')
-    return UIAudio.play(sound)
-  }
-
-  const onSoundHandleClick = () => handleSound('click')
-  const onSoundHandleTap = () => handleSound('tap')
-  const onSoundHandleMouseOver = () => handleSound('hover')
-
-  createEffect(() => {
-    if (local.sound === 'off') return
-
-    ref.addEventListener('click', onSoundHandleClick)
-    ref.addEventListener('touchstart', onSoundHandleTap)
-    ref.addEventListener('mouseover', onSoundHandleMouseOver)
-
-    return () => {
-      ref.removeEventListener('click', onSoundHandleClick)
-      ref.removeEventListener('touchstart', onSoundHandleTap)
-      ref.removeEventListener('mouseover', onSoundHandleMouseOver)
-    }
-  })
+  const node = useSceneryPopoverNode()
+  const disabled = createMemo(() => node.collided.get() !== true)
 
   createEffect(() => ref.setAttribute('data-pressed', pressed() ? 'true' : 'false'))
   createEffect(() => disabled() && pressed() && setPressed(false))
 
-  onMount(() => {
-    if (local.variant === 'game-action') {
-      createHotkeys(
-        [
-          {
-            hotkey: local.hotkey,
-            options: {
-              eventType: 'keydown',
-              get enabled() {
-                return !disabled()
-              },
-            },
-            callback: () => {
-              if (disabled()) return
-              setPressed(true)
-              onSoundHandleClick()
-            },
+  createHotkeys(
+    [
+      {
+        hotkey: props.hotkey,
+        options: {
+          eventType: 'keydown',
+          get enabled() {
+            return !disabled()
           },
-          {
-            hotkey: local.hotkey,
-            options: {
-              eventType: 'keyup',
-              get enabled() {
-                return !disabled()
-              },
-            },
-            callback: (e, ctx) => {
-              setPressed(false)
-              local.onHotkeyPress(e, ctx)
-            },
-          },
-        ],
-        { requireReset: true, conflictBehavior: 'allow' },
-      )
-    }
-  })
+        },
+        callback: () => {
+          if (disabled()) return
+          setPressed(true)
 
-  return (
-    <ButtonPrimitive
-      data-slot="button"
-      class={buttonVariants(local)}
-      ref={(el) => {
-        if (typeof props.ref === 'function') props.ref(el)
-        else props.ref = el
-        ref = el
-      }}
-      disabled={disabled()}
-      {...rest}
-    />
+          if (SOUNDS.ui.keyup.playing()) SOUNDS.ui.keyup.stop()
+          SOUNDS.ui.keydown.play('default')
+        },
+      },
+      {
+        hotkey: props.hotkey,
+        options: {
+          eventType: 'keyup',
+          get enabled() {
+            return !disabled()
+          },
+        },
+        callback: (e, ctx) => {
+          setPressed(false)
+          SOUNDS.ui.keyup.play('default')
+          props.onPress(e, ctx)
+        },
+      },
+    ],
+    { requireReset: true, conflictBehavior: 'allow' },
   )
-}
 
-export function InteractButton(props: { onPress: HotkeyCallback; label?: string }) {
   return (
     <div class="animate-pulseY">
       <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue w-max">
-        <Button variant="game-action" hotkey="E" onHotkeyPress={props.onPress}>
+        <Button variant="keycap" ref={ref}>
           E
         </Button>
         <span class="comic text-xl">{props.label ?? 'Interact'}</span>
@@ -197,4 +126,4 @@ export function InteractButton(props: { onPress: HotkeyCallback; label?: string 
   )
 }
 
-export { Button, buttonVariants, InteractButton as PressE, type ExtraButtonProps }
+export { Button, buttonVariants, InteractButton as PressE }

@@ -3,7 +3,7 @@ import type { Id } from '@/convex/dataModel'
 import { useStableQuery } from '@/lib/useStableQuery'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { createEffect, createRenderEffect, createSignal, on, onCleanup, onMount } from 'solid-js'
-import { Button } from '../../../components/ui/button'
+import { Button, InteractButton } from '../../../components/ui/button'
 import { Tooltip, TooltipPopup, TooltipPortal, TooltipPositioner } from '../../../components/ui/tooltip'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
@@ -12,7 +12,8 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
   let ref!: HTMLDivElement
   let sceneNode: SceneNodePlayer | undefined
   const { nodes, misc, otherPlayers } = useGlobalState()
-  const [nodeOpen, setNodeOpen] = createSignal(false)
+  const [collided, setCollided] = createSignal(false)
+  const [status, setStatus] = createSignal<SceneNodeStatus>({ type: 'not-started' })
 
   const getInitialState = useMutation(api.gameState.getInitialState)
 
@@ -42,14 +43,16 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
 
     sceneNode = {
       type: 'player',
-      actions: {
-        open: {
-          value: false,
-          get: nodeOpen,
-          set: setNodeOpen,
-        },
+      collided: {
+        value: collided(),
+        get: collided,
+        set: setCollided,
       },
-      position: { x: 0, y: 0 },
+      status: {
+        value: status(),
+        get: status,
+        set: setStatus,
+      },
       size: newOtherPlayer.size,
       hitbox: newOtherPlayer.hitbox,
       get rootRef() {
@@ -109,19 +112,15 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
 
   return (
     <>
-      <Tooltip variant="action" open={nodeOpen()}>
+      <Tooltip variant="action" open={collided()}>
         <TooltipPortal>
           <TooltipPositioner anchor={ref} side="top" align="center">
             <TooltipPopup>
-              <Button
-                variant="game-action"
-                hotkey="E"
-                onHotkeyPress={() => {
+              <InteractButton
+                onPress={() => {
                   console.log('Interact with', userProfile()?.fullname ?? 'USER_FULLNAME')
                 }}
-              >
-                E
-              </Button>
+              />
             </TooltipPopup>
           </TooltipPositioner>
         </TooltipPortal>

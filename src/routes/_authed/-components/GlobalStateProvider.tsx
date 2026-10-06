@@ -89,7 +89,7 @@ export function GlobalStateProvider(props: ParentProps) {
       scene.walkableMinX = misc.player.size.halfWidth
       scene.walkableMaxX = 100 - misc.player.size.halfWidth
 
-      player.x = lastKnownX ?? sceneInitialState.playerInitialX
+      player.x = lastKnownX ?? sceneInitialState.playerInitialX ?? 0
       player.hitbox.x1 = sceneInitialState.playerInitialX
       player.hitbox.x2 = sceneInitialState.playerInitialX + misc.player.size.width
       player.hitbox.y1 = misc.player.hitbox.y1

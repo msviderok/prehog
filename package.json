@@ -29,7 +29,6 @@
     "@tanstack/solid-router": "catalog:",
     "@tanstack/solid-router-devtools": "catalog:",
     "@tanstack/solid-start": "catalog:",
-    "@web-kits/audio": "catalog:",
     "class-variance-authority": "catalog:",
     "clerk-solidjs-tanstack-start": "catalog:",
     "cn": "catalog:",
@@ -67,7 +66,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.3.2",
+      "version": "12.8.1",
       "onFail": "download"
     }
   }

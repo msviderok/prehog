@@ -2,7 +2,7 @@ import { defaultProps } from '@/lib/utils'
 import { assets, type Assets, type RouteAsset } from '@/routeAssets.gen'
 import { cn } from 'cn'
 import { createMemo, splitProps, type JSX } from 'solid-js'
-import { useSceneryPopover } from './SceneryPopover'
+import { useSceneryPopover } from './SceneryPopoverContext'
 
 export interface AssetProps<
   K extends keyof Assets,

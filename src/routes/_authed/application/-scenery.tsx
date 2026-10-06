@@ -174,7 +174,7 @@ function Truck() {
         routeId="/_authed/application/"
         asset="truck_wheel.png"
         scale={0.3}
-        class="bottom-[2.5%] right-[34.2%] top-[unset] left-[unset] origin-center animate-truckWheelSpin [--tx:0]"
+        class="after:bottom-[2.5%] after:right-[34.2%] after:top-[unset] after:left-[unset] after:origin-center after:animate-truckWheelSpin after:[--tx:0]"
       />
       <Asset
         routeId="/_authed/application/"

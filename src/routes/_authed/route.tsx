@@ -9,7 +9,6 @@ import { useGlobalState } from './-components/GlobalStateContext'
 import { GlobalStateProvider } from './-components/GlobalStateProvider'
 import { SceneryPopoverProvider } from './-components/SceneryPopover'
 import { runGameLoop } from './-gameloop'
-import { useAudioManager } from '@/audio/useAudioManager'
 
 export const Route = createFileRoute('/_authed')({
   staticData: { scene: null },
@@ -18,7 +17,6 @@ export const Route = createFileRoute('/_authed')({
   },
   component() {
     useWatchPresence()
-    useAudioManager()
 
     return (
       <GlobalStateProvider>
@@ -50,6 +48,7 @@ function AuthedWrapper(props: ParentProps) {
       player.isWalking = false
       player.direction = 0
       player.facing = s.direction
+      console.log(s)
       player.x = s.x
       recalculate()
     })

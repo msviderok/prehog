@@ -56,7 +56,7 @@ export const sendMyBatch = mutation({
     const existingBatch = await ctx.db.get('game_event_batches', user.gameEventBatchesId)
     const batch = args.batch.map((i) => ({ ...i, t: now + i.t }))
 
-    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: batch[batch.length - 1].x })
+    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: batch[batch.length - 1].x ?? 0 })
 
     if (existingBatch) {
       await ctx.db.patch('game_event_batches', existingBatch._id, { batch })
@@ -190,6 +190,15 @@ export const updateMyPosition = mutation({
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
-    await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: args.x })
+    if (Number.isNaN(args.x)) {
+      const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+      const initialX = SCENE[state.scene].playerInitialX
+      await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: initialX })
+      await ctx.db.patch('game_user_state', user.gameUserStateId, {
+        lastKnownXPosition: { ...state.lastKnownXPosition, [state.scene]: initialX },
+      })
+    } else {
+      await ctx.db.patch('game_user_positions', user.gameUserPositionId, { x: args.x })
+    }
   },
 })
