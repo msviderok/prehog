@@ -1,0 +1,27 @@
+@utility hitbox {
+  &:after {
+    @apply border-2 border-red-500;
+    filter: unset;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 0, 0, calc(0.3 * var(--collided, 0)));
+  }
+
+  &.player {
+    &:after {
+      top: calc((var(--original-player-height) - var(--original-player-hitbox-height)) / 2);
+      left: calc((var(--original-player-width) - var(--original-player-hitbox-width)) / 2);
+      width: var(--original-player-hitbox-width);
+      height: var(--original-player-hitbox-height);
+    }
+
+    &[data-me='true']:after {
+      @apply border-2 border-green-500;
+      background-color: rgba(0, 255, 0, calc(0.3 * var(--collided, 0)));
+    }
+  }
+}

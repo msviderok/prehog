@@ -1,0 +1,57 @@
+@layer components {
+  .asset {
+    @apply game-transform absolute top-0 left-0 origin-center;
+    --attr-w: attr(data-width type(<number>), var(--w));
+    --attr-h: attr(data-height type(<number>), var(--h));
+    --attr-x: attr(data-x type(<number>), var(--x, 0));
+    --attr-y: attr(data-y type(<number>), var(--y, 0));
+    --tx: calc(var(--scene-tx, 0) + var(--dtx, 0) + (var(--attr-x) * var(--wux)));
+    --ty: calc(var(--dty, 0) + var(--attr-y) * var(--wuy));
+    width: calc(var(--dw, var(--attr-w)) * 1px);
+    height: calc(var(--dh, var(--attr-h)) * 1px);
+    z-index: -1;
+
+    &:before {
+      --mask: var(--asset-url) center / 100% 100% no-repeat;
+      @apply bg-ph-mustard-yellow;
+      content: '';
+      position: absolute;
+      inset: -5px;
+      mask: var(--mask);
+      -webkit-mask: var(--mask);
+      will-change: filter, transform, translate, scale, opacity;
+      image-rendering: pixelated;
+      transform-origin: top left;
+      opacity: 0;
+      transition-property: opacity;
+    }
+
+    &:after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: var(--asset-url);
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      background-position: top left;
+      image-rendering: pixelated;
+      will-change: transform, translate, scale;
+      transform-origin: top left;
+      transition-property: filter;
+      isolation: isolate;
+    }
+
+    &[data-open='true'] {
+      z-index: 0 !important;
+
+      &:before {
+        opacity: 1;
+      }
+
+      &:after {
+        @apply shadow-ph-mustard-yellow;
+        filter: drop-shadow(0px 0px 10px var(--tw-shadow-color));
+      }
+    }
+  }
+}

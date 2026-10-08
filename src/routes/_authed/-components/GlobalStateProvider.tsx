@@ -10,12 +10,13 @@ import {
   type Hat,
 } from '@/lib/constants'
 import { useStableQuery } from '@/lib/useStableQuery'
+import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
 import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { createEffect, createMemo, createSignal, on, onCleanup, onMount, type ParentProps } from 'solid-js'
-import { createStore } from 'solid-js/store'
+import { batch, createEffect, createMemo, createSignal, on, onCleanup, onMount, type ParentProps } from 'solid-js'
+import { createStore, produce } from 'solid-js/store'
 import { createRtcState } from '../../../lib/createRtcState'
 import { GlobalStateContext } from './GlobalStateContext'
 
@@ -26,7 +27,8 @@ export function GlobalStateProvider(props: ParentProps) {
   const rtc = createRtcState()
   const navigate = useNavigate()
 
-  const nodes: GlobalState['nodes'] = new Set()
+  const nodes: GlobalState['nodes'] = new Map()
+  const [nodeSlots, setNodeSlots] = createStore<GlobalState['nodeSlots']>({})
   const viewport: GlobalState['viewport'] = { width: 0, height: 0, vw: 0, vh: 0 }
   const misc: GlobalState['misc'] = {
     player: {
@@ -54,7 +56,7 @@ export function GlobalStateProvider(props: ParentProps) {
     s50WU: 0,
     cameraStartTravelAtX: 0,
     cameraEndTravelAtX: 0,
-    currentScene: 'main',
+    currentScene: () => currentScene()!.scene,
   }
   createEffect(
     on([() => currentScene()?.scene, () => currentScene()?.lastKnownXPosition], ([sceneValue, lastKnownX]) => {
@@ -141,6 +143,20 @@ export function GlobalStateProvider(props: ParentProps) {
     ),
   )
 
+  const [activeNodeId, setActiveNodeId] = createSignal<string>()
+  const [prevActiveNodeId, setPrevActiveNodeId] = createSignal<string>()
+  function setActiveNode(id: string | undefined) {
+    batch(() => {
+      setPrevActiveNodeId(activeNodeId())
+      setActiveNodeId(id)
+    })
+  }
+  const popover: GlobalState['popover'] = {
+    activeNodeId,
+    prevActiveNodeId,
+    setActiveNode,
+  }
+
   function calculate() {
     viewport.width = window.innerWidth
     viewport.height = window.innerHeight
@@ -162,23 +178,6 @@ export function GlobalStateProvider(props: ParentProps) {
     misc.eventMarker.r = EVENT_MARKER_SIZE.width / scene.worldUnit.x
     misc.eventMarker.h = EVENT_MARKER_SIZE.height / scene.worldUnit.y
 
-    for (const node of nodes) {
-      if (node.type === 'popover') {
-        node.hitbox.x1 = node.markerPosition.x - misc.eventMarker.r
-        node.hitbox.x2 = node.markerPosition.x + misc.eventMarker.r
-        node.hitbox.y1 = node.markerPosition.y - misc.eventMarker.h
-        node.hitbox.y2 = node.markerPosition.y + misc.eventMarker.h
-        node.size.width = node.hitbox.x2 - node.hitbox.x1
-        node.size.height = node.hitbox.y2 - node.hitbox.y1
-      }
-
-      if (node.type === 'popover') {
-        node.rootRef?.style.setProperty('--node-tx', `${node.hitbox.x1}`)
-        node.rootRef?.style.setProperty('--node-ty', `${node.hitbox.y1}`)
-        node.rootRef?.style.setProperty('--node-width', `${node.size.width}`)
-        node.rootRef?.style.setProperty('--node-height', `${node.size.height}`)
-      }
-    }
     updatePlayerAnimations()
   }
 
@@ -292,11 +291,14 @@ export function GlobalStateProvider(props: ParentProps) {
     onCleanup(() => clearInterval(i))
   })
 
+  const isPopoverOpen = createMemo(() => popover.activeNodeId() != null)
+
   return (
     <GlobalStateContext.Provider
       value={{
         recalculate: calculate,
         nodes,
+        nodeSlots,
         scene,
         otherPlayers,
         rtc,
@@ -304,9 +306,21 @@ export function GlobalStateProvider(props: ParentProps) {
         misc,
         viewport,
         debugData,
+        popover,
+
+        registerSlot(id, slot, component) {
+          if (nodeSlots[id] == null) setNodeSlots(id, {})
+          setNodeSlots(id, slot, () => component)
+        },
+        unregisterSlot(id, slot) {
+          setNodeSlots(
+            id,
+            produce((draft) => delete draft[slot]),
+          )
+        },
       }}
     >
-      {props.children}
+      <PopoverPrimitive.Root open={isPopoverOpen()}>{props.children}</PopoverPrimitive.Root>
     </GlobalStateContext.Provider>
   )
 }

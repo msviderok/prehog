@@ -1,8 +1,10 @@
 import type { FunctionReturnType } from 'convex/server'
-import type { Accessor } from 'solid-js'
+import type { JSX, Accessor, Setter } from 'solid-js'
 import type { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
 import type { RtcState } from './lib/createRtcState'
+import type { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
+import type { Store } from 'solid-js/store'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -48,41 +50,48 @@ declare global {
     y: number
   }
 
-  interface NodeAction<T> {
-    value: T
-    get: Accessor<T>
-    set: Setter<T>
-  }
+  type InteractiveNodeStatus = 'idle' | 'interacting'
 
-  type SceneNodeStatus = { type: 'not-started' } | { type: 'in-progress' }
-
-  type SceneNode = SceneNodePopover | SceneNodePlayer
-
-  interface BaseSceneNodeProps {
-    rootRef: HTMLElement | undefined
+  type InteractiveNode = {
     size: { width: number; height: number }
     hitbox: { x1: number; y1: number; x2: number; y2: number }
-    collided: NodeAction<boolean>
-    status: NodeAction<SceneNodeStatus>
-  }
+    collided: Accessor<boolean>
+    setCollided: Setter<boolean>
+    status: Accessor<InteractiveNodeStatus>
+    setStatus: Setter<InteractiveNodeStatus>
+  } & (
+    | {
+        type: 'popover'
+        data: {
+          anchorRef: HTMLButtonElement | undefined
+          positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>
+        }
+      }
+    | {
+        type: 'player'
+        data: {}
+      }
+  )
 
-  interface SceneNodePopover extends BaseSceneNodeProps {
-    type: 'popover'
-    popupRef: HTMLElement | undefined
-    anchorPosition?: { x: number; y: number }
-    markerPosition: { x: number; y: number }
-  }
+  type InteractiveNodeOf<K extends InteractiveNode['type']> = Extract<InteractiveNode, { type: K }>
 
-  interface SceneNodePlayer extends BaseSceneNodeProps {
-    type: 'player'
+  type SceneNodePopover = Extract<InteractiveNode, { type: 'popover' }>
+  type SceneNodePlayer = Extract<InteractiveNode, { type: 'player' }>
+
+  interface NodeSlots {
+    anchor?: () => JSX.Element
+    marker?: () => JSX.Element
+    asset?: () => JSX.Element
+    content?: () => JSX.Element
+    interaction?: Record<string, () => JSX.Element>
   }
 
   interface OtherPlayer {
     ref: HTMLDivElement | undefined
     x: number
     batchQueue: GameEventBatch
-    size: BaseSceneNodeProps['size']
-    hitbox: BaseSceneNodeProps['hitbox']
+    size: { width: number; height: number }
+    hitbox: { x1: number; y1: number; x2: number; y2: number }
   }
 
   type CurrentScene = Doc<'game_user_state'>['scene']
@@ -138,7 +147,7 @@ declare global {
     cameraStartTravelAtX: number
     cameraEndTravelAtX: number
     /** The current scene the player is in */
-    currentScene: CurrentScene
+    currentScene: Accessor<CurrentScene>
   }
 
   interface Misc {
@@ -149,10 +158,20 @@ declare global {
     eventMarker: { r: number; h: number }
   }
 
+  interface SceneryPopover {
+    activeNodeId: Accessor<string | undefined>
+    prevActiveNodeId: Accessor<string | undefined>
+    setActiveNode: (id: string | undefined) => void
+  }
+
   interface GlobalState {
     viewport: { width: number; height: number; vw: number; vh: number }
     scene: Scene
-    nodes: Set<SceneNode>
+    nodes: Map<string, InteractiveNode>
+    nodeSlots: Store<Record<string, NodeSlots>>
+    registerSlot: <K extends keyof NodeSlots>(id: string, slot: K, component: NodeSlots[K]) => void
+    unregisterSlot: (id: string, slot: keyof NodeSlots) => void
+    popover: SceneryPopover
     player: MyPlayer
     rtc: RtcState
     otherPlayers: {

@@ -7,7 +7,6 @@ import { useMutation } from 'convex-solidjs'
 import { onCleanup, onMount, Show, type ParentProps } from 'solid-js'
 import { useGlobalState } from './-components/GlobalStateContext'
 import { GlobalStateProvider } from './-components/GlobalStateProvider'
-import { SceneryPopoverProvider } from './-components/SceneryPopover'
 import { runGameLoop } from './-gameloop'
 
 export const Route = createFileRoute('/_authed')({
@@ -20,13 +19,11 @@ export const Route = createFileRoute('/_authed')({
 
     return (
       <GlobalStateProvider>
-        <SceneryPopoverProvider>
-          <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden justify-center">
-            <AuthedWrapper>
-              <Outlet />
-            </AuthedWrapper>
-          </main>
-        </SceneryPopoverProvider>
+        <main class="h-screen w-screen max-w-screen max-h-screen min-w-screen min-h-screen flex items-center overflow-hidden justify-center">
+          <AuthedWrapper>
+            <Outlet />
+          </AuthedWrapper>
+        </main>
       </GlobalStateProvider>
     )
   },
@@ -48,7 +45,6 @@ function AuthedWrapper(props: ParentProps) {
       player.isWalking = false
       player.direction = 0
       player.facing = s.direction
-      console.log(s)
       player.x = s.x
       recalculate()
     })

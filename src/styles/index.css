@@ -8,7 +8,9 @@
 @import './utils.css';
 @import './animations.css';
 @import './player.css';
-@import './scenery.css';
+@import './asset.component.css';
+@import './marker.component.css';
+@import './hitbox.utility.css';
 @import './view-transitions.css';
 @import './typeset.css';
 

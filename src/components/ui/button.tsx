@@ -1,11 +1,11 @@
 import { SOUNDS } from '@/audio'
 import { defaultProps } from '@/lib/utils'
-import { useSceneryPopoverNode } from '@/routes/_authed/-components/SceneryPopoverContext'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
 import { createEffect, createMemo, createSignal, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
+import { useInteractiveNodeContext } from '@/routes/_authed/-components/interactive-layer/context'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
@@ -72,8 +72,8 @@ export function InteractButton(componentProps: {
   const props = defaultProps(componentProps, { hotkey: 'E' })
   const [pressed, setPressed] = createSignal(false)
 
-  const node = useSceneryPopoverNode()
-  const disabled = createMemo(() => node.collided.get() !== true)
+  const nodeCtx = useInteractiveNodeContext()
+  const disabled = createMemo(() => nodeCtx?.node.collided() !== true)
 
   createEffect(() => ref.setAttribute('data-pressed', pressed() ? 'true' : 'false'))
   createEffect(() => disabled() && pressed() && setPressed(false))

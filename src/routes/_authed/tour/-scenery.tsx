@@ -1,6 +1,5 @@
 import { PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import * as Scene from '@/routes/_authed/-components/Scene'
-import { SceneryPopover } from '../-components/SceneryPopover'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { api } from '@/convex/api'
 

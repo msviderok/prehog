@@ -1,5 +1,4 @@
 import type { Assets } from '@/routeAssets.gen'
-import { SceneryPopoverMarkers, SceneryPopoverPortal } from '@/routes/_authed/-components/SceneryPopover'
 import { cn } from 'cn'
 import { For, Index, Show, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
@@ -7,11 +6,14 @@ import { Asset, type AssetProps } from './Asset'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
 import { OtherPlayer } from './OtherPlayer'
+import { MarkersLayer } from './interactive-layer/MarkersLayer'
+import { PopoverLayer } from './interactive-layer/PopoverLayer'
 
 const DEBUG = false
 
 export function Root(props: { children: JSX.Element }) {
   const { scene } = useGlobalState()
+
   return (
     <div data-viewport class="box-content w-min h-[calc(var(--original-scene-height)*var(--scale))] overflow-hidden">
       <div
@@ -33,6 +35,7 @@ export function Root(props: { children: JSX.Element }) {
 
 export function Elements(props: { children: JSX.Element }) {
   const { scene } = useGlobalState()
+
   return (
     <div ref={(el) => (scene.elementsContainerRef = el)} class="absolute top-0 left-0 size-[inherit] transform-3d">
       {props.children}
@@ -53,14 +56,13 @@ export function Background<K extends keyof Assets, A extends keyof Assets[K]>(pr
         class={cn('bg-background relative size-[inherit]', props.class)}
       />
 
-      <SceneryPopoverPortal />
+      <PopoverLayer />
     </>
   )
 }
 
 export function Debug() {
-  const { debugData, scene } = useGlobalState()
-
+  const { debugData } = useGlobalState()
   return (
     <Show when={DEBUG}>
       <div class="absolute bottom-0 left-0 right-0 h-10 bg-cyan-500 flex items-center translate-x-(--scene-tx)">
@@ -106,7 +108,7 @@ export function Players() {
     <>
       <OtherPlayers />
       <MyPlayer />
-      <SceneryPopoverMarkers />
+      <MarkersLayer />
     </>
   )
 }

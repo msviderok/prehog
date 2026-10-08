@@ -1,7 +1,6 @@
 import { api } from '@/convex/api'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import * as Scene from '@/routes/_authed/-components/Scene'
-import { SceneryPopover } from '../-components/SceneryPopover'
 
 export function Scenery() {
   return (

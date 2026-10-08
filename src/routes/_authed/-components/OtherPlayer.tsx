@@ -7,13 +7,18 @@ import { Button, InteractButton } from '../../../components/ui/button'
 import { Tooltip, TooltipPopup, TooltipPortal, TooltipPositioner } from '../../../components/ui/tooltip'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
+import { createInteractiveNode } from './interactive-layer/-createInteractiveNode'
 
 export function OtherPlayer(props: { id: Id<'users'> }) {
   let ref!: HTMLDivElement
-  let sceneNode: SceneNodePlayer | undefined
+  const sceneNode = createInteractiveNode({
+    type: 'player',
+    get rootRef() {
+      return ref
+    },
+    data: {},
+  })
   const { nodes, misc, otherPlayers } = useGlobalState()
-  const [collided, setCollided] = createSignal(false)
-  const [status, setStatus] = createSignal<SceneNodeStatus>({ type: 'not-started' })
 
   const getInitialState = useMutation(api.gameState.getInitialState)
 
