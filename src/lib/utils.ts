@@ -1,4 +1,4 @@
-import { assets } from '@/routeAssets.gen'
+import { assets, type Asset, type Assets } from '@/routeAssets.gen'
 import type { RouteIds } from '@tanstack/solid-router'
 import { mergeProps, type JSX } from 'solid-js'
 import { useSingleFlightMutation } from './useSingleFlightMutation'
@@ -92,6 +92,10 @@ export function preloadAssets<T extends string>(routeId: T) {
     new Image().src = src
     return { rel: 'preload', as: 'image', href: src }
   })
+}
+
+export function preloadAsset<K extends keyof Assets, A extends keyof Assets[K]>(props: Asset<K, A>) {
+  new Image().src = (assets[props.routeId][props.asset] as any).src
 }
 
 export function decodeJwtPayload(token: string) {

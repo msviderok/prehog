@@ -2,6 +2,7 @@ import { api } from '@/convex/api'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
+import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
 
 export function Scenery() {
   return (
@@ -152,17 +153,12 @@ export function Scenery() {
 function Door() {
   const setScene = useSingleFlightMutation(api.gameState.setScene)
   return (
-    <SceneryPopover
-      id="door"
-      side="top"
-      align="center"
-      marker={{
-        position: { x: 10, y: 72 },
-        preloadRoute: 'main',
-        onInteract: () => setScene.mutate({ scene: 'main' }),
-        label: 'Go back',
-      }}
-    />
+    <InteractiveNode.Root id="door">
+      <InteractiveNode.Preload.Route route="main" />
+      <InteractiveNode.Marker.Root x={10} y={72}>
+        <InteractiveNode.Marker.Pill label="Go back" onInteract={() => setScene.mutate({ scene: 'main' })} />
+      </InteractiveNode.Marker.Root>
+    </InteractiveNode.Root>
   )
 }
 

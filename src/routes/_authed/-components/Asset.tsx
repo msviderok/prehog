@@ -1,15 +1,11 @@
 import { defaultProps } from '@/lib/utils'
-import { assets, type Assets, type RouteAsset } from '@/routeAssets.gen'
+import { assets, type Assets, type Asset as AssetItem, type RouteAsset } from '@/routeAssets.gen'
 import { cn } from 'cn'
 import { createMemo, splitProps, type JSX } from 'solid-js'
 import { useInteractiveNodeContext } from './interactive-layer/context'
 
-export interface AssetProps<
-  K extends keyof Assets,
-  A extends keyof Assets[K],
-> extends JSX.HTMLAttributes<HTMLDivElement> {
-  routeId: K
-  asset: A
+export interface AssetProps<K extends keyof Assets, A extends keyof Assets[K]>
+  extends AssetItem<K, A>, JSX.HTMLAttributes<HTMLDivElement> {
   x?: number
   y?: number
   width?: number

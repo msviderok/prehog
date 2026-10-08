@@ -1,8 +1,7 @@
 import { SOUNDS } from '@/audio'
 import { InteractButton } from '@/components/ui/button'
 import { createPolygonClipPath, random } from '@/lib/utils'
-import { useRouter } from '@tanstack/solid-router'
-import { createEffect, createMemo, Index, on, type ParentProps } from 'solid-js'
+import { createEffect, createMemo, Index, on, onCleanup, type ParentProps } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
 import { useInteractiveNode } from './context'
 
@@ -11,8 +10,16 @@ const POLYGON_ARR = Array.from({ length: POLYGON_SIDES }, (_, i) => i)
 const POLYGON_BOTTOM_PLANE_CLIP_PATH = createPolygonClipPath(POLYGON_SIDES)
 
 export function Root(props: ParentProps<{ x: number; y: number }>) {
+  const { id } = useInteractiveNode()
+  const { registerSlot, unregisterSlot } = useGlobalState()
+  registerSlot(id, 'marker', () => <EventMarker {...props} />)
+  onCleanup(() => unregisterSlot(id, 'marker'))
+  return null
+}
+
+function EventMarker(props: ParentProps<{ x: number; y: number }>) {
   const { scene, misc } = useGlobalState()
-  const { node } = useInteractiveNode<'popover'>()
+  const { node } = useInteractiveNode()
 
   const hitbox = createMemo(
     on(
@@ -80,13 +87,13 @@ export function Root(props: ParentProps<{ x: number; y: number }>) {
 export function Pill(props: {
   /** @default "Interact" */
   label?: string
-  onInteract: (node: SceneNodePopover) => void
+  onInteract: (node: InteractiveNode) => void
   /** @default "x" of the marker */
   offsetX?: number
   /** @default "y" of the marker - (player height * 1.3 WUy) */
   offsetY?: number
 }) {
-  const { node } = useInteractiveNode<'popover'>()
+  const { node } = useInteractiveNode()
   const { misc, scene } = useGlobalState()
   const y = createMemo(() => (props.offsetY ?? misc.player.size.height * 1.3 * -1) * scene.worldUnit.y)
   const x = createMemo(() => (props.offsetX ?? 0) * scene.worldUnit.x)

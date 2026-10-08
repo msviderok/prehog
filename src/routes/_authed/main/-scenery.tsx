@@ -14,8 +14,7 @@ import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
-import * as EventMarker from '@/routes/_authed/-components/interactive-layer/EventMarker'
-import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer/InteractiveNode'
+import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
 import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
 
@@ -45,28 +44,21 @@ function Intro() {
   return (
     <InteractiveNode.Root id="intro">
       <InteractiveNode.Asset routeId="/_authed/main/" asset="experience.png" x={8} y={51.8} scale={SCALE} />
-      <InteractiveNode.Anchor x={10} y={50} />
-      <InteractiveNode.Marker x={6} y={94}>
-        <EventMarker.Pill
-          onInteract={(node) => {
-            console.log(node.collided())
-          }}
-        />
-      </InteractiveNode.Marker>
+      <InteractiveNode.Marker.Root x={6} y={94} />
 
-      <InteractiveNode.Content>
+      <InteractiveNode.Popover.Anchor x={10} y={50} />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Hawg</PopoverTitle>
           <Separator />
         </PopoverHeader>
-
         <PopoverDescription>
           <Prose>
             <p>Hey there, welcome! I'm Hawg.</p>
             <p>Would you like me to give you a tour of this place or do you wanna wonder on your own?</p>
           </Prose>
         </PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -75,6 +67,8 @@ function Experience() {
   const setScene = useSingleFlightMutation(api.gameState.setScene)
   return (
     <InteractiveNode.Root id="experience">
+      <InteractiveNode.Preload.Route route="tour" />
+
       <InteractiveNode.Asset routeId="/_authed/main/" asset="intro.png" x={12.48} y={-0.1} scale={SCALE} class="group">
         <Asset
           routeId="/_authed/main/"
@@ -104,21 +98,21 @@ function Experience() {
           </span>
         </Asset>
       </InteractiveNode.Asset>
-      <InteractiveNode.Anchor x={21.5} y={80} side="bottom" align="center" />
-      <InteractiveNode.PreloadRoute route="tour" />
-      <InteractiveNode.Marker x={15.9} y={94}>
-        <EventMarker.Pill
+
+      <InteractiveNode.Marker.Root x={15.9} y={94}>
+        <InteractiveNode.Marker.Pill
           onInteract={() => setScene.mutate({ scene: 'tour' })}
           label="Explore"
           offsetX={0.1}
           offsetY={-43}
         />
-      </InteractiveNode.Marker>
-      <InteractiveNode.Content>
+      </InteractiveNode.Marker.Root>
+
+      <InteractiveNode.Popover.Anchor x={21.5} y={80} side="bottom" align="center" />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Experience</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>
           <span>Here you can take a </span>
           <Tooltip>
@@ -139,7 +133,7 @@ function Experience() {
           </Tooltip>{' '}
           <span>of my professional experience.</span>
         </PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -147,6 +141,9 @@ function Experience() {
 function Wardrobe() {
   return (
     <InteractiveNode.Root id="wardrobe">
+      <InteractiveNode.Preload.Asset routeId="/_authed/" asset="skin_dyno_idle.png" />
+      <InteractiveNode.Preload.Asset routeId="/_authed/" asset="skin_dyno_walk.png" />
+
       <InteractiveNode.Asset
         routeId="/_authed/main/"
         asset="building_3.png"
@@ -155,17 +152,18 @@ function Wardrobe() {
         scale={SCALE}
         class="z-[-2]"
       />
-      <InteractiveNode.Anchor x={30} y={34} side="top" align="center" />
-      <InteractiveNode.Marker x={29.5} y={94}>
-        <EventMarker.Pill offsetX={-2} offsetY={-28.2} label="Explore" onInteract={() => {}} />
-      </InteractiveNode.Marker>
-      <InteractiveNode.Content>
+
+      <InteractiveNode.Marker.Root x={29.5} y={94}>
+        <InteractiveNode.Marker.Pill offsetX={-2} offsetY={-28.2} label="Explore" onInteract={() => {}} />
+      </InteractiveNode.Marker.Root>
+
+      <InteractiveNode.Popover.Anchor x={30} y={34} side="top" align="center" />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Wardrobe</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -181,17 +179,17 @@ function MyProjects() {
         scale={SCALE}
         class="[--ry:180deg]"
       />
-      <InteractiveNode.Anchor x={40.6} y={53} side="top" align="end" />
-      <InteractiveNode.Marker x={38} y={94} />
-      <InteractiveNode.Content>
+      <InteractiveNode.Marker.Root x={38} y={94} />
+
+      <InteractiveNode.Popover.Anchor x={40.6} y={53} side="top" align="end" />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Personal Projects</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>
           d This should list all of my (a single one lol) personal projects to show-off.
         </PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -200,24 +198,25 @@ function WhyAmIGoodForARole() {
   const setScene = useSingleFlightMutation(api.gameState.setScene)
   return (
     <InteractiveNode.Root id="application">
+      <InteractiveNode.Preload.Route route="application" />
       <InteractiveNode.Asset routeId="/_authed/main/" asset="application.png" x={43.1} y={-0.1} scale={SCALE} />
-      <InteractiveNode.Anchor x={54} y={80} side="bottom" align="end" />
-      <InteractiveNode.Marker x={47} y={94}>
-        <EventMarker.Pill
+
+      <InteractiveNode.Marker.Root x={47} y={94}>
+        <InteractiveNode.Marker.Pill
           offsetX={5.5}
           offsetY={-22.2}
           label="Explore"
           onInteract={() => setScene.mutate({ scene: 'application' })}
         />
-      </InteractiveNode.Marker>
+      </InteractiveNode.Marker.Root>
 
-      <InteractiveNode.Content>
+      <InteractiveNode.Popover.Anchor x={54} y={80} side="bottom" align="end" />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>My Job Application for PostHog</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>This is my job application for the Posthog Product engineer position.</PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -233,15 +232,15 @@ function Wardrobe2() {
         scale={SCALE}
         class="z-[-2]"
       />
-      <InteractiveNode.Anchor x={55} y={46} />
-      <InteractiveNode.Marker x={60} y={94} />
-      <InteractiveNode.Content>
+      <InteractiveNode.Marker.Root x={60} y={94} />
+
+      <InteractiveNode.Popover.Anchor x={55} y={46} />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Wardrobe</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -250,17 +249,17 @@ function Drawboard() {
   return (
     <InteractiveNode.Root id="drawboard">
       <InteractiveNode.Asset routeId="/_authed/main/" asset="building_1.png" x={63.35} y={-0.1} scale={SCALE} />
-      <InteractiveNode.Anchor x={65} y={46} />
-      <InteractiveNode.Marker x={65} y={94} />
-      <InteractiveNode.Content>
+      <InteractiveNode.Marker.Root x={65} y={94} />
+
+      <InteractiveNode.Popover.Anchor x={65} y={46} />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Drawboard</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>
           I would expect you to be able to draw some random stuff over here, y'know
         </PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -268,18 +267,20 @@ function Drawboard() {
 function PersonalStuff() {
   return (
     <InteractiveNode.Root id="personal">
+      <InteractiveNode.Preload.Route route="personal" />
       <InteractiveNode.Asset x={74.46} y={-0.3} scale={SCALE} routeId="/_authed/main/" asset="personal.png" />
-      <InteractiveNode.Anchor x={83} y={48} side="right" align="end" />
-      <InteractiveNode.Marker x={77.8} y={94}>
-        <EventMarker.Pill onInteract={() => {}} label="Interact" />
-      </InteractiveNode.Marker>
-      <InteractiveNode.Content>
+
+      <InteractiveNode.Marker.Root x={77.8} y={94}>
+        <InteractiveNode.Marker.Pill onInteract={() => {}} label="Interact" />
+      </InteractiveNode.Marker.Root>
+
+      <InteractiveNode.Popover.Anchor x={83} y={48} side="right" align="end" />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>Personal Stuff</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>Here you can get to know me better.</PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -288,11 +289,12 @@ function Temp1() {
   return (
     <InteractiveNode.Root id="temp1">
       <InteractiveNode.Asset x={82} y={46} scale={SCALE} routeId="/_authed/main/" asset="temp1_with_table.png" />
-      <InteractiveNode.Anchor x={82.4} y={58.58} side="left" align="end" />
-      <InteractiveNode.Marker x={82} y={94} />
-      <InteractiveNode.Content>
+      <InteractiveNode.Marker.Root x={82} y={94} />
+
+      <InteractiveNode.Popover.Anchor x={82.4} y={58.58} side="left" align="end" />
+      <InteractiveNode.Popover.Content>
         <span>hey, yo</span>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -301,11 +303,12 @@ function Temp2() {
   return (
     <InteractiveNode.Root id="temp2">
       <InteractiveNode.Asset x={86.44} y={43.2} scale={SCALE} routeId="/_authed/main/" asset="temp2.png" />
-      <InteractiveNode.Anchor x={87.3} y={60} side="left" align="end" />
-      <InteractiveNode.Marker x={86} y={94} />
-      <InteractiveNode.Content>
+      <InteractiveNode.Marker.Root x={86} y={94} />
+
+      <InteractiveNode.Popover.Anchor x={87.3} y={60} side="left" align="end" />
+      <InteractiveNode.Popover.Content>
         <span>wassup, homie</span>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }
@@ -313,15 +316,15 @@ function Temp2() {
 function LastDoor() {
   return (
     <InteractiveNode.Root id="last-door">
-      <InteractiveNode.Anchor x={95} y={46} />
-      <InteractiveNode.Marker x={95} y={94} />
-      <InteractiveNode.Content>
+      <InteractiveNode.Marker.Root x={95} y={94} />
+
+      <InteractiveNode.Popover.Anchor x={95} y={46} />
+      <InteractiveNode.Popover.Content>
         <PopoverHeader>
           <PopoverTitle>This is the end, my friend.</PopoverTitle>
         </PopoverHeader>
-
         <PopoverDescription>You can proceed with your life</PopoverDescription>
-      </InteractiveNode.Content>
+      </InteractiveNode.Popover.Content>
     </InteractiveNode.Root>
   )
 }

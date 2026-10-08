@@ -1,10 +1,10 @@
 import { PopoverArrowIcon } from '@/components/PopoverArrow'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { cn } from 'cn'
-import { createEffect, createMemo, Show } from 'solid-js'
+import { createMemo, Show } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { useGlobalState } from '../GlobalStateContext'
-import { SlotLayer } from './SlotLayer'
+import { SlotLayer } from './Slot.layer'
 
 export function PopoverLayer() {
   const { nodes, nodeSlots, scene, popover } = useGlobalState()
@@ -17,7 +17,7 @@ export function PopoverLayer() {
 
   const content = createMemo(() => {
     const id = activeId()
-    return id ? nodeSlots[id]?.content : undefined
+    return id ? nodeSlots[id]?.popoverContent : undefined
   })
 
   const backdropVariant = createMemo(() => {
@@ -34,7 +34,7 @@ export function PopoverLayer() {
         class="fixed inset-0 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-[variant=engaged]:opacity-50 data-[variant=collided]:opacity-30 ease-in-out"
       />
 
-      <SlotLayer type="anchor" />
+      <SlotLayer type="popoverAnchor" />
       <SlotLayer type="asset" />
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>

@@ -7,7 +7,7 @@ import { Button, InteractButton } from '../../../components/ui/button'
 import { Tooltip, TooltipPopup, TooltipPortal, TooltipPositioner } from '../../../components/ui/tooltip'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
-import { createInteractiveNode } from './interactive-layer/-createInteractiveNode'
+import { createInteractiveNode } from './interactive-layer/createInteractiveNode'
 
 export function OtherPlayer(props: { id: Id<'users'> }) {
   let ref!: HTMLDivElement

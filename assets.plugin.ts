@@ -100,6 +100,11 @@ export function routeAssetsPlugin(): Plugin {
         export const assets = { ${meta.join(',')} } as const
 
         export type Assets = typeof assets
+
+        export interface Asset<K extends keyof Assets, A extends keyof Assets[K]> {
+          routeId: K
+          asset: A
+        }
       `,
       oxfmtConfig as any,
     )

@@ -79,10 +79,10 @@ declare global {
   type SceneNodePlayer = Extract<InteractiveNode, { type: 'player' }>
 
   interface NodeSlots {
-    anchor?: () => JSX.Element
-    marker?: () => JSX.Element
     asset?: () => JSX.Element
-    content?: () => JSX.Element
+    marker?: () => JSX.Element
+    popoverAnchor?: () => JSX.Element
+    popoverContent?: () => JSX.Element
     interaction?: Record<string, () => JSX.Element>
   }
 

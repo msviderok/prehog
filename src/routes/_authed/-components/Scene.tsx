@@ -6,8 +6,8 @@ import { Asset, type AssetProps } from './Asset'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
 import { OtherPlayer } from './OtherPlayer'
-import { MarkersLayer } from './interactive-layer/MarkersLayer'
-import { PopoverLayer } from './interactive-layer/PopoverLayer'
+import { MarkersLayer } from './interactive-layer/Markers.layer'
+import { PopoverLayer } from './interactive-layer/Popover.layer'
 
 const DEBUG = false
 

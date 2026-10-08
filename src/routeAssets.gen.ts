@@ -44,10 +44,85 @@ export const assets = {
     },
   },
   '/_authed/': {
+    'default_waving_orange_flag.png': {
+      name: 'default_waving_orange_flag.png',
+      size: { width: 2000 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/default_waving_orange_flag.png']!,
+    },
+    'fire_effect.png': {
+      name: 'fire_effect.png',
+      size: { width: 1120 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/fire_effect.png']!,
+    },
     'hats.png': {
       name: 'hats.png',
       size: { width: 1360 as number, height: 80 as number },
       src: globPaths['/_authed/']['/src/routes/_authed/-assets/hats.png']!,
+    },
+    'skin_default_calling_by_phone.png': {
+      name: 'skin_default_calling_by_phone.png',
+      size: { width: 2240 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_calling_by_phone.png']!,
+    },
+    'skin_default_hello_sign.png': {
+      name: 'skin_default_hello_sign.png',
+      size: { width: 2640 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_hello_sign.png']!,
+    },
+    'skin_default_idle.png': {
+      name: 'skin_default_idle.png',
+      size: { width: 6880 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_idle.png']!,
+    },
+    'skin_default_jumps_twice.png': {
+      name: 'skin_default_jumps_twice.png',
+      size: { width: 1280 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_jumps_twice.png']!,
+    },
+    'skin_default_magnifying_glass_mirror.png': {
+      name: 'skin_default_magnifying_glass_mirror.png',
+      size: { width: 2800 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_magnifying_glass_mirror.png']!,
+    },
+    'skin_default_nervous_fall.png': {
+      name: 'skin_default_nervous_fall.png',
+      size: { width: 1680 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_nervous_fall.png']!,
+    },
+    'skin_default_walk.png': {
+      name: 'skin_default_walk.png',
+      size: { width: 880 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_walk.png']!,
+    },
+    'skin_default_wave.png': {
+      name: 'skin_default_wave.png',
+      size: { width: 2080 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_wave.png']!,
+    },
+    'skin_dyno_idle.png': {
+      name: 'skin_dyno_idle.png',
+      size: { width: 720 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_dyno_idle.png']!,
+    },
+    'skin_dyno_jump.png': {
+      name: 'skin_dyno_jump.png',
+      size: { width: 880 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_dyno_jump.png']!,
+    },
+    'skin_dyno_walk.png': {
+      name: 'skin_dyno_walk.png',
+      size: { width: 800 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_dyno_walk.png']!,
+    },
+    'skin_dyno_wave.png': {
+      name: 'skin_dyno_wave.png',
+      size: { width: 2000 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_dyno_wave.png']!,
+    },
+    'skin_ghost_walk.png': {
+      name: 'skin_ghost_walk.png',
+      size: { width: 960 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_ghost_walk.png']!,
     },
   },
   '/_authed/application/': {
@@ -276,3 +351,8 @@ export const assets = {
 } as const
 
 export type Assets = typeof assets
+
+export interface Asset<K extends keyof Assets, A extends keyof Assets[K]> {
+  routeId: K
+  asset: A
+}
