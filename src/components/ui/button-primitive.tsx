@@ -5,6 +5,7 @@ function isActivationKey(event: KeyboardEvent): boolean {
   return event.key === ' ' || event.key === 'Enter'
 }
 
+// oxlint-disable-next-line typescript/no-namespace
 export namespace Button {
   export type Props = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
     focusableWhenDisabled?: boolean | undefined

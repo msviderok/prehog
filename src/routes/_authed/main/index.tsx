@@ -12,7 +12,6 @@ export const Route = createFileRoute('/_authed/main/')({
       <Scene.Root>
         <Scene.Background routeId="/_authed/main/" asset="main_v2.png" />
         <Scenery />
-        <Scene.Debug />
       </Scene.Root>
     )
   },

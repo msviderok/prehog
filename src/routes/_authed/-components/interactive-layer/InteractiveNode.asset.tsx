@@ -6,8 +6,8 @@ import { useInteractiveNode } from './context'
 
 export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(props: AssetProps<K, A>) {
   const { id } = useInteractiveNode()
-  const { registerSlot, unregisterSlot } = useGlobalState()
-  registerSlot(id, 'asset', () => <AssetOriginal {...props} />)
-  onCleanup(() => unregisterSlot(id, 'asset'))
+  const { nodes } = useGlobalState()
+  nodes.registerSlot(id, 'asset', () => <AssetOriginal {...props} />)
+  onCleanup(() => nodes.unregisterSlot(id, 'asset'))
   return null
 }

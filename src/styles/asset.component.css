@@ -42,7 +42,7 @@
     }
 
     &[data-open='true'] {
-      z-index: 0 !important;
+      z-index: 1 !important;
 
       &:before {
         opacity: 1;

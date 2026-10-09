@@ -1,5 +1,4 @@
 import { api } from '@/convex/api'
-import type { Id } from '@/convex/dataModel'
 import {
   COMMON_SCENE_HEIGHT,
   EVENT_MARKER_SIZE,
@@ -15,10 +14,10 @@ import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/soli
 import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation, useQuery } from 'convex-solidjs'
-import { batch, createEffect, createMemo, createSignal, on, onCleanup, onMount, type ParentProps } from 'solid-js'
-import { createStore, produce } from 'solid-js/store'
+import { batch, createEffect, createMemo, createSignal, on, onMount, type ParentProps } from 'solid-js'
 import { createRtcState } from '../../../lib/createRtcState'
 import { GlobalStateContext } from './GlobalStateContext'
+import { NodeRegistry } from './NodeRegistry'
 
 type DebugData = Pick<GlobalState, 'scene' | 'player'>
 
@@ -27,8 +26,7 @@ export function GlobalStateProvider(props: ParentProps) {
   const rtc = createRtcState()
   const navigate = useNavigate()
 
-  const nodes: GlobalState['nodes'] = new Map()
-  const [nodeSlots, setNodeSlots] = createStore<GlobalState['nodeSlots']>({})
+  const nodes: GlobalState['nodes'] = new NodeRegistry()
   const viewport: GlobalState['viewport'] = { width: 0, height: 0, vw: 0, vh: 0 }
   const misc: GlobalState['misc'] = {
     player: {
@@ -122,19 +120,7 @@ export function GlobalStateProvider(props: ParentProps) {
     isAdmin,
   }
 
-  const [otherPlayersIds, setOtherPlayersIds] = createStore({ ids: [] as Array<Id<'users'>> })
-  const { data: onlineUsersList } = useQuery(api.users.listOnlineUsers, {})
-  createEffect(
-    on(
-      () => onlineUsersList() ?? [],
-      (list) => setOtherPlayersIds('ids', list),
-    ),
-  )
-  const otherPlayers: GlobalState['otherPlayers'] = {
-    hashmap: new Map(),
-    list: () => otherPlayersIds.ids,
-  }
-
+  const { data: otherPlayersIds } = useStableQuery(api.users.listOnlineUsers, {}, { initialData: [] })
   const { data: shouldSendBatches } = useQuery(api.gameState.shouldSendRealTimeMovement, {})
   createEffect(
     on(
@@ -278,18 +264,18 @@ export function GlobalStateProvider(props: ParentProps) {
     })
   }
 
-  const [debugData, setDebugData] = createSignal<DebugData>({ scene, player })
-  const getScene = () => scene
-  const getPlayer = () => player
+  // const getScene = () => scene
+  // const getPlayer = () => player
 
-  onMount(() => {
-    const i = setInterval(() => {
-      const s = getScene()
-      const p = getPlayer()
-      setDebugData({ scene: s, player: p })
-    }, 100)
-    onCleanup(() => clearInterval(i))
-  })
+  const [debugData, setDebugData] = createSignal<DebugData>({ scene, player })
+  // onMount(() => {
+  //   const i = setInterval(() => {
+  //     const s = getScene()
+  //     const p = getPlayer()
+  //     setDebugData({ scene: s, player: p })
+  //   }, 100)
+  //   onCleanup(() => clearInterval(i))
+  // })
 
   const isPopoverOpen = createMemo(() => popover.activeNodeId() != null)
 
@@ -298,26 +284,14 @@ export function GlobalStateProvider(props: ParentProps) {
       value={{
         recalculate: calculate,
         nodes,
-        nodeSlots,
         scene,
-        otherPlayers,
         rtc,
         player,
         misc,
         viewport,
         debugData,
         popover,
-
-        registerSlot(id, slot, component) {
-          if (nodeSlots[id] == null) setNodeSlots(id, {})
-          setNodeSlots(id, slot, () => component)
-        },
-        unregisterSlot(id, slot) {
-          setNodeSlots(
-            id,
-            produce((draft) => delete draft[slot]),
-          )
-        },
+        otherPlayersIds: () => otherPlayersIds() ?? [],
       }}
     >
       <PopoverPrimitive.Root open={isPopoverOpen()}>{props.children}</PopoverPrimitive.Root>

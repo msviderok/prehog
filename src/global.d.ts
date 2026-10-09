@@ -1,10 +1,10 @@
-import type { FunctionReturnType } from 'convex/server'
-import type { JSX, Accessor, Setter } from 'solid-js'
-import type { api } from '../convex/_generated/api'
-import type { Doc } from '../convex/_generated/dataModel'
-import type { RtcState } from './lib/createRtcState'
 import type { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
-import type { Store } from 'solid-js/store'
+import type { FunctionReturnType } from 'convex/server'
+import type { Accessor, JSX, Setter } from 'solid-js'
+import type { api } from '../convex/_generated/api'
+import type { Doc, Id } from '../convex/_generated/dataModel'
+import type { RtcState } from './lib/createRtcState'
+import type { NodeRegistry } from './routes/_authed/-components/NodeRegistry'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -52,31 +52,35 @@ declare global {
 
   type InteractiveNodeStatus = 'idle' | 'interacting'
 
-  type InteractiveNode = {
+  interface CollisionNode {
     size: { width: number; height: number }
     hitbox: { x1: number; y1: number; x2: number; y2: number }
+  }
+
+  type InteractiveNode = CollisionNode & {
     collided: Accessor<boolean>
     setCollided: Setter<boolean>
     status: Accessor<InteractiveNodeStatus>
     setStatus: Setter<InteractiveNodeStatus>
   } & (
-    | {
-        type: 'popover'
-        data: {
-          anchorRef: HTMLButtonElement | undefined
-          positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>
+      | {
+          type: 'popover'
+          data: {
+            anchorRef: HTMLButtonElement | undefined
+            positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>
+          }
         }
-      }
-    | {
-        type: 'player'
-        data: {}
-      }
-  )
+      | {
+          type: 'player'
+          data: {
+            ref: HTMLDivElement | undefined
+            x: number
+            batchQueue: GameEventBatch
+          }
+        }
+    )
 
   type InteractiveNodeOf<K extends InteractiveNode['type']> = Extract<InteractiveNode, { type: K }>
-
-  type SceneNodePopover = Extract<InteractiveNode, { type: 'popover' }>
-  type SceneNodePlayer = Extract<InteractiveNode, { type: 'player' }>
 
   interface NodeSlots {
     asset?: () => JSX.Element
@@ -86,16 +90,7 @@ declare global {
     interaction?: Record<string, () => JSX.Element>
   }
 
-  interface OtherPlayer {
-    ref: HTMLDivElement | undefined
-    x: number
-    batchQueue: GameEventBatch
-    size: { width: number; height: number }
-    hitbox: { x1: number; y1: number; x2: number; y2: number }
-  }
-
   type CurrentScene = Doc<'game_user_state'>['scene']
-
   type LoadingStatus = 'not-initiated' | 'signed-out' | 'loading-clerk' | 'loading-game-state' | UserData
 
   interface MyPlayer {
@@ -167,18 +162,12 @@ declare global {
   interface GlobalState {
     viewport: { width: number; height: number; vw: number; vh: number }
     scene: Scene
-    nodes: Map<string, InteractiveNode>
-    nodeSlots: Store<Record<string, NodeSlots>>
-    registerSlot: <K extends keyof NodeSlots>(id: string, slot: K, component: NodeSlots[K]) => void
-    unregisterSlot: (id: string, slot: keyof NodeSlots) => void
+    nodes: NodeRegistry
     popover: SceneryPopover
     player: MyPlayer
     rtc: RtcState
-    otherPlayers: {
-      list: Accessor<Array<Id<'users'>>>
-      hashmap: Map<Id<'users'>, OtherPlayer>
-    }
     misc: Misc
+    otherPlayersIds: Accessor<Id<'users'>[]>
     debugData: Accessor<DebugData>
     recalculate: () => void
   }

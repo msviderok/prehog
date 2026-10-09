@@ -35,9 +35,8 @@ export function Root(props: { children: JSX.Element }) {
 
 export function Elements(props: { children: JSX.Element }) {
   const { scene } = useGlobalState()
-
   return (
-    <div ref={(el) => (scene.elementsContainerRef = el)} class="absolute top-0 left-0 size-[inherit] transform-3d">
+    <div ref={(el) => (scene.elementsContainerRef = el)} class="absolute top-0 left-0 size-[inherit] transform-3d z-2">
       {props.children}
     </div>
   )
@@ -76,6 +75,7 @@ export function Debug() {
       </div>
 
       <div
+        // @ts-ignore this is a valid property
         content={debugData().scene.cameraStartTravelAtX}
         style={{ '--x': debugData().scene.cameraStartTravelAtX }}
         class={cn(
@@ -84,6 +84,7 @@ export function Debug() {
         )}
       />
       <div
+        // @ts-ignore this is a valid property
         content={debugData().scene.cameraEndTravelAtX}
         style={{ '--x': debugData().scene.cameraEndTravelAtX }}
         class={cn(
@@ -123,6 +124,6 @@ function MyPlayer() {
 }
 
 function OtherPlayers() {
-  const { otherPlayers } = useGlobalState()
-  return <For each={otherPlayers.list()}>{(userId) => <OtherPlayer id={userId} />}</For>
+  const { otherPlayersIds } = useGlobalState()
+  return <For each={otherPlayersIds()}>{(userId) => <OtherPlayer id={userId} />}</For>
 }

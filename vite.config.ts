@@ -139,7 +139,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       tsconfigPaths: true,
     },
-    plugins: [nitro(), tailwindcss(), tanstackStart(), solidPlugin({ ssr: true }), routeAssetsPlugin()],
+    plugins: [nitro(), tanstackStart(), solidPlugin({ ssr: true }), tailwindcss(), routeAssetsPlugin()],
     environments: {
       ssr: {
         define: {

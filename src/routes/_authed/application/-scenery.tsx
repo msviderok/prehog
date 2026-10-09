@@ -1,5 +1,3 @@
-import { api } from '@/convex/api'
-import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
 import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
@@ -8,6 +6,7 @@ export function Scenery() {
   return (
     <Scene.Elements>
       <Asset
+        data-bg-town
         routeId="/_authed/application/"
         asset="bg_town.png"
         scale={1}
@@ -117,14 +116,35 @@ export function Scenery() {
         class="origin-center [--skx:2deg] z-0"
       />
 
-      <div class="relative z-0">
+      <div data-truck-hog class="relative z-0">
         <Asset routeId="/_authed/application/" asset="hog_donotcross.png" scale={0.5} x={0} y={20} />
         <Asset routeId="/_authed/application/" asset="boxes.png" scale={0.3} x={60} y={3.6} />
-        <Truck />
+        <Asset
+          data-truck
+          routeId="/_authed/application/"
+          asset="hog_truck.png"
+          scale={0.3}
+          x={50}
+          y={21}
+          class="animate-truckMoving"
+        >
+          <Asset
+            routeId="/_authed/application/"
+            asset="truck_wheel.png"
+            scale={0.3}
+            class="bottom-[2.5%] right-[34.2%] top-[unset] left-[unset] origin-center animate-truckWheelSpin [--tx:0] z-1"
+          />
+          <Asset
+            routeId="/_authed/application/"
+            asset="truck_wheel.png"
+            scale={0.3}
+            class="bottom-[2.5%] left-[2%] delay-75 rotate-45 top-[unset]  origin-center animate-truckWheelSpin [--tx:0] z-1"
+          />
+        </Asset>
         <Asset routeId="/_authed/application/" asset="c_asset_normal.png" scale={0.8} x={65} y={28} />
       </div>
 
-      <div class="relative z-0">
+      <div data-scaffold class="relative z-0">
         <Asset routeId="/_authed/application/" asset="c_asset_normal.png" scale={0.9} x={30} y={30} />
         <Asset routeId="/_authed/application/" asset="c_asset_normal.png" scale={0.9} x={37.5} y={30} />
         <Asset
@@ -137,47 +157,22 @@ export function Scenery() {
         />
       </div>
 
-      <div class="transform-3d">
-        <Door />
+      <div data-interactive class="transform-3d">
+        <InteractiveNode.Root id="door">
+          <InteractiveNode.Preload.Route route="main" />
+          <InteractiveNode.Marker.Root x={10} y={72}>
+            <InteractiveNode.Marker.Pill label="Go back" goTo="main" />
+          </InteractiveNode.Marker.Root>
+        </InteractiveNode.Root>
+
         <Scene.Players />
       </div>
 
-      <div class="relative z-0">
+      <div data-bottom-hogs class="relative z-0">
         <Asset routeId="/_authed/application/" asset="hog_drill.png" scale={0.55} x={30} y={68} />
         <Asset routeId="/_authed/application/" asset="hog_noting.png" scale={0.55} x={74} y={25} />
       </div>
     </Scene.Elements>
-  )
-}
-
-function Door() {
-  const setScene = useSingleFlightMutation(api.gameState.setScene)
-  return (
-    <InteractiveNode.Root id="door">
-      <InteractiveNode.Preload.Route route="main" />
-      <InteractiveNode.Marker.Root x={10} y={72}>
-        <InteractiveNode.Marker.Pill label="Go back" onInteract={() => setScene.mutate({ scene: 'main' })} />
-      </InteractiveNode.Marker.Root>
-    </InteractiveNode.Root>
-  )
-}
-
-function Truck() {
-  return (
-    <Asset routeId="/_authed/application/" asset="hog_truck.png" scale={0.3} x={50} y={21} class="animate-truckMoving">
-      <Asset
-        routeId="/_authed/application/"
-        asset="truck_wheel.png"
-        scale={0.3}
-        class="after:bottom-[2.5%] after:right-[34.2%] after:top-[unset] after:left-[unset] after:origin-center after:animate-truckWheelSpin after:[--tx:0]"
-      />
-      <Asset
-        routeId="/_authed/application/"
-        asset="truck_wheel.png"
-        scale={0.3}
-        class="bottom-[2.5%] left-[2%] delay-75 rotate-45 top-[unset]  origin-center animate-truckWheelSpin [--tx:0]"
-      />
-    </Asset>
   )
 }
 
@@ -190,7 +185,7 @@ function Truck() {
       <li>Autonomy</li>
       <li>Shipping fast</li>
       <li>Time for building</li>
-      <li>Ambition</li>
+      <li>Ambition</li> -> GONE IN A NEW VERSION
       <li>Being weird</li>
     </ul>
   </li>

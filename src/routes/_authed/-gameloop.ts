@@ -8,7 +8,7 @@ import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { useMutation } from 'convex-solidjs'
 
 export function runGameLoop() {
-  const { scene, player, misc, nodes, otherPlayers } = useGlobalState()
+  const { scene, player, misc, nodes } = useGlobalState()
   const sendBatch = useMutation(api.gameState.sendMyBatch)
   const updateMyPosition = useSingleFlightMutation(api.gameState.updateMyPosition)
   let eventBatch: Doc<'game_event_batches'>['batch'] = []
@@ -45,8 +45,8 @@ export function runGameLoop() {
 
   function moveOtherPlayers() {
     const renderTime = Date.now() - INTERPOLATION_DELAY_MS
-    for (const [, otherPlayer] of otherPlayers.hashmap) {
-      const batch = otherPlayer.batchQueue
+    for (const otherPlayer of nodes.byType('player').values()) {
+      const batch = otherPlayer.data.batchQueue
       if (batch.length < 2) continue
 
       while (batch.length > 2 && batch[1]!.t <= renderTime) batch.shift()
@@ -54,11 +54,11 @@ export function runGameLoop() {
       const a = batch[0]!
       const b = batch[1]!
       const alpha = Math.max(0, Math.min(1, (renderTime - a.t) / (b.t - a.t)))
-      otherPlayer.x = lerp(a.x, b.x, alpha)
-      otherPlayer.hitbox.x1 = otherPlayer.x - misc.player.size.halfWidth
-      otherPlayer.hitbox.x2 = otherPlayer.x + misc.player.size.halfWidth
-      const otherPlayerPaintX = Math.round(otherPlayer.x * scene.worldUnit.x)
-      otherPlayer.ref?.style.setProperty('--tx', `${otherPlayerPaintX}px`)
+      otherPlayer.data.x = lerp(a.x, b.x, alpha)
+      otherPlayer.hitbox.x1 = otherPlayer.data.x - misc.player.size.halfWidth
+      otherPlayer.hitbox.x2 = otherPlayer.data.x + misc.player.size.halfWidth
+      const otherPlayerPaintX = Math.round(otherPlayer.data.x * scene.worldUnit.x)
+      otherPlayer.data.ref?.style.setProperty('--tx', `${otherPlayerPaintX}px`)
     }
   }
 

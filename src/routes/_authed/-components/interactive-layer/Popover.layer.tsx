@@ -7,7 +7,7 @@ import { useGlobalState } from '../GlobalStateContext'
 import { SlotLayer } from './Slot.layer'
 
 export function PopoverLayer() {
-  const { nodes, nodeSlots, scene, popover } = useGlobalState()
+  const { nodes, scene, popover } = useGlobalState()
   const activeId = createMemo(() => popover.activeNodeId() ?? popover.prevActiveNodeId())
   const currentlyRenderedElement = createMemo(() => {
     const id = activeId()
@@ -17,7 +17,7 @@ export function PopoverLayer() {
 
   const content = createMemo(() => {
     const id = activeId()
-    return id ? nodeSlots[id]?.popoverContent : undefined
+    return id ? nodes.slots[id]?.popoverContent : undefined
   })
 
   const backdropVariant = createMemo(() => {

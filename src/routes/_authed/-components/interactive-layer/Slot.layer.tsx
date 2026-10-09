@@ -4,9 +4,9 @@ import { useGlobalState } from '../GlobalStateContext'
 import { InteractiveNodeContext } from './context'
 
 export function SlotLayer(props: { type: keyof NodeSlots }) {
-  const { nodes, nodeSlots } = useGlobalState()
+  const { nodes } = useGlobalState()
   const entries = createMemo(() => {
-    return Object.entries(nodeSlots).flatMap(([id, slots]) => {
+    return Object.entries(nodes.slots).flatMap(([id, slots]) => {
       const component = slots[props.type]
       const node = nodes.get(id)
       return component && node ? [{ id, node, component }] : []
