@@ -1,13 +1,22 @@
+import { Button } from '@/components/ui/button'
 import { Dialog as DialogPrimitive } from '@msviderok/base-ui-solid/dialog'
 import { cn } from 'cn'
+import { XIcon } from 'lucide-solid'
 import { mergeProps, splitProps, type ComponentProps } from 'solid-js'
 
-import { Button } from '@/components/ui/button'
-import { XIcon } from 'lucide-solid'
-import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
-
 function Dialog(props: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  const [local, rest] = splitProps(props, ['onOpenChange'])
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      {...rest}
+      onOpenChange={(open, e, reason) => {
+        if (reason === 'escape-key') return
+        if (reason === 'outside-press') return
+        local.onOpenChange?.(open, e, reason)
+      }}
+    />
+  )
 }
 
 function DialogTrigger(props: DialogPrimitive.Trigger.Props) {
@@ -51,7 +60,7 @@ function DialogContent(
           <DialogPrimitive.Popup
             data-slot="dialog-content"
             class={cn(
-              'fixed left-1/2 h-auto z-50 grid w-full max-w-[calc(100%-4rem)] -translate-x-1/2  duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+              'fixed left-1/2 top-1/2 h-(--original) z-50 grid w-full max-w-[calc(100%-4rem)] -translate-x-1/2 -translate-y-1/2 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
               local.class,
             )}
             {...rest}

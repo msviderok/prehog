@@ -4,25 +4,25 @@ import { createEffect, mergeProps, on, splitProps, type Accessor } from 'solid-j
 import { createStore, reconcile } from 'solid-js/store'
 import { defaultProps } from './utils'
 
-interface QueryOptions<T> {
+interface QueryOptions<T, KeepPreviousData extends boolean | undefined> {
   enabled?: boolean
   initialData?: T
-  keepPreviousData?: boolean
+  keepPreviousData?: KeepPreviousData
 }
 
-interface QueryReturn<T> {
-  data: Accessor<T | undefined>
+interface QueryReturn<T, KeepPreviousData extends boolean | undefined> {
+  data: Accessor<KeepPreviousData extends true ? T : T | undefined>
   error: Accessor<Error | undefined>
   isLoading: Accessor<boolean>
   isStale: Accessor<boolean>
   refetch: () => void
 }
 
-export const useStableQuery = <Query extends FunctionReference<'query'>>(
+export const useStableQuery = <Query extends FunctionReference<'query'>, KeepPreviousData extends boolean | undefined>(
   query: Query,
   args?: FunctionArgs<Query> & { reconcileKey?: string | undefined },
-  options?: QueryOptions<FunctionReturnType<Query>>,
-): QueryReturn<FunctionReturnType<Query>> => {
+  options?: QueryOptions<FunctionReturnType<Query>, KeepPreviousData>,
+): QueryReturn<FunctionReturnType<Query>, KeepPreviousData> => {
   const [state, setState] = createStore<{ data: FunctionReturnType<Query> | undefined }>({ data: undefined })
   const mergedOptions = defaultProps(options ?? {}, { keepPreviousData: true })
   const [customArgs, queryArgs] = splitProps(args ?? ({} as NonNullable<typeof args>), ['reconcileKey'])

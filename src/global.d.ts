@@ -5,6 +5,7 @@ import type { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import type { RtcState } from './lib/createRtcState'
 import type { NodeRegistry } from './routes/_authed/-components/NodeRegistry'
+import type { HatType } from './lib/constants'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -104,8 +105,8 @@ declare global {
     facing: 'left' | 'right'
     speed: number
     shouldSendBatches: boolean
-    hat: Accessor<Hat>
-    setHat: Setter<Hat>
+    hat: Accessor<number | undefined>
+    setHat: Setter<number | undefined>
     isAdmin: Accessor<boolean>
   }
 

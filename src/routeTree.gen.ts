@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
@@ -17,6 +18,11 @@ import { Route as AuthedMainIndexRouteImport } from './routes/_authed/main/index
 import { Route as AuthedPetIndexRouteImport } from './routes/_authed/pet/index'
 import { Route as AuthedTourIndexRouteImport } from './routes/_authed/tour/index'
 
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -54,6 +60,7 @@ const AuthedTourIndexRoute = AuthedTourIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
+  '/$': typeof SplatRoute
   '/login': typeof LoginRoute
   '/application/': typeof AuthedApplicationIndexRoute
   '/main/': typeof AuthedMainIndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/tour/': typeof AuthedTourIndexRoute
 }
 export interface FileRoutesByTo {
+  '/$': typeof SplatRoute
   '/login': typeof LoginRoute
   '/': typeof AuthedIndexRoute
   '/application': typeof AuthedApplicationIndexRoute
@@ -71,6 +79,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
+  '/$': typeof SplatRoute
   '/login': typeof LoginRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/application/': typeof AuthedApplicationIndexRoute
@@ -80,12 +89,14 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/application/' | '/main/' | '/pet/' | '/tour/'
+  fullPaths:
+    '/' | '/$' | '/login' | '/application/' | '/main/' | '/pet/' | '/tour/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/' | '/application' | '/main' | '/pet' | '/tour'
+  to: '/$' | '/login' | '/' | '/application' | '/main' | '/pet' | '/tour'
   id:
     | '__root__'
     | '/_authed'
+    | '/$'
     | '/login'
     | '/_authed/'
     | '/_authed/application/'
@@ -96,11 +107,19 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
+  SplatRoute: typeof SplatRoute
   LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -175,6 +194,7 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
+  SplatRoute: SplatRoute,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

@@ -5,6 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
 import { createEffect, createSignal, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
+import { debounce, throttle } from '@solid-primitives/scheduled'
 
 export const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
@@ -21,12 +22,13 @@ export const buttonVariants = cva(
         plain: 'border-none hover:text-accent focus-visible:text-accent bg-foreground/5',
 
         keycap: cn(`
-          bg-white border-black/20! relative isolate size-8! text-shade-ph-dark-cornflower-blue/50 text-xl!
+          bg-white border-black/20! text-shade-ph-dark-cornflower-blue/50
+          relative isolate size-8! text-xl!
           origin-center
           [--s:0.2em]
           -top-(--s)
           [--boxShadowY-dynamic:var(--s)]
-          shadow-white/30
+          shadow-gray-400
           [box-shadow:0_var(--boxShadowY-dynamic)_0_0_var(--tw-shadow-color)]
           data-[pressed=true]:[--boxShadowY-dynamic:0]
           data-[pressed=true]:translate-y-(--s)
@@ -45,7 +47,7 @@ export const buttonVariants = cva(
         sm: 'h-6 p-3 text-xs [&_svg]:size-4',
         icon: 'size-8 [&_svg]:size-4.5',
         'icon-xs': 'size-6 [&_svg]:size-3.5',
-        lg: 'size-20! text-5xl!',
+        lg: 'h-20! p-4 min-w-20 w-auto! text-5xl!',
       },
     },
     defaultVariants: {
@@ -67,14 +69,45 @@ export function Button(componentProps: ButtonProps) {
 type KeycapProps = Omit<ButtonProps, 'variant'> & {
   /** @default "E" */
   hotkey?: Hotkey
+  label?: string
   onPress: HotkeyCallback
+  onHold?: () => void
 }
 
 export function KeycapButton(componentProps: KeycapProps) {
   let ref!: HTMLButtonElement
   const props = defaultProps(componentProps, { hotkey: 'E' })
-  const [local, rest] = splitProps(props, ['hotkey', 'onPress', 'ref', 'disabled', 'class'])
+  const [local, rest] = splitProps(props, [
+    'hotkey',
+    'onPress',
+    'ref',
+    'disabled',
+    'class',
+    'children',
+    'label',
+    'onHold',
+  ])
   const [pressed, setPressed] = createSignal(false)
+
+  let interval: NodeJS.Timeout | undefined
+  let cleared = false
+  function stopInterval() {
+    if (interval) clearInterval(interval)
+    interval = undefined
+  }
+
+  const hold = debounce(() => {
+    if (interval) clearInterval(interval)
+    interval = setInterval(() => (cleared ? stopInterval() : local.onHold()), 200)
+    local.onHold()
+  }, 200)
+
+  function release() {
+    cleared = true
+    hold.clear()
+    stopInterval()
+    cleared = false
+  }
 
   createEffect(() => ref.setAttribute('data-pressed', pressed() ? 'true' : 'false'))
   createEffect(() => local.disabled && pressed() && setPressed(false))
@@ -92,7 +125,7 @@ export function KeycapButton(componentProps: KeycapProps) {
         callback: () => {
           if (local.disabled) return
           setPressed(true)
-
+          hold()
           if (SOUNDS.ui.keyup.playing()) SOUNDS.ui.keyup.stop()
           SOUNDS.ui.keydown.play('default')
         },
@@ -107,6 +140,7 @@ export function KeycapButton(componentProps: KeycapProps) {
         },
         callback: (e, ctx) => {
           setPressed(false)
+          release()
           SOUNDS.ui.keyup.play('default')
           local.onPress(e, ctx)
         },
@@ -126,7 +160,8 @@ export function KeycapButton(componentProps: KeycapProps) {
       class={cn('touch-manipulation', local.class)}
       {...rest}
     >
-      {local.hotkey}
+      <span>{local.label ?? local.hotkey}</span>
+      {local.children}
     </Button>
   )
 }

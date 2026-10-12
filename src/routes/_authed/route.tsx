@@ -46,6 +46,7 @@ function AuthedWrapper(props: ParentProps) {
       player.direction = 0
       player.facing = s.direction
       player.x = s.x
+      player.setHat(s.hat)
       recalculate()
     })
 

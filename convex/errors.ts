@@ -8,3 +8,7 @@ export function unauthenticated(): never {
 export function authMismtach(): never {
   throw new ConvexError({ code: 'AUTH_MISMATCH' })
 }
+
+export function badData(): never {
+  throw new ConvexError({ code: 'BAD_DATA' })
+}

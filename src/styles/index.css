@@ -111,6 +111,9 @@
 @layer base {
   html {
     overflow: hidden;
+
+    --scaled-player-width: calc(var(--original-player-width) * var(--scale));
+    --scaled-player-height: calc(var(--original-player-height) * var(--scale));
   }
 
   h1,

@@ -32,6 +32,11 @@ export const HAT_INDEX = {
   admin: 16,
 } as const
 
+export const HATS_BY_INDEX = Object.entries(HAT_INDEX).reduce(
+  (acc, [k, idx]) => ((acc[idx] = k as HatType), acc),
+  {} as Record<number, HatType>,
+)
+
 export const SAMPLING_INTERVAL_MS = 33
 export const BATCHING_INTERVAL_MS = 100
 export const INTERPOLATION_DELAY_MS = 200

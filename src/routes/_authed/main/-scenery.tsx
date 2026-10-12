@@ -12,25 +12,25 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { HAT_INDEX, type HatType } from '@/lib/constants'
+import { HAT_INDEX, HATS_BY_INDEX } from '@/lib/constants'
 import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
 import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
 import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
+import { batch, createMemo, Show } from 'solid-js'
 import { useGlobalState } from '../-components/GlobalStateContext'
 import { Hat } from '../-components/Hat'
-import { createMemo, createSignal } from 'solid-js'
+import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
+import { api } from '@/convex/api'
 
 const SCALE = 1.475
 const MARKER_Y = 94
-const HATS = Object.keys(HAT_INDEX) as HatType[]
+const HATS = Object.values(HAT_INDEX) as number[]
 
 export function Scenery() {
-  const { interaction, player } = useGlobalState()
-  const hats = createMemo(() => (player.isAdmin() ? HATS : HATS.filter((i) => i !== 'admin')))
-
+  const { interaction } = useGlobalState()
   return (
     <Scene.Elements>
       <InteractiveNode.Root id="intro">
@@ -147,22 +147,7 @@ export function Scenery() {
         </InteractiveNode.Popover>
 
         <DialogContent>
-          <Carousel list={hats()} value={player.hat()} onValueChange={player.setHat}>
-            {(hat) => (
-              <>
-                <CardHeader class="border-none absolute w-full">
-                  <CardTitle class="flex justify-center comic text-4xl">{hat()}</CardTitle>
-                </CardHeader>
-                <CardContent class="size-full">
-                  <div class="relative w-(--original-player-width) h-(--original-player-height)">
-                    <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2">
-                      <Hat hat={hat()} class="animate-none!" />
-                    </div>
-                  </div>
-                </CardContent>
-              </>
-            )}
-          </Carousel>
+          <WardrobeCarousel />
         </DialogContent>
       </InteractiveNode.Root>
 
@@ -283,5 +268,54 @@ export function Scenery() {
 
       <Scene.Players />
     </Scene.Elements>
+  )
+}
+
+function WardrobeCarousel() {
+  const { interaction, player } = useGlobalState()
+  const setHatInDB = useSingleFlightMutation(api.gameState.updateHat)
+  const hats = createMemo(() => (player.isAdmin() ? HATS : HATS.filter((i) => i !== HAT_INDEX.admin)))
+
+  return (
+    <Show when={player.hat() != null}>
+      <Carousel
+        list={hats()}
+        value={player.hat()!}
+        getLabel={(value) => HATS_BY_INDEX[value]}
+        onValueChange={player.setHat}
+        onConfirm={(value) => {
+          batch(() => {
+            player.setHat(value)
+            interaction.finish('confirm')
+            void setHatInDB.mutate({ hat: value })
+          })
+        }}
+        onDiscard={(value) => {
+          batch(() => {
+            player.setHat(value)
+            interaction.finish('cancel')
+            void setHatInDB.mutate({ hat: value })
+          })
+        }}
+      >
+        {(hat, label) => (
+          <>
+            d
+            <CardHeader class="border-none absolute w-full">
+              <CardTitle class="flex justify-center text-4xl capitalize text-ph-mustard-yellow comic">
+                {label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent class="size-full">
+              <div class="relative w-(--scaled-player-width) h-(--scaled-player-height)">
+                <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2">
+                  <Hat hat={hat()} class="animate-none!" />
+                </div>
+              </div>
+            </CardContent>
+          </>
+        )}
+      </Carousel>
+    </Show>
   )
 }

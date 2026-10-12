@@ -3,6 +3,7 @@ import {
   COMMON_SCENE_HEIGHT,
   EVENT_MARKER_SIZE,
   GAME_CONTENT_HEIGHT_RATIO,
+  HAT_INDEX,
   PLAYER_HITBOX_SIZE,
   PLAYER_SIZE,
   SCENE,
@@ -19,6 +20,7 @@ import { batch, createEffect, createMemo, createSignal, on, onMount, type Parent
 import { createRtcState } from '../../../lib/createRtcState'
 import { GlobalStateContext } from './GlobalStateContext'
 import { NodeRegistry } from './NodeRegistry'
+import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 
 type DebugData = Pick<GlobalState, 'scene' | 'player'>
 
@@ -101,10 +103,8 @@ export function GlobalStateProvider(props: ParentProps) {
     }),
   )
 
-  const [hat, setHat] = createSignal<HatType>('baseball')
   const isAdmin = createMemo(() => !!clerk()?.user?.publicMetadata?.isAdmin)
-  createEffect(on(isAdmin, (admin) => admin && setHat('admin')))
-
+  const [hat, setHat] = createSignal<number>()
   const player: GlobalState['player'] = {
     ref: null as unknown as HTMLElement,
     x: 0,
@@ -116,9 +116,9 @@ export function GlobalStateProvider(props: ParentProps) {
     facing: 'right',
     speed: 1,
     shouldSendBatches: false,
+    isAdmin,
     hat,
     setHat,
-    isAdmin,
   }
 
   const { data: otherPlayersIds } = useStableQuery(api.users.listOnlineUsers, {}, { initialData: [] })
@@ -151,10 +151,10 @@ export function GlobalStateProvider(props: ParentProps) {
     isActive: isInteractionActive,
     setIsActive: setIsInteractionActive,
     start() {
-      return setIsInteractionActive(true)
+      setIsInteractionActive(true)
     },
     finish() {
-      return setIsInteractionActive(false)
+      setIsInteractionActive(false)
     },
   }
 

@@ -20,17 +20,21 @@ import {
 } from 'solid-js'
 import { Motion } from 'solid-motionone'
 import { Card } from './card'
+import { ArrowLeftIcon, BoxIcon, MoveLeftIcon, MoveRightIcon, PanelLeftDashed } from 'lucide-solid'
 
 type CarouselApi = NonNullable<ReturnType<UseEmblaCarouselType[1]>>
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
 type CarouselOptions = UseCarouselParameters[0]
 type CarouselPlugin = UseCarouselParameters[1]
 
-interface ItemsProps<T extends readonly any[], U extends JSX.Element> {
+interface ItemsProps<T extends readonly any[], U extends JSX.Element, L extends JSX.Element> {
   list: T
-  children: (item: Accessor<T[number]>, index: number) => U
+  getLabel: (item: T[number]) => L
+  children: (item: Accessor<T[number]>, label: L, index: number) => U
   value: T[number]
   onValueChange: (value: T[number]) => void
+  onConfirm: (newValue: T[number]) => void
+  onDiscard: (originalValue: T[number]) => void
 }
 
 interface CarouselProps {
@@ -40,7 +44,7 @@ interface CarouselProps {
   setApi?: Setter<CarouselApi>
 }
 
-interface CarouselContextProps<T extends readonly any[], U extends JSX.Element> extends Omit<
+interface CarouselContextProps<T extends readonly any[], U extends JSX.Element, L extends JSX.Element> extends Omit<
   CarouselProps,
   'orientation'
 > {
@@ -51,14 +55,16 @@ interface CarouselContextProps<T extends readonly any[], U extends JSX.Element> 
   canScrollPrev: Accessor<boolean>
   canScrollNext: Accessor<boolean>
   orientation: Accessor<'horizontal' | 'vertical' | undefined>
-  selectedValue: ItemsProps<T, U>['value']
-  onSelect: ItemsProps<T, U>['onValueChange']
+  selectedValue: ItemsProps<T, U, L>['value']
+  onSelect: ItemsProps<T, U, L>['onValueChange']
   currentIndex: Accessor<number>
   setCurrentIndex: Setter<number>
+  onConfirm: () => void
+  onDiscard: () => void
   readonly valueInView: Accessor<T[number]>
 }
 
-const CarouselContext = createContext<CarouselContextProps<any[], JSX.Element> | null>(null)
+const CarouselContext = createContext<CarouselContextProps<any[], JSX.Element, string> | null>(null)
 
 export function useCarousel() {
   const context = useContext(CarouselContext)
@@ -70,25 +76,39 @@ export function useCarousel() {
   return context
 }
 
-export function Carousel<T extends readonly any[], U extends JSX.Element>(
-  componentProps: CarouselProps & ItemsProps<T, U>,
+export function Carousel<T extends readonly any[], U extends JSX.Element, L extends JSX.Element>(
+  componentProps: CarouselProps & ItemsProps<T, U, L>,
 ) {
   const props = defaultProps(componentProps, { orientation: 'horizontal' })
   const [local, list, rest] = splitProps(
     props,
     ['orientation', 'opts', 'setApi', 'plugins'],
-    ['list', 'children', 'value', 'onValueChange'],
+    ['list', 'children', 'value', 'onValueChange', 'onConfirm', 'onDiscard', 'getLabel'],
   )
   const [carouselRef, emblaApi] = useEmblaCarousel(
     () => ({ loop: true, ...local.opts?.(), axis: local.orientation === 'horizontal' ? 'x' : 'y' }),
     () => local.plugins?.() ?? [],
   )
+
+  const initialValue = list.value
   const [canScrollPrev, setCanScrollPrev] = createSignal(local.opts?.()?.loop ?? true)
   const [canScrollNext, setCanScrollNext] = createSignal(local.opts?.()?.loop ?? true)
   const [currentIndex, setCurrentIndex] = createSignal(list.list.indexOf(list.value))
 
+  const valueInView = createMemo(() => list.list[currentIndex()])
+
+  function onConfirm() {
+    const val = valueInView()
+    list.onValueChange(val)
+    list.onConfirm(val)
+  }
+
+  function onDiscard() {
+    list.onValueChange(initialValue)
+    list.onDiscard(initialValue)
+  }
+
   function onSelect(api: CarouselApi) {
-    console.log('on select')
     batch(() => {
       setCanScrollPrev(api.canGoToPrev())
       setCanScrollNext(api.canGoToNext())
@@ -104,8 +124,6 @@ export function Carousel<T extends readonly any[], U extends JSX.Element>(
   function scrollNext() {
     emblaApi()?.goToNext()
   }
-
-  const valueInView = createMemo(() => list.list[currentIndex()])
 
   onMount(() => {
     const api = emblaApi()
@@ -138,6 +156,8 @@ export function Carousel<T extends readonly any[], U extends JSX.Element>(
         onSelect: list.onValueChange as any,
         currentIndex,
         setCurrentIndex,
+        onConfirm,
+        onDiscard,
         valueInView,
       }}
     >
@@ -159,12 +179,36 @@ export function Carousel<T extends readonly any[], U extends JSX.Element>(
       >
         <CarouselContent>
           <Index each={list.list}>
-            {(item, idx) => <CarouselItem value={item()}>{props.children(item, idx)}</CarouselItem>}
+            {(item, idx) => (
+              <CarouselItem value={item()}>{props.children(item, list.getLabel(item()), idx)}</CarouselItem>
+            )}
           </Index>
         </CarouselContent>
 
         <CarouselPrevious />
         <CarouselNext />
+
+        <div class="absolute size-auto bottom-0 left-1/2 -translate-x-1/2 translate-y-[150%] flex items-center justify-between gap-6">
+          <KeycapButton
+            data-slot="carousel-next"
+            size="lg"
+            hotkey="Enter"
+            class="touch-manipulation flex-1 px-8"
+            onPress={onConfirm}
+          >
+            <span class="text-base absolute bottom-0">to confirm</span>
+          </KeycapButton>
+          <KeycapButton
+            data-slot="carousel-next"
+            size="lg"
+            hotkey="Escape"
+            label="Esc"
+            class="touch-manipulation flex-1 px-8"
+            onPress={onDiscard}
+          >
+            <span class="text-base absolute bottom-0">to discard</span>
+          </KeycapButton>
+        </div>
       </div>
     </CarouselContext.Provider>
   )
@@ -174,7 +218,7 @@ function CarouselContent(props: ComponentProps<'div'>) {
   const [local, rest] = splitProps(props, ['class'])
   const { carouselRef, orientation } = useCarousel()
   return (
-    <div ref={carouselRef} class="overflow-hidden [--cspace:1rem]" data-slot="carousel-content">
+    <div ref={carouselRef} class="overflow-hidden [--cspace:0rem]" data-slot="carousel-content">
       <div
         class={cn('flex', orientation() === 'horizontal' ? '-ml-(--cspace)' : '-mt-(--cspace) flex-col', local.class)}
         {...rest}
@@ -195,15 +239,19 @@ function CarouselItem<T extends any>(props: ComponentProps<'div'> & { value: T }
       aria-roledescription="slide"
       data-slot="carousel-item"
       class={cn(
-        'carousel-item aspect-square flex-none flex min-w-0',
+        'carousel-item aspect-square',
         orientation() === 'horizontal' ? 'pl-(--cspace) last:pr-(--cspace)' : 'pt-(--cspace)',
         local.class,
       )}
       {...rest}
     >
-      <Motion.div class="pl-(--cspace)" animate={{ scale: isInView() ? 1 : 0.7 }}>
+      <Motion.div class="pl-(--cspace)" animate={{ scale: isInView() ? 0.9 : 0.6 }}>
         <Card
-          class={cn('py-4 border-8 bg-glass-ph-light-cornflower-blue/60!', isActive() && 'bg-glass-ph-mustard-yellow!')}
+          class={cn(
+            'py-4 border-8 bg-glass-ph-soft-green/70!',
+            isInView() && 'bg-glass-ph-soft-green/10!',
+            isActive() && '',
+          )}
         >
           {local.children}
         </Card>
@@ -228,7 +276,10 @@ function CarouselPrevious() {
         hotkey="A"
         disabled={!canScrollPrev()}
         onPress={scrollPrev}
-      />
+        onHold={scrollPrev}
+      >
+        <MoveLeftIcon class="absolute bottom-0" />
+      </KeycapButton>
     </div>
   )
 }
@@ -250,7 +301,10 @@ function CarouselNext() {
         class="touch-manipulation"
         disabled={!canScrollNext()}
         onPress={scrollNext}
-      />
+        onHold={scrollNext}
+      >
+        <MoveRightIcon class="absolute bottom-0" />
+      </KeycapButton>
     </div>
   )
 }

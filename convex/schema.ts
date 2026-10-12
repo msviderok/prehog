@@ -31,6 +31,7 @@ export default defineSchema({
     movementDir: v.union(v.literal('left'), v.literal('right')),
     isWalking: v.boolean(),
     isRunning: v.boolean(),
+    hat: v.number(),
     y: v.number(),
     lastKnownXPosition: v.optional(
       v.object({

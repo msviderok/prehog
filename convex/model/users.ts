@@ -43,6 +43,7 @@ export async function ensureUserExists(ctx: MutationCtx, userData: UserJSON | { 
     isRunning: false,
     movementDir: 'right',
     scene: 'main',
+    hat: 0,
     y: SCENE.main.playerInitialY,
     lastKnownXPosition: {},
   })
