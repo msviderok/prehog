@@ -159,11 +159,19 @@ declare global {
     setActiveNode: (id: string | undefined) => void
   }
 
+  interface Interaction {
+    isActive: Accessor<boolean>
+    setIsActive: Setter<boolean>
+    start: () => void
+    finish: (type: 'confirm' | 'cancel') => void
+  }
+
   interface GlobalState {
     viewport: { width: number; height: number; vw: number; vh: number }
     scene: Scene
     nodes: NodeRegistry
     popover: SceneryPopover
+    interaction: Interaction
     player: MyPlayer
     rtc: RtcState
     misc: Misc

@@ -11,7 +11,7 @@ export const HAVE_AUDIO_OUTPUT_SELECTOR =
   typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype
 
 /* `x` offset on the hats.png sprite for the hog */
-export type Hat = keyof typeof HAT_INDEX
+export type HatType = keyof typeof HAT_INDEX
 export const HAT_INDEX = {
   painter: 0,
   baseball: 1,

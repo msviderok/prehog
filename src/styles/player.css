@@ -50,25 +50,16 @@
     }
   }
 
-  @keyframes player-idle {
+  @keyframes player-animation {
     from {
       background-position-x: 0;
     }
     to {
-      background-position-x: calc(-1 * var(--original-player-width) * 86);
+      background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps));
     }
   }
 
-  @keyframes player-walk {
-    from {
-      background-position-x: 0;
-    }
-    to {
-      background-position-x: calc(-1 * var(--original-player-width) * 11);
-    }
-  }
-
-  @keyframes player-run {
+  @keyframes player-on-fire {
     from {
       background-position-x: 0;
     }
@@ -87,24 +78,25 @@
   }
 }
 
+/*player-admin-hue var(--hue-speed) infinite;*/
+
 @utility hat {
+  --hats-count: 16;
+  --hat-width: calc(100% / var(--hats-count));
+  --hat-offset-x: calc((var(--hat-index, 0) * var(--hat-width)) + var(--hat-offset, 0px) + 2px);
   position: absolute;
   top: 0;
   left: 0;
   box-sizing: content-box;
+  background-image: var(--bg);
   background-position-y: -2px;
-  background-position-x: calc(-1 * var(--original-player-width) * var(--hat-index, 0) + var(--hat-offset, 0) + 2px);
+  background-position-x: var(--hat-offset-x);
   image-rendering: pixelated;
   width: var(--original-player-width);
   height: var(--original-player-height);
   background-repeat: no-repeat;
   background-size: cover;
-  transform-origin: center bottom;
-
-  /*&:after {
-    @apply absolute top-full left-1/2 -translate-x-1/2 w-0.5 h-10 bg-red-500;
-    content: '';
-  }*/
+  transform-origin: center center;
 }
 
 @utility player {
@@ -116,8 +108,11 @@
   --hat-offset: 3px;
   --animation-speed: 7000ms;
   --hue-speed: 500ms;
+  --is-walking: 0;
+  --is-running: 0;
+  --is-skewed: max(0, calc(var(--is-running) + var(--is-walking) - 1));
   --ty: calc(var(--player-offset-y) * var(--wuy));
-  --skx: calc(var(--is-running, 0) * var(--facing-dir, 0) * -1 * 10deg);
+  --skx: calc(var(--is-skewed, 0) * var(--facing-dir, 0) * -1 * 10deg);
   --sx: var(--facing-dir, 1);
 
   position: absolute;
@@ -133,12 +128,13 @@
   translate: -50% -50%;
   transform-origin: center bottom;
   z-index: 10;
+  animation: player-animation var(--animation-speed) steps(var(--anim-steps)) infinite;
 
   &:before {
     @apply absolute inset-0;
     content: '';
     background-image: url('../routes/_authed/-assets/fire_effect.png');
-    animation: player-run 1500ms steps(14) infinite;
+    animation: player-on-fire 1500ms steps(14) infinite;
     image-rendering: pixelated;
     background-repeat: no-repeat;
     box-sizing: content-box;
@@ -153,21 +149,28 @@
 }
 
 @utility player-idle {
+  --anim-steps: 86;
   background-image: url('../routes/_authed/-assets/skin_default_idle.png');
-  animation: player-idle var(--animation-speed) steps(86) infinite;
-  /*player-admin-hue var(--hue-speed) infinite;*/
-
   & > .hat {
-    animation: hat-idle var(--animation-speed) steps(86) infinite;
+    animation: hat-idle var(--animation-speed) steps(var(--anim-steps)) infinite;
   }
 }
 
 @utility player-walk {
+  --anim-steps: 11;
   background-image: url('../routes/_authed/-assets/skin_default_walk.png');
-  animation: player-walk calc(900ms / var(--movement-speed)) steps(11) infinite;
-  /*player-admin-hue var(--hue-speed) infinite;*/
-
+  animation-duration: calc(900ms / var(--movement-speed));
   & > .hat {
     --hat-offset: 0px;
   }
+}
+
+@utility player-dyno-idle {
+  --anim-steps: 9;
+  background-image: url('../routes/_authed/-assets/skin_dyno_idle.png');
+}
+
+@utility player-dyno-walk {
+  --anim-steps: 10;
+  background-image: url('../routes/_authed/-assets/skin_dyno_walk.png');
 }

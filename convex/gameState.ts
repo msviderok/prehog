@@ -134,6 +134,7 @@ export const setIsRunning = mutation({
 export const setScene = mutation({
   args: {
     scene: sceneSchema,
+    x: v.number().optional(),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
@@ -149,7 +150,7 @@ export const setScene = mutation({
       y: sceneInitialData.playerInitialY,
       lastKnownXPosition: {
         ...currentState.lastKnownXPosition,
-        [currentState.scene]: currentPosition.x,
+        [currentState.scene]: args.x ?? currentPosition.x,
       },
     })
 

@@ -1,11 +1,12 @@
 import { SOUNDS } from '@/audio'
-import { InteractButton } from '@/components/ui/button'
+import { KeycapButton } from '@/components/ui/button'
 import { createPolygonClipPath, random } from '@/lib/utils'
-import { createEffect, createMemo, Index, on, onCleanup, type ParentProps } from 'solid-js'
+import { createEffect, createMemo, Index, on, onCleanup, Show, type ParentProps } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
 import { useInteractiveNode } from './context'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { api } from '@/convex/api'
+import { cn } from 'cn'
 
 const POLYGON_SIDES = 14
 const POLYGON_ARR = Array.from({ length: POLYGON_SIDES }, (_, i) => i)
@@ -106,20 +107,31 @@ export function Pill(
   ),
 ) {
   const { node } = useInteractiveNode()
-  const { misc, scene } = useGlobalState()
+  const { misc, scene, interaction } = useGlobalState()
   const setScene = useSingleFlightMutation(api.gameState.setScene)
   const y = createMemo(() => (props.offsetY ?? misc.player.size.height * 1.3 * -1) * scene.worldUnit.y)
   const x = createMemo(() => (props.offsetX ?? 0) * scene.worldUnit.x)
+
+  const disabled = createMemo(() => interaction.isActive() || node.collided() !== true)
+
   return (
-    <div class="marker-floating-action" style={{ '--ty': `${y()}px`, '--tx': `${x()}px` }}>
-      <InteractButton
-        label={props.label}
-        onPress={() => {
-          if (props.onInteract) return props.onInteract(node)
-          if (props.goTo) return void setScene.mutate({ scene: props.goTo })
-          throw new Error('Unhandled event interaction')
-        }}
-      />
+    <div
+      class={cn('marker-floating-action', disabled() && 'quick-hide')}
+      style={{ '--ty': `${y()}px`, '--tx': `${x()}px` }}
+    >
+      <div class="animate-pulseY">
+        <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue w-max">
+          <KeycapButton
+            disabled={disabled()}
+            onPress={() => {
+              if (props.onInteract) return props.onInteract(node)
+              if (props.goTo) return void setScene.mutate({ scene: props.goTo })
+              throw new Error('Unhandled event interaction')
+            }}
+          />
+          <span class="comic text-xl">{props.label ?? 'Interact'}</span>
+        </div>
+      </div>
     </div>
   )
 }

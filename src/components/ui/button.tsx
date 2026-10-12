@@ -3,11 +3,10 @@ import { defaultProps } from '@/lib/utils'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
-import { createEffect, createMemo, createSignal, splitProps } from 'solid-js'
+import { createEffect, createSignal, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
-import { useInteractiveNodeContext } from '@/routes/_authed/-components/interactive-layer/context'
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
   {
     variants: {
@@ -46,6 +45,7 @@ const buttonVariants = cva(
         sm: 'h-6 p-3 text-xs [&_svg]:size-4',
         icon: 'size-8 [&_svg]:size-4.5',
         'icon-xs': 'size-6 [&_svg]:size-3.5',
+        lg: 'size-20! text-5xl!',
       },
     },
     defaultVariants: {
@@ -56,40 +56,41 @@ const buttonVariants = cva(
   },
 )
 
-function Button(componentProps: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants>
+
+export function Button(componentProps: ButtonProps) {
   const props = defaultProps(componentProps, { variant: 'outline', animate: 'default' })
   const [local, rest] = splitProps(props, ['class', 'size', 'variant', 'animate'])
   return <ButtonPrimitive data-slot="button" class={cn(buttonVariants(local))} {...rest} />
 }
 
-export function InteractButton(componentProps: {
+type KeycapProps = Omit<ButtonProps, 'variant'> & {
   /** @default "E" */
   hotkey?: Hotkey
-  label?: string
   onPress: HotkeyCallback
-}) {
+}
+
+export function KeycapButton(componentProps: KeycapProps) {
   let ref!: HTMLButtonElement
   const props = defaultProps(componentProps, { hotkey: 'E' })
+  const [local, rest] = splitProps(props, ['hotkey', 'onPress', 'ref', 'disabled', 'class'])
   const [pressed, setPressed] = createSignal(false)
 
-  const nodeCtx = useInteractiveNodeContext()
-  const disabled = createMemo(() => nodeCtx?.node.collided() !== true)
-
   createEffect(() => ref.setAttribute('data-pressed', pressed() ? 'true' : 'false'))
-  createEffect(() => disabled() && pressed() && setPressed(false))
+  createEffect(() => local.disabled && pressed() && setPressed(false))
 
   createHotkeys(
     [
       {
-        hotkey: props.hotkey,
+        hotkey: local.hotkey,
         options: {
           eventType: 'keydown',
           get enabled() {
-            return !disabled()
+            return !local.disabled
           },
         },
         callback: () => {
-          if (disabled()) return
+          if (local.disabled) return
           setPressed(true)
 
           if (SOUNDS.ui.keyup.playing()) SOUNDS.ui.keyup.stop()
@@ -97,17 +98,17 @@ export function InteractButton(componentProps: {
         },
       },
       {
-        hotkey: props.hotkey,
+        hotkey: local.hotkey,
         options: {
           eventType: 'keyup',
           get enabled() {
-            return !disabled()
+            return !local.disabled
           },
         },
         callback: (e, ctx) => {
           setPressed(false)
           SOUNDS.ui.keyup.play('default')
-          props.onPress(e, ctx)
+          local.onPress(e, ctx)
         },
       },
     ],
@@ -115,15 +116,17 @@ export function InteractButton(componentProps: {
   )
 
   return (
-    <div class="animate-pulseY">
-      <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue w-max">
-        <Button variant="keycap" ref={ref}>
-          E
-        </Button>
-        <span class="comic text-xl">{props.label ?? 'Interact'}</span>
-      </div>
-    </div>
+    <Button
+      variant="keycap"
+      ref={(el) => {
+        ref = el
+        typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
+      }}
+      disabled={local.disabled}
+      class={cn('touch-manipulation', local.class)}
+      {...rest}
+    >
+      {local.hotkey}
+    </Button>
   )
 }
-
-export { Button, buttonVariants, InteractButton as PressE }

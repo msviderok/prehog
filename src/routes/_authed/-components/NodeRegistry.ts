@@ -45,7 +45,6 @@ export class NodeRegistry {
   }
 
   delete(id: string): boolean {
-    console.log(id)
     const nodeType = this.#nodes.get(id)!.type
     return this.#nodes.delete(id) && this.#views.get(nodeType)!.delete(id)
   }

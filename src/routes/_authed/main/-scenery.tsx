@@ -1,4 +1,7 @@
 import { Prose } from '@/components/Prose'
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Carousel } from '@/components/ui/carousel'
+import { DialogContent } from '@/components/ui/dialog'
 import { PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -9,17 +12,25 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { HAT_INDEX, type HatType } from '@/lib/constants'
 import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
 import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
 import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
+import { useGlobalState } from '../-components/GlobalStateContext'
+import { Hat } from '../-components/Hat'
+import { createMemo, createSignal } from 'solid-js'
 
 const SCALE = 1.475
 const MARKER_Y = 94
+const HATS = Object.keys(HAT_INDEX) as HatType[]
 
 export function Scenery() {
+  const { interaction, player } = useGlobalState()
+  const hats = createMemo(() => (player.isAdmin() ? HATS : HATS.filter((i) => i !== 'admin')))
+
   return (
     <Scene.Elements>
       <InteractiveNode.Root id="intro">
@@ -125,7 +136,7 @@ export function Scenery() {
         />
 
         <InteractiveNode.Marker.Root x={29.5} y={MARKER_Y}>
-          <InteractiveNode.Marker.Pill offsetX={-2} offsetY={-28.2} label="Explore" onInteract={() => {}} />
+          <InteractiveNode.Marker.Pill offsetY={-30} label="Explore" onInteract={interaction.start} />
         </InteractiveNode.Marker.Root>
 
         <InteractiveNode.Popover anchorX={30} anchorY={34} side="top" align="center">
@@ -134,6 +145,25 @@ export function Scenery() {
           </PopoverHeader>
           <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
         </InteractiveNode.Popover>
+
+        <DialogContent>
+          <Carousel list={hats()} value={player.hat()} onValueChange={player.setHat}>
+            {(hat) => (
+              <>
+                <CardHeader class="border-none absolute w-full">
+                  <CardTitle class="flex justify-center comic text-4xl">{hat()}</CardTitle>
+                </CardHeader>
+                <CardContent class="size-full">
+                  <div class="relative w-(--original-player-width) h-(--original-player-height)">
+                    <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2">
+                      <Hat hat={hat()} class="animate-none!" />
+                    </div>
+                  </div>
+                </CardContent>
+              </>
+            )}
+          </Carousel>
+        </DialogContent>
       </InteractiveNode.Root>
 
       <InteractiveNode.Root id="pet">

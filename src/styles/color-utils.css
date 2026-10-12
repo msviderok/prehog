@@ -7,8 +7,8 @@
   color: color-mix(in oklch, white, black calc(--value(integer) * 1%));
 }
 @utility text-glass-* {
-  background-color: rgb(from --value(--color-*, [*]) r g b / 70%);
-  background-color: rgb(from --value(--color-*, [*]) r g b / calc(100% - --modifier(integer) * 1%));
+  color: rgb(from --value(--color-*, [*]) r g b / 70%);
+  color: rgb(from --value(--color-*, [*]) r g b / calc(100% - --modifier(integer) * 1%));
 }
 
 @utility bg-tint-* {

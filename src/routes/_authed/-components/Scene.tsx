@@ -8,6 +8,8 @@ import { Hat } from './Hat'
 import { OtherPlayer } from './OtherPlayer'
 import { MarkersLayer } from './interactive-layer/Markers.layer'
 import { PopoverLayer } from './interactive-layer/Popover.layer'
+import { DialogLayer } from './interactive-layer/Dialog.layer'
+import { SlotLayer } from './interactive-layer/Slot.layer'
 
 const DEBUG = false
 
@@ -56,6 +58,10 @@ export function Background<K extends keyof Assets, A extends keyof Assets[K]>(pr
       />
 
       <PopoverLayer />
+      <DialogLayer />
+
+      <SlotLayer type="popoverAnchor" />
+      <SlotLayer type="asset" />
     </>
   )
 }
@@ -118,7 +124,7 @@ function MyPlayer() {
   const { player } = useGlobalState()
   return (
     <div ref={(el) => (player.ref = el)} class="player player-idle" data-me={true} data-is-admin={player.isAdmin()}>
-      <Hat hat={player.isAdmin() ? 'admin' : 'baseball'} />
+      <Hat hat={player.hat()} />
     </div>
   )
 }

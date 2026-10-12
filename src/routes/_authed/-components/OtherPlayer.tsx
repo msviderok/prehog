@@ -3,7 +3,7 @@ import type { Id } from '@/convex/dataModel'
 import { useStableQuery } from '@/lib/useStableQuery'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { createEffect, on, onMount } from 'solid-js'
-import { InteractButton } from '../../../components/ui/button'
+import { KeycapButton } from '../../../components/ui/button'
 import { Tooltip, TooltipPopup, TooltipPortal, TooltipPositioner } from '../../../components/ui/tooltip'
 import { useGlobalState } from './GlobalStateContext'
 import { Hat } from './Hat'
@@ -79,7 +79,7 @@ export function OtherPlayer(props: { id: Id<'users'> }) {
         <TooltipPortal>
           <TooltipPositioner anchor={ref} side="top" align="center">
             <TooltipPopup>
-              <InteractButton
+              <KeycapButton
                 onPress={() => {
                   console.log('Interact with', userProfile()?.fullname ?? 'USER_FULLNAME')
                 }}

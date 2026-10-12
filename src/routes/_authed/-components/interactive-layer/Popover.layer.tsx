@@ -4,10 +4,9 @@ import { cn } from 'cn'
 import { createMemo, Show } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { useGlobalState } from '../GlobalStateContext'
-import { SlotLayer } from './Slot.layer'
 
 export function PopoverLayer() {
-  const { nodes, scene, popover } = useGlobalState()
+  const { nodes, scene, popover, interaction } = useGlobalState()
   const activeId = createMemo(() => popover.activeNodeId() ?? popover.prevActiveNodeId())
   const currentlyRenderedElement = createMemo(() => {
     const id = activeId()
@@ -34,9 +33,6 @@ export function PopoverLayer() {
         class="fixed inset-0 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-[variant=engaged]:opacity-50 data-[variant=collided]:opacity-30 ease-in-out"
       />
 
-      <SlotLayer type="popoverAnchor" />
-      <SlotLayer type="asset" />
-
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
         <div class="z-1 fixed inset-0">
           <div class="absolute top-0 left-0 size-full translate-x-(--scene-tx)">
@@ -55,7 +51,8 @@ export function PopoverLayer() {
                 data-slot="popover-content"
                 data-variant="scenery"
                 class={cn(
-                  'group z-50 rounded-lg origin-(--transform-origin) p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all bg-glass-ph-very-dark-cornflower-blue/5 text-ph-light-cornflower-blue [--arrow-offset:0px] data-starting-style:opacity-0 data-ending-style:opacity-0 data-closed:opacity-0 duration-200 ease-out border-2 [--bc:var(--ph-light-cornflower-blue)] border-(--bc) animate-pulseY delay-100 flex flex-col gap-6',
+                  'group z-50 rounded-lg origin-(--transform-origin) p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all bg-glass-ph-very-dark-cornflower-blue/5 text-ph-light-cornflower-blue [--arrow-offset:0px] data-starting-style:opacity-0 data-ending-style:opacity-0 data-closed:opacity-0 duration-200 ease-out border-2 [--bc:var(--ph-light-cornflower-blue)] border-(--bc) delay-100 flex flex-col gap-6 animate-pulseY',
+                  interaction.isActive() && 'quick-hide',
                 )}
               >
                 <PopoverPrimitive.Arrow

@@ -6,10 +6,11 @@ import {
   PLAYER_HITBOX_SIZE,
   PLAYER_SIZE,
   SCENE,
-  type Hat,
+  type HatType,
 } from '@/lib/constants'
 import { useStableQuery } from '@/lib/useStableQuery'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
+import { Dialog } from '@/components/ui/dialog'
 import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
 import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
@@ -100,7 +101,7 @@ export function GlobalStateProvider(props: ParentProps) {
     }),
   )
 
-  const [hat, setHat] = createSignal<Hat>('baseball')
+  const [hat, setHat] = createSignal<HatType>('baseball')
   const isAdmin = createMemo(() => !!clerk()?.user?.publicMetadata?.isAdmin)
   createEffect(on(isAdmin, (admin) => admin && setHat('admin')))
 
@@ -143,6 +144,20 @@ export function GlobalStateProvider(props: ParentProps) {
     setActiveNode,
   }
 
+  const [isInteractionActive, setIsInteractionActive] = createSignal<boolean>(true)
+  const movementBlocked = createMemo(() => isInteractionActive())
+
+  const interaction: GlobalState['interaction'] = {
+    isActive: isInteractionActive,
+    setIsActive: setIsInteractionActive,
+    start() {
+      return setIsInteractionActive(true)
+    },
+    finish() {
+      return setIsInteractionActive(false)
+    },
+  }
+
   function calculate() {
     viewport.width = window.innerWidth
     viewport.height = window.innerHeight
@@ -169,6 +184,7 @@ export function GlobalStateProvider(props: ParentProps) {
 
   function updatePlayerAnimations() {
     player.ref?.style.setProperty('--facing-dir', `${player.facing === 'left' ? -1 : 1}`)
+    player.ref?.style.setProperty('--is-walking', `${+player.isWalking}`)
     player.ref?.classList.toggle('player-walk', player.isWalking)
     player.ref?.classList.toggle('player-idle', !player.isWalking)
   }
@@ -241,7 +257,13 @@ export function GlobalStateProvider(props: ParentProps) {
       { hotkey: 'ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
       { hotkey: 'Shift+ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
     ],
-    { requireReset: true, conflictBehavior: 'allow' },
+    {
+      requireReset: true,
+      conflictBehavior: 'allow',
+      get enabled() {
+        return movementBlocked() === false
+      },
+    },
   )
 
   createEffect(
@@ -291,10 +313,20 @@ export function GlobalStateProvider(props: ParentProps) {
         viewport,
         debugData,
         popover,
+        interaction,
         otherPlayersIds: () => otherPlayersIds() ?? [],
       }}
     >
-      <PopoverPrimitive.Root open={isPopoverOpen()}>{props.children}</PopoverPrimitive.Root>
+      <Dialog
+        modal="trap-focus"
+        open={interaction.isActive()}
+        onOpenChange={(open, _e, reason) => {
+          // if (reason === 'escape-key') return
+          interaction.setIsActive(open)
+        }}
+      >
+        <PopoverPrimitive.Root open={isPopoverOpen()}>{props.children}</PopoverPrimitive.Root>
+      </Dialog>
     </GlobalStateContext.Provider>
   )
 }
