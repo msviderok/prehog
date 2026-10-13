@@ -48,39 +48,42 @@ function DialogOverlay(props: DialogPrimitive.Backdrop.Props) {
 function DialogContent(
   props: DialogPrimitive.Popup.Props & {
     showCloseButton?: boolean
+    wrapperClass?: string
   },
 ) {
   const mergedProps = mergeProps({ showCloseButton: false }, props)
-  const [local, rest] = splitProps(mergedProps, ['class', 'children', 'showCloseButton'])
+  const [local, rest] = splitProps(mergedProps, ['class', 'children', 'showCloseButton', 'wrapperClass'])
 
   return (
     <DialogPortal>
-      <div class="z-1 fixed inset-0">
-        <div class="absolute top-0 left-0 size-full scale-(--scale)">
-          <DialogPrimitive.Popup
-            data-slot="dialog-content"
-            class={cn(
-              'fixed left-1/2 top-1/2 h-(--original) z-50 grid w-full max-w-[calc(100%-4rem)] -translate-x-1/2 -translate-y-1/2 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
-              local.class,
-            )}
-            {...rest}
-          >
-            {local.children}
-            {local.showCloseButton && (
-              <DialogPrimitive.Close
-                data-slot="dialog-close"
-                render={{
-                  component: Button,
-                  variant: 'ghost',
-                  class: 'absolute top-2 right-2',
-                  size: 'icon-sm',
-                }}
-              >
-                <XIcon />
-                <span class="sr-only">Close</span>
-              </DialogPrimitive.Close>
-            )}
-          </DialogPrimitive.Popup>
+      <div class="z-1 fixed inset-0 flex items-center justify-center">
+        <div class="relative w-full h-(--real-scene-height)">
+          <div class={cn('size-full')}>
+            <DialogPrimitive.Popup
+              data-slot="dialog-content"
+              class={cn(
+                'fixed left-1/2 top-1/2 z-50 grid w-full max-w-[calc(100%-4rem)] max-h-[calc(100%-4rem)] -translate-x-1/2 -translate-y-1/2 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+                local.class,
+              )}
+              {...rest}
+            >
+              {local.children}
+              {local.showCloseButton && (
+                <DialogPrimitive.Close
+                  data-slot="dialog-close"
+                  render={{
+                    component: Button,
+                    variant: 'ghost',
+                    class: 'absolute top-2 right-2',
+                    size: 'icon-sm',
+                  }}
+                >
+                  <XIcon />
+                  <span class="sr-only">Close</span>
+                </DialogPrimitive.Close>
+              )}
+            </DialogPrimitive.Popup>
+          </div>
         </div>
       </div>
     </DialogPortal>

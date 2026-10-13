@@ -144,7 +144,7 @@ export function GlobalStateProvider(props: ParentProps) {
     setActiveNode,
   }
 
-  const [isInteractionActive, setIsInteractionActive] = createSignal<boolean>(true)
+  const [isInteractionActive, setIsInteractionActive] = createSignal<boolean>(false)
   const movementBlocked = createMemo(() => isInteractionActive())
 
   const interaction: GlobalState['interaction'] = {
@@ -171,6 +171,8 @@ export function GlobalStateProvider(props: ParentProps) {
 
     scene.scaledSize.width = scene.originalSize.width * scene.scale
     scene.scaledSize.height = scene.originalSize.height * scene.scale
+    root?.style.setProperty('--real-scene-height', `${scene.scaledSize.height}px`)
+
     scene.s50PX = Math.min(window.innerWidth, scene.scaledSize.width) / 2
     scene.s50WU = (scene.s50PX / scene.scaledSize.width) * 100
     scene.cameraStartTravelAtX = scene.s50WU

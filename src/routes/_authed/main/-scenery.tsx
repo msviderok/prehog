@@ -146,7 +146,7 @@ export function Scenery() {
           <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
         </InteractiveNode.Popover>
 
-        <DialogContent>
+        <DialogContent class="justify-center items-center">
           <WardrobeCarousel />
         </DialogContent>
       </InteractiveNode.Root>
@@ -278,44 +278,86 @@ function WardrobeCarousel() {
 
   return (
     <Show when={player.hat() != null}>
-      <Carousel
-        list={hats()}
-        value={player.hat()!}
-        getLabel={(value) => HATS_BY_INDEX[value]}
-        onValueChange={player.setHat}
-        onConfirm={(value) => {
-          batch(() => {
-            player.setHat(value)
-            interaction.finish('confirm')
-            void setHatInDB.mutate({ hat: value })
-          })
-        }}
-        onDiscard={(value) => {
-          batch(() => {
-            player.setHat(value)
-            interaction.finish('cancel')
-            void setHatInDB.mutate({ hat: value })
-          })
-        }}
-      >
-        {(hat, label) => (
-          <>
-            d
-            <CardHeader class="border-none absolute w-full">
-              <CardTitle class="flex justify-center text-4xl capitalize text-ph-mustard-yellow comic">
-                {label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="size-full">
-              <div class="relative w-(--scaled-player-width) h-(--scaled-player-height)">
-                <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2">
-                  <Hat hat={hat()} class="animate-none!" />
+      <div class="relative flex items-center justify-center size-150">
+        <Carousel
+          class="absolute inset-0"
+          orientation="horizontal"
+          list={hats()}
+          value={player.hat()!}
+          getLabel={(value) => HATS_BY_INDEX[value]}
+          onValueChange={player.setHat}
+          onConfirm={(value) => {
+            batch(() => {
+              player.setHat(value)
+              interaction.finish('confirm')
+              void setHatInDB.mutate({ hat: value })
+            })
+          }}
+          onDiscard={(value) => {
+            batch(() => {
+              player.setHat(value)
+              interaction.finish('cancel')
+              void setHatInDB.mutate({ hat: value })
+            })
+          }}
+        >
+          {(hat, label) => (
+            <>
+              <CardHeader class="border-none absolute w-full top-0">
+                <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
+                  {label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent class="size-full">
+                <div class="relative  h-full aspect-square mx-auto">
+                  <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]">
+                    <Hat hat={hat()} class="animate-none!" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </>
-        )}
-      </Carousel>
+              </CardContent>
+            </>
+          )}
+        </Carousel>
+        <Carousel
+          class="absolute inset-0"
+          orientation="vertical"
+          list={hats()}
+          value={player.hat()!}
+          getLabel={(value) => HATS_BY_INDEX[value]}
+          onValueChange={player.setHat}
+          onConfirm={(value) => {
+            batch(() => {
+              player.setHat(value)
+              interaction.finish('confirm')
+              void setHatInDB.mutate({ hat: value })
+            })
+          }}
+          onDiscard={(value) => {
+            batch(() => {
+              player.setHat(value)
+              interaction.finish('cancel')
+              void setHatInDB.mutate({ hat: value })
+            })
+          }}
+        >
+          {(hat, label) => (
+            <>
+              <CardHeader class="border-none absolute w-full top-0">
+                <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
+                  {label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent class="size-full">
+                <div class="relative size-full">
+                  <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]">
+                    <Hat hat={hat()} class="animate-none!" />
+                  </div>
+                </div>
+              </CardContent>
+            </>
+          )}
+        </Carousel>
+      </div>
     </Show>
   )
 }
