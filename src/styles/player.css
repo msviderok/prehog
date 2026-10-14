@@ -1,4 +1,13 @@
-@keyframes player-animation {
+@keyframes player-walk {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps));
+  }
+}
+
+@keyframes player-idle {
   from {
     background-position-x: 0;
   }
@@ -119,7 +128,6 @@
   transform-origin: center bottom;
   z-index: 10;
 
-  animation-name: player-animation;
   animation-timing-function: steps(var(--anim-steps));
   animation-duration: var(--animation-speed);
   animation-iteration-count: infinite;
@@ -129,6 +137,8 @@
   }
 
   &[data-action='idle'] {
+    animation-name: player-idle;
+    --hat-animation: hat-idle;
     &[data-skin='default'] {
       --anim-steps: 86;
       --bg-sprite: url('../routes/_authed/-assets/skin_default_idle.png');
@@ -142,6 +152,7 @@
   &[data-action='walk'] {
     --hat-offset: 0cqw;
     --hat-animation: none;
+    animation-name: player-walk;
     animation-duration: calc(900ms / var(--movement-speed));
 
     &[data-skin='default'] {
