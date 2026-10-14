@@ -11,7 +11,6 @@ export const HAVE_AUDIO_OUTPUT_SELECTOR =
   typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype
 
 /* `x` offset on the hats.png sprite for the hog */
-export type HatType = keyof typeof HAT_INDEX
 export const HAT_INDEX = {
   painter: 0,
   baseball: 1,
@@ -31,10 +30,20 @@ export const HAT_INDEX = {
   scarf: 15,
   admin: 16,
 } as const
-
+export const DEFAULT_HAT_INDEX = 0
 export const HATS_BY_INDEX = Object.entries(HAT_INDEX).reduce(
-  (acc, [k, idx]) => ((acc[idx] = k as HatType), acc),
-  {} as Record<number, HatType>,
+  (acc, [k, idx]) => ((acc[idx] = k as keyof typeof HAT_INDEX), acc),
+  {} as Record<number, keyof typeof HAT_INDEX>,
+)
+
+export const SKIN_INDEX = {
+  default: 0,
+  dyno: 1,
+} as const
+export const DEFAULT_SKIN_INDEX = 0
+export const SKINS_BY_INDEX = Object.entries(SKIN_INDEX).reduce(
+  (acc, [k, idx]) => ((acc[idx] = k as keyof typeof SKIN_INDEX), acc),
+  {} as Record<number, keyof typeof SKIN_INDEX>,
 )
 
 export const SAMPLING_INTERVAL_MS = 33

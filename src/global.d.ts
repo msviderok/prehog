@@ -5,7 +5,6 @@ import type { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import type { RtcState } from './lib/createRtcState'
 import type { NodeRegistry } from './routes/_authed/-components/NodeRegistry'
-import type { HatType } from './lib/constants'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -73,11 +72,7 @@ declare global {
         }
       | {
           type: 'player'
-          data: {
-            ref: HTMLDivElement | undefined
-            x: number
-            batchQueue: GameEventBatch
-          }
+          data: CommonPlayerProps & { batchQueue: GameEventBatch }
         }
     )
 
@@ -94,20 +89,38 @@ declare global {
   type CurrentScene = Doc<'game_user_state'>['scene']
   type LoadingStatus = 'not-initiated' | 'signed-out' | 'loading-clerk' | 'loading-game-state' | UserData
 
-  interface MyPlayer {
-    ref: HTMLElement | undefined
-    hitbox: { x1: number; y1: number; x2: number; y2: number }
+  type Left = -1
+  type Right = 1
+  type Standing = 0
+  type MovementDirection = Left | Standing | Right
+  type FacingDirection = 'left' | 'right'
+  interface CommonPlayerProps {
+    ref: HTMLDivElement | undefined
     x: number
-    tx: number
-    direction: 1 | 0 | -1 // 1 – right, 0 – stopped, -1 – left
-    isWalking: boolean
-    isRunning: boolean
-    facing: 'left' | 'right'
-    speed: number
-    shouldSendBatches: boolean
+    facingDirection: Accessor<FacingDirection>
+    isWalking: Accessor<boolean>
+    isRunning: Accessor<boolean>
     hat: Accessor<number | undefined>
-    setHat: Setter<number | undefined>
+    skin: Accessor<number>
     isAdmin: Accessor<boolean>
+  }
+
+  interface MyPlayer extends CommonPlayerProps {
+    __gameloop: {
+      direction: 1 | 0 | -1 // 1 – right, 0 – stopped, -1 – left
+      hitbox: { x1: number; y1: number; x2: number; y2: number }
+      tx: number
+      speed: number
+      shouldSendBatches: boolean
+    }
+    direction: Accessor<MovementDirection>
+    setIsWalking: Setter<boolean>
+    setIsRunning: Setter<boolean>
+    setHat: Setter<number | undefined>
+    setSkin: Setter<number>
+    setDirection: Setter<MovementDirection>
+    setInitialData: (data: FunctionReturnType<typeof api.gameState.getMyInitialState>) => void
+    isInitialDataLoaded: Accessor<boolean>
   }
 
   interface Scene {

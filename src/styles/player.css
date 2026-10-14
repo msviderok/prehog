@@ -1,88 +1,159 @@
-@theme inline {
-  @keyframes hat-idle {
-    0%,
-    89.5% {
-      top: -1cqw;
-    }
+@keyframes player-animation {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps));
+  }
+}
 
-    /* duck */
-    89.51%,
-    90.7% {
-      top: 0.6667cqw;
-    }
-    90.71%,
-    91.8% {
-      top: -1cqw;
-    }
+@keyframes player-on-fire {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: calc(-1 * var(--original-player-width) * 14);
+  }
+}
 
-    /* jump */
-    91.81%,
-    93% {
-      top: 1.6667cqw;
-    }
-    93.01%,
-    94.15% {
-      top: -0.6667cqw;
-    }
-    94.16%,
-    95.3% {
-      top: -5.3333cqw;
-    }
-    95.31%,
-    96.3% {
-      top: -7cqw;
-    }
-    96.31%,
-    97% {
-      top: -6.6667cqw;
-    }
-    97.01%,
-    97.7% {
-      top: -6cqw;
-    }
-    97.71%,
-    98.4% {
-      top: -4.6667cqw;
-    }
-    98.41%,
-    99.1% {
-      top: -1cqw;
-    }
-    98.41%,
-    100% {
-      top: -0.6667cqw;
-    }
+@keyframes player-admin-hue {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(calc(360deg * var(--is-admin, 0)));
+  }
+}
+
+@keyframes hat-idle {
+  0%,
+  89.5% {
+    top: -1cqw;
   }
 
-  @keyframes player-animation {
-    from {
-      background-position-x: 0;
-    }
-    to {
-      background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps));
-    }
+  /* duck */
+  89.51%,
+  90.7% {
+    top: 0.6667cqw;
+  }
+  90.71%,
+  91.8% {
+    top: -1cqw;
   }
 
-  @keyframes player-on-fire {
-    from {
-      background-position-x: 0;
-    }
-    to {
-      background-position-x: calc(-1 * var(--original-player-width) * 14);
-    }
+  /* jump */
+  91.81%,
+  93% {
+    top: 1.6667cqw;
   }
-
-  @keyframes player-admin-hue {
-    from {
-      filter: hue-rotate(0deg);
-    }
-    to {
-      filter: hue-rotate(calc(360deg * var(--is-admin, 0)));
-    }
+  93.01%,
+  94.15% {
+    top: -0.6667cqw;
+  }
+  94.16%,
+  95.3% {
+    top: -5.3333cqw;
+  }
+  95.31%,
+  96.3% {
+    top: -10cqw;
+  }
+  96.31%,
+  97% {
+    top: -8.6667cqw;
+  }
+  97.01%,
+  97.7% {
+    top: -6cqw;
+  }
+  97.71%,
+  98.4% {
+    top: -4.6667cqw;
+  }
+  98.41%,
+  99.1% {
+    top: -1cqw;
+  }
+  99.11%,
+  100% {
+    top: -0.6667cqw;
   }
 }
 
 /*player-admin-hue var(--hue-speed) infinite;*/
+
+@utility player {
+  @apply game-transform after:hat before:fire;
+
+  --hat-index: attr(data-hat type(<number>), 0);
+  --is-walking: attr(data-is-walking type(<number>), 0);
+  --is-running: attr(data-is-running type(<number>), 0);
+  --facing-dir: attr(data-direction type(<number>), 1);
+  --hat-animation: hat-idle;
+  --base-movement-speed: 1;
+  --movement-speed: calc(var(--base-movement-speed) + (var(--is-running, 0) * 1.5));
+  --hat-offset: 1cqw;
+  --animation-speed: 7000ms;
+  --hue-speed: 500ms;
+  --is-skewed: max(0, calc(var(--is-running) + var(--is-walking) - 1));
+  --ty: calc(var(--player-offset-y) * var(--wuy));
+  --skx: calc(var(--is-skewed, 0) * var(--facing-dir) * -1 * 10deg);
+  --sx: var(--facing-dir);
+  --bg-sprite: url('../routes/_authed/-assets/skin_default_idle.png');
+  --anim-steps-count: 86;
+  --anim-step: calc(100% / var(--anim-steps-count));
+
+  container-type: inline-size;
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: content-box;
+  background-position-y: 0;
+  background-image: var(--bg-sprite);
+  image-rendering: pixelated;
+  width: var(--original-player-width);
+  aspect-ratio: 1 / 1;
+  background-repeat: no-repeat;
+  background-size: cover;
+  translate: -50% -50%;
+  transform-origin: center bottom;
+  z-index: 10;
+
+  animation-name: player-animation;
+  animation-timing-function: steps(var(--anim-steps));
+  animation-duration: var(--animation-speed);
+  animation-iteration-count: infinite;
+
+  &[data-is-admin='true'] {
+    --is-admin: 1;
+  }
+
+  &[data-action='idle'] {
+    &[data-skin='default'] {
+      --anim-steps: 86;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_idle.png');
+    }
+    &[data-skin='dyno'] {
+      --anim-steps: 9;
+      --bg-sprite: url('../routes/_authed/-assets/skin_dyno_idle.png');
+    }
+  }
+
+  &[data-action='walk'] {
+    --hat-offset: 0cqw;
+    --hat-animation: none;
+    animation-duration: calc(900ms / var(--movement-speed));
+
+    &[data-skin='default'] {
+      --anim-steps: 11;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_walk.png');
+    }
+    &[data-skin='dyno'] {
+      --anim-steps: 10;
+      --bg-sprite: url('../routes/_authed/-assets/skin_dyno_walk.png');
+    }
+  }
+}
 
 @utility hat {
   --hats-count: 16;
@@ -92,88 +163,29 @@
   width: 100%;
   height: 100%;
   box-sizing: content-box;
-  background-image: var(--bg);
+  background-image: url('../routes/_authed/-assets/hats.png');
   background-position-y: -1cqw;
   background-position-x: calc((var(--hat-index, 0) * var(--hat-width)) + var(--hat-offset, 0cqw) + 1cqw);
   image-rendering: pixelated;
   background-repeat: no-repeat;
   background-size: cover;
   transform-origin: center center;
+  animation-name: var(--hat-animation);
+  animation-timing-function: inherit;
+  animation-duration: inherit;
+  animation-iteration-count: inherit;
 }
 
-@utility player {
-  @apply game-transform;
-
-  --base-movement-speed: 1;
-  --movement-speed: calc(var(--base-movement-speed) + (var(--is-running, 0) * 1.5));
-  --facing-dir: 1;
-  --hat-offset: 1cqw;
-  --animation-speed: 7000ms;
-  --hue-speed: 500ms;
-  --is-walking: 0;
-  --is-running: 0;
-  --is-skewed: max(0, calc(var(--is-running) + var(--is-walking) - 1));
-  --ty: calc(var(--player-offset-y) * var(--wuy));
-  --skx: calc(var(--is-skewed, 0) * var(--facing-dir, 0) * -1 * 10deg);
-  --sx: var(--facing-dir, 1);
-
-  container-type: inline-size;
-  position: absolute;
-  top: 0;
-  left: 0;
-  box-sizing: content-box;
-  background-position-y: 0;
+@utility fire {
+  @apply absolute inset-0;
+  content: '';
+  z-index: 1;
+  background-image: url('../routes/_authed/-assets/fire_effect.png');
+  animation: player-on-fire 1500ms steps(14) infinite;
   image-rendering: pixelated;
-  width: var(--original-player-width);
-  aspect-ratio: 1 / 1;
   background-repeat: no-repeat;
+  box-sizing: content-box;
   background-size: cover;
-  translate: -50% -50%;
   transform-origin: center bottom;
-  z-index: 10;
-  animation: player-animation var(--animation-speed) steps(var(--anim-steps)) infinite;
-
-  &:before {
-    @apply absolute inset-0;
-    content: '';
-    background-image: url('../routes/_authed/-assets/fire_effect.png');
-    animation: player-on-fire 1500ms steps(14) infinite;
-    image-rendering: pixelated;
-    background-repeat: no-repeat;
-    box-sizing: content-box;
-    background-size: cover;
-    transform-origin: center bottom;
-    opacity: calc(var(--is-running, 0) * 0.5);
-  }
-
-  &[data-is-admin='true'] {
-    --is-admin: 1;
-  }
-}
-
-@utility player-idle {
-  --anim-steps: 86;
-  background-image: url('../routes/_authed/-assets/skin_default_idle.png');
-  & > .hat {
-    animation: hat-idle var(--animation-speed) steps(var(--anim-steps)) infinite;
-  }
-}
-
-@utility player-walk {
-  --anim-steps: 11;
-  background-image: url('../routes/_authed/-assets/skin_default_walk.png');
-  animation-duration: calc(900ms / var(--movement-speed));
-  & > .hat {
-    --hat-offset: 0cqw;
-  }
-}
-
-@utility player-dyno-idle {
-  --anim-steps: 9;
-  background-image: url('../routes/_authed/-assets/skin_dyno_idle.png');
-}
-
-@utility player-dyno-walk {
-  --anim-steps: 10;
-  background-image: url('../routes/_authed/-assets/skin_dyno_walk.png');
+  opacity: calc(var(--is-running, 0) * 0.5);
 }

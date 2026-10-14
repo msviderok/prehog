@@ -1,32 +1,29 @@
+import { Dialog } from '@/components/ui/dialog'
 import { api } from '@/convex/api'
 import {
   COMMON_SCENE_HEIGHT,
   EVENT_MARKER_SIZE,
   GAME_CONTENT_HEIGHT_RATIO,
-  HAT_INDEX,
   PLAYER_HITBOX_SIZE,
   PLAYER_SIZE,
   SCENE,
-  type HatType,
 } from '@/lib/constants'
 import { useStableQuery } from '@/lib/useStableQuery'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
-import { Dialog } from '@/components/ui/dialog'
 import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
 import { useNavigate } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
-import { useMutation, useQuery } from 'convex-solidjs'
+import { useMutation } from 'convex-solidjs'
 import { batch, createEffect, createMemo, createSignal, on, onMount, type ParentProps } from 'solid-js'
 import { createRtcState } from '../../../lib/createRtcState'
 import { GlobalStateContext } from './GlobalStateContext'
 import { NodeRegistry } from './NodeRegistry'
-import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 
 type DebugData = Pick<GlobalState, 'scene' | 'player'>
 
 export function GlobalStateProvider(props: ParentProps) {
-  const clerk = useClerk()
   const rtc = createRtcState()
+  const player = createPlayer()
   const navigate = useNavigate()
 
   const nodes: GlobalState['nodes'] = new NodeRegistry()
@@ -93,42 +90,17 @@ export function GlobalStateProvider(props: ParentProps) {
       scene.walkableMaxX = 100 - misc.player.size.halfWidth
 
       player.x = lastKnownX ?? sceneInitialState.playerInitialX ?? 0
-      player.hitbox.x1 = sceneInitialState.playerInitialX
-      player.hitbox.x2 = sceneInitialState.playerInitialX + misc.player.size.width
-      player.hitbox.y1 = misc.player.hitbox.y1
-      player.hitbox.y2 = misc.player.hitbox.y2
+      player.__gameloop.hitbox.x1 = sceneInitialState.playerInitialX
+      player.__gameloop.hitbox.x2 = sceneInitialState.playerInitialX + misc.player.size.width
+      player.__gameloop.hitbox.y1 = misc.player.hitbox.y1
+      player.__gameloop.hitbox.y2 = misc.player.hitbox.y2
 
       navigate({ to: `/${sceneValue}` })
       queueMicrotask(() => calculate())
     }),
   )
 
-  const isAdmin = createMemo(() => !!clerk()?.user?.publicMetadata?.isAdmin)
-  const [hat, setHat] = createSignal<number>()
-  const player: GlobalState['player'] = {
-    ref: null as unknown as HTMLElement,
-    x: 0,
-    tx: 0,
-    hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
-    direction: 0,
-    isWalking: false,
-    isRunning: false,
-    facing: 'right',
-    speed: 1,
-    shouldSendBatches: false,
-    isAdmin,
-    hat,
-    setHat,
-  }
-
   const { data: otherPlayersIds } = useStableQuery(api.users.listOnlineUsers, {}, { initialData: [] })
-  const { data: shouldSendBatches } = useQuery(api.gameState.shouldSendRealTimeMovement, {})
-  createEffect(
-    on(
-      () => shouldSendBatches() ?? false,
-      (shouldSend) => (player.shouldSendBatches = shouldSend),
-    ),
-  )
 
   const [activeNodeId, setActiveNodeId] = createSignal<string>()
   const [prevActiveNodeId, setPrevActiveNodeId] = createSignal<string>()
@@ -180,60 +152,59 @@ export function GlobalStateProvider(props: ParentProps) {
 
     misc.eventMarker.r = EVENT_MARKER_SIZE.width / scene.worldUnit.x
     misc.eventMarker.h = EVENT_MARKER_SIZE.height / scene.worldUnit.y
-
-    updatePlayerAnimations()
   }
 
-  function updatePlayerAnimations() {
-    player.ref?.style.setProperty('--facing-dir', `${player.facing === 'left' ? -1 : 1}`)
-    player.ref?.style.setProperty('--is-walking', `${+player.isWalking}`)
-    player.ref?.classList.toggle('player-walk', player.isWalking)
-    player.ref?.classList.toggle('player-idle', !player.isWalking)
-  }
-
-  const setIsWalking = useMutation(api.gameState.setIsWalking)
-  const setIsRunning = useMutation(api.gameState.setIsRunning)
-  const setDirection = useMutation(api.gameState.setDirection)
+  const updateIsWalking = useMutation(api.gameState.setIsWalking)
+  const updateIsRunning = useMutation(api.gameState.setIsRunning)
+  const updateDirection = useMutation(api.gameState.setDirection)
   const isShiftHeld = createKeyHold('Shift')
   const keytracker = getKeyStateTracker()
 
   function updateGameStateIfChanged(cb: () => void) {
     return () => {
-      const prevIsWalking = player.isWalking
-      const prevDirection = player.direction
+      const prevIsWalking = player.isWalking()
+      const prevDirection = player.direction()
 
       cb()
-      updatePlayerAnimations()
 
-      if (prevIsWalking !== player.isWalking) {
-        void setIsWalking.mutate({ isWalking: player.isWalking })
+      const newIsWalking = player.isWalking()
+      const newDirection = player.direction()
+
+      if (prevIsWalking !== newIsWalking) {
+        void updateIsWalking.mutate({ isWalking: newIsWalking })
       }
-      if (player.direction !== 0 && prevDirection !== player.direction) {
-        void setDirection.mutate({ direction: player.direction })
+      if (newDirection !== 0 && prevDirection !== newDirection) {
+        void updateDirection.mutate({ direction: newDirection })
       }
     }
   }
 
   const startMovingLeft = updateGameStateIfChanged(() => {
-    player.isWalking = true
-    player.facing = 'left'
-    player.direction = -1
+    batch(() => {
+      player.setDirection(-1)
+      player.setIsWalking(true)
+    })
   })
 
   const stopMovingLeft = updateGameStateIfChanged(() => {
-    player.isWalking = keytracker.isKeyHeld('D') || keytracker.isKeyHeld('ArrowRight') ? true : false
-    if (player.isWalking === false) player.direction = 0
+    batch(() => {
+      player.setIsWalking(keytracker.isKeyHeld('D') || keytracker.isKeyHeld('ArrowRight') ? true : false)
+      if (player.isWalking() === false) player.setDirection(0)
+    })
   })
 
   const startMovingRight = updateGameStateIfChanged(() => {
-    player.isWalking = true
-    player.facing = 'right'
-    player.direction = 1
+    batch(() => {
+      player.setIsWalking(true)
+      player.setDirection(1)
+    })
   })
 
   const stopMovingRight = updateGameStateIfChanged(() => {
-    player.isWalking = keytracker.isKeyHeld('A') || keytracker.isKeyHeld('ArrowLeft') ? true : false
-    if (player.isWalking === false) player.direction = 0
+    batch(() => {
+      player.setIsWalking(keytracker.isKeyHeld('A') || keytracker.isKeyHeld('ArrowLeft') ? true : false)
+      if (player.isWalking() === false) player.setDirection(0)
+    })
   })
 
   createHotkeys(
@@ -270,10 +241,9 @@ export function GlobalStateProvider(props: ParentProps) {
 
   createEffect(
     on(isShiftHeld, (shift) => {
-      player.isRunning = shift
-      player.speed = shift ? 2.0 : 1.0
-      player.ref?.style.setProperty('--is-running', shift ? '1' : '0')
-      void setIsRunning.mutate({ isRunning: player.isRunning })
+      player.setIsRunning(shift)
+      player.__gameloop.speed = shift ? 2.0 : 1.0
+      void updateIsRunning.mutate({ isRunning: shift })
     }),
   )
 
@@ -316,13 +286,13 @@ export function GlobalStateProvider(props: ParentProps) {
         debugData,
         popover,
         interaction,
-        otherPlayersIds: () => otherPlayersIds() ?? [],
+        otherPlayersIds,
       }}
     >
       <Dialog
         modal="trap-focus"
         open={interaction.isActive()}
-        onOpenChange={(open, _e, reason) => {
+        onOpenChange={(open, _e, _reason) => {
           // if (reason === 'escape-key') return
           interaction.setIsActive(open)
         }}
@@ -331,4 +301,70 @@ export function GlobalStateProvider(props: ParentProps) {
       </Dialog>
     </GlobalStateContext.Provider>
   )
+}
+
+function createPlayer() {
+  const clerk = useClerk()
+  const isAdmin = createMemo(() => !!clerk()?.user?.publicMetadata?.isAdmin)
+  const [hat, setHat] = createSignal<number>()
+  const [skin, setSkin] = createSignal(0)
+  const [isWalking, setIsWalking] = createSignal(false)
+  const [isRunning, setIsRunning] = createSignal(false)
+  const [direction, setDirection] = createSignal<MovementDirection>(0)
+  const [facingDirection, setFacingDirection] = createSignal<FacingDirection>('right')
+  const [isInitialDataLoaded, setIsInitialDataLoaded] = createSignal(false)
+  const player: GlobalState['player'] = {
+    x: 0,
+    ref: undefined,
+    isWalking,
+    setIsWalking,
+    isRunning,
+    setIsRunning,
+    isAdmin,
+    hat,
+    setHat,
+    skin,
+    setSkin,
+    direction,
+    setDirection,
+    facingDirection,
+    isInitialDataLoaded,
+    __gameloop: {
+      tx: 0,
+      direction: 0,
+      speed: 1,
+      hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
+      shouldSendBatches: false,
+    },
+    setInitialData(data) {
+      batch(() => {
+        player.x = data.x
+        setHat(data.hat)
+        setSkin(data.skin)
+        setDirection(0)
+        setFacingDirection(data.direction)
+        setIsInitialDataLoaded(true)
+      })
+    },
+  }
+
+  createEffect(
+    on(player.direction, (dir) => {
+      player.__gameloop.direction = dir
+      if (dir === -1) setFacingDirection('left')
+      else if (dir === 1) setFacingDirection('right')
+    }),
+  )
+
+  const { data: shouldSendBatches } = useStableQuery(
+    api.gameState.shouldSendRealTimeMovement,
+    {},
+    { initialData: false },
+  )
+  createEffect(on(shouldSendBatches, (shouldSend) => (player.__gameloop.shouldSendBatches = shouldSend)))
+
+  const getMyInitialState = useMutation(api.gameState.getMyInitialState)
+  onMount(() => void getMyInitialState.mutate({}).then(player.setInitialData))
+
+  return player
 }

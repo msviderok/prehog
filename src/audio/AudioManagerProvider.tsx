@@ -6,11 +6,11 @@ import { AudioManagerContext } from './context'
 
 export function AudioManagerProvider(props: ParentProps) {
   const [volume, setVolume] = createSignal(1)
-  const { data: isWalking } = useStableQuery(api.gameState.getMyIsWalking)
+  const { data: isWalking } = useStableQuery(api.gameState.getMyIsWalking, {}, { initialData: false })
   const soundWalking = SOUNDS.footsteps.concrete
   createEffect(on(isWalking, (val) => (val ? soundWalking.play() : soundWalking.pause())))
 
-  const { data: isRunning } = useStableQuery(api.gameState.getMyIsRunning)
+  const { data: isRunning } = useStableQuery(api.gameState.getMyIsRunning, {}, { initialData: false })
   const soundFire = SOUNDS.effects.fire
   createEffect(
     on(isRunning, (val) => {

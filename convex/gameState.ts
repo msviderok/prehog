@@ -1,9 +1,20 @@
 import { v } from 'convex/values'
-import { BATCHING_INTERVAL_MS, HAT_INDEX, HATS_BY_INDEX, SCENE } from '../src/lib/constants'
+import { BATCHING_INTERVAL_MS, HAT_INDEX, SCENE } from '../src/lib/constants'
 import { env, mutation, query } from './_generated/server'
 import { sceneSchema } from './fields'
 import * as Users from './model/users'
 import { badData } from './errors'
+import type { Doc } from './_generated/dataModel'
+
+function pickInitialData(pos: Doc<'game_user_positions'>, state: Doc<'game_user_state'>) {
+  return {
+    x: pos.x,
+    isWalking: state.isWalking,
+    direction: state.movementDir,
+    hat: state.hat,
+    skin: state.skin,
+  }
+}
 
 export const getMyPosition = query({
   handler: async (ctx) => {
@@ -18,7 +29,7 @@ export const getMyInitialState = mutation({
     const user = await Users.getCurrentUser(ctx)
     const pos = (await ctx.db.get('game_user_positions', user.gameUserPositionId))!
     const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
-    return { x: pos.x, isWalking: state.isWalking, direction: state.movementDir, hat: state.hat }
+    return pickInitialData(pos, state)
   },
 })
 
@@ -30,7 +41,7 @@ export const getInitialState = mutation({
     const user = (await ctx.db.get('users', args.userId))!
     const pos = (await ctx.db.get('game_user_positions', user.gameUserPositionId))!
     const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
-    return { x: pos.x, isWalking: state.isWalking, direction: state.movementDir }
+    return pickInitialData(pos, state)
   },
 })
 
@@ -222,5 +233,15 @@ export const updateHat = mutation({
     const isAdmin = user._id === env.ADMIN_ID
     if (args.hat === HAT_INDEX['admin'] && isAdmin === false) badData()
     await ctx.db.patch('game_user_state', user.gameUserStateId, { hat: args.hat })
+  },
+})
+
+export const updateSkin = mutation({
+  args: {
+    skin: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await Users.getCurrentUser(ctx)
+    await ctx.db.patch('game_user_state', user.gameUserStateId, { skin: args.skin })
   },
 })

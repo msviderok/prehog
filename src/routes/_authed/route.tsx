@@ -31,8 +31,7 @@ export const Route = createFileRoute('/_authed')({
 
 function AuthedWrapper(props: ParentProps) {
   const router = useRouter()
-  const { recalculate, player } = useGlobalState()
-  const getMyInitialState = useMutation(api.gameState.getMyInitialState)
+  const { player, recalculate } = useGlobalState()
 
   runGameLoop()
 
@@ -40,15 +39,6 @@ function AuthedWrapper(props: ParentProps) {
     queueMicrotask(() => recalculate())
     window.addEventListener('resize', recalculate)
     const unsubscribe = router.subscribe('onRendered', recalculate)
-
-    void getMyInitialState.mutate({}).then((s) => {
-      player.isWalking = false
-      player.direction = 0
-      player.facing = s.direction
-      player.x = s.x
-      player.setHat(s.hat)
-      recalculate()
-    })
 
     onCleanup(() => {
       window.removeEventListener('resize', recalculate)
@@ -65,7 +55,7 @@ function AuthedWrapper(props: ParentProps) {
   })
 
   return (
-    <Show when={getMyInitialState.data() != undefined} fallback={<Loading type="convex" />}>
+    <Show when={player.isInitialDataLoaded()} fallback={<Loading type="convex" />}>
       {props.children}
       <GameUI />
     </Show>

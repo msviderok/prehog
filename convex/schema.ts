@@ -32,6 +32,7 @@ export default defineSchema({
     isWalking: v.boolean(),
     isRunning: v.boolean(),
     hat: v.number(),
+    skin: v.number(),
     y: v.number(),
     lastKnownXPosition: v.optional(
       v.object({

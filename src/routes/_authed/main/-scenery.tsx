@@ -12,7 +12,7 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { HAT_INDEX, HATS_BY_INDEX } from '@/lib/constants'
+import { HAT_INDEX, HATS_BY_INDEX, SKIN_INDEX, SKINS_BY_INDEX } from '@/lib/constants'
 import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
@@ -21,13 +21,13 @@ import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
 import { batch, createMemo, Show } from 'solid-js'
 import { useGlobalState } from '../-components/GlobalStateContext'
-import { Hat } from '../-components/Hat'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { api } from '@/convex/api'
 
 const SCALE = 1.475
 const MARKER_Y = 94
 const HATS = Object.values(HAT_INDEX) as number[]
+const SKINS = Object.values(SKIN_INDEX) as number[]
 
 export function Scenery() {
   const { interaction } = useGlobalState()
@@ -273,12 +273,13 @@ export function Scenery() {
 
 function WardrobeCarousel() {
   const { interaction, player } = useGlobalState()
-  const setHatInDB = useSingleFlightMutation(api.gameState.updateHat)
+  const updateHat = useSingleFlightMutation(api.gameState.updateHat)
+  const updateSkin = useSingleFlightMutation(api.gameState.updateSkin)
   const hats = createMemo(() => (player.isAdmin() ? HATS : HATS.filter((i) => i !== HAT_INDEX.admin)))
 
   return (
-    <Show when={player.hat() != null}>
-      <div class="relative flex items-center justify-center size-150">
+    <Show when={player.hat() != null && player.skin() != null}>
+      <div class="relative flex items-center justify-center size-150 scale-80">
         <Carousel
           class="absolute inset-0"
           orientation="horizontal"
@@ -290,14 +291,14 @@ function WardrobeCarousel() {
             batch(() => {
               player.setHat(value)
               interaction.finish('confirm')
-              void setHatInDB.mutate({ hat: value })
+              void updateHat.mutate({ hat: value })
             })
           }}
           onDiscard={(value) => {
             batch(() => {
               player.setHat(value)
               interaction.finish('cancel')
-              void setHatInDB.mutate({ hat: value })
+              void updateHat.mutate({ hat: value })
             })
           }}
         >
@@ -310,9 +311,10 @@ function WardrobeCarousel() {
               </CardHeader>
               <CardContent class="size-full">
                 <div class="relative  h-full aspect-square mx-auto">
-                  <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]">
-                    <Hat hat={hat()} class="animate-none!" />
-                  </div>
+                  <div
+                    class="player animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]"
+                    data-hat={hat()}
+                  />
                 </div>
               </CardContent>
             </>
@@ -321,26 +323,26 @@ function WardrobeCarousel() {
         <Carousel
           class="absolute inset-0"
           orientation="vertical"
-          list={hats()}
-          value={player.hat()!}
-          getLabel={(value) => HATS_BY_INDEX[value]}
-          onValueChange={player.setHat}
+          list={SKINS}
+          value={player.skin()!}
+          getLabel={(value) => SKINS_BY_INDEX[value]}
+          onValueChange={player.setSkin}
           onConfirm={(value) => {
             batch(() => {
-              player.setHat(value)
+              player.setSkin(value)
               interaction.finish('confirm')
-              void setHatInDB.mutate({ hat: value })
+              void updateSkin.mutate({ skin: value })
             })
           }}
           onDiscard={(value) => {
             batch(() => {
-              player.setHat(value)
+              player.setSkin(value)
               interaction.finish('cancel')
-              void setHatInDB.mutate({ hat: value })
+              void updateSkin.mutate({ skin: value })
             })
           }}
         >
-          {(hat, label) => (
+          {(skin, label) => (
             <>
               <CardHeader class="border-none absolute w-full top-0">
                 <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
@@ -349,9 +351,10 @@ function WardrobeCarousel() {
               </CardHeader>
               <CardContent class="size-full">
                 <div class="relative size-full">
-                  <div class="player player-idle animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]">
-                    <Hat hat={hat()} class="animate-none!" />
-                  </div>
+                  <div
+                    class="player animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]"
+                    data-skin={skin()}
+                  />
                 </div>
               </CardContent>
             </>

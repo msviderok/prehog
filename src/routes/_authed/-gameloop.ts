@@ -29,17 +29,17 @@ export function runGameLoop() {
   })
 
   function movePlayerAndCamera(dt: number) {
-    const velocity = player.direction * player.speed * dt
+    const velocity = player.__gameloop.direction * player.__gameloop.speed * dt
     const distanceThisFrameWU = (velocity * PLAYER_BASE_SPEED_PX_PER_SEC) / scene.worldUnit.x
 
     player.x = clamp(scene.walkableMinX, player.x + distanceThisFrameWU, scene.walkableMaxX)
-    player.hitbox.x1 = player.x - misc.player.size.halfWidth
-    player.hitbox.x2 = player.x + misc.player.size.halfWidth
+    player.__gameloop.hitbox.x1 = player.x - misc.player.size.halfWidth
+    player.__gameloop.hitbox.x2 = player.x + misc.player.size.halfWidth
 
     const cameraLeftX = clamp(0, player.x - scene.s50WU, scene.cameraEndTravelAtX - scene.s50WU)
-    player.tx = (player.x - cameraLeftX) * scene.worldUnit.x
+    player.__gameloop.tx = (player.x - cameraLeftX) * scene.worldUnit.x
     scene.tx = cameraLeftX * scene.worldUnit.x
-    player.ref?.style.setProperty('--tx', `${Math.round(player.tx)}px`)
+    player.ref?.style.setProperty('--tx', `${Math.round(player.__gameloop.tx)}px`)
     scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
   }
 
@@ -63,13 +63,13 @@ export function runGameLoop() {
   }
 
   function sampling(msSinceBatchStart: number) {
-    if (player.shouldSendBatches && player.direction !== 0) {
+    if (player.__gameloop.shouldSendBatches && player.__gameloop.direction !== 0) {
       eventBatch.push({ type: 'move', x: player.x, t: msSinceBatchStart })
     }
   }
 
   function batching() {
-    if (player.shouldSendBatches && eventBatch.length > 0) {
+    if (player.__gameloop.shouldSendBatches && eventBatch.length > 0) {
       void sendBatch.mutate({ batch: eventBatch })
     }
     eventBatch = []
@@ -78,7 +78,7 @@ export function runGameLoop() {
   function debugging() {}
 
   function processMyOfflineMovement(offlinePositionUpdateTick: boolean) {
-    if (player.shouldSendBatches === false) {
+    if (player.__gameloop.shouldSendBatches === false) {
       if (offlinePositionUpdateTick) {
         void updateMyPosition.mutate({ x: player.x })
       }
@@ -88,7 +88,7 @@ export function runGameLoop() {
   function checkCollisions() {
     let collided = false
     for (const node of nodes.values()) {
-      const nodeCollided = collisionDetected(player.hitbox, node.hitbox)
+      const nodeCollided = collisionDetected(player.__gameloop.hitbox, node.hitbox)
       if (node.collided() !== nodeCollided) node.setCollided(nodeCollided)
       if (nodeCollided) collided = true
     }

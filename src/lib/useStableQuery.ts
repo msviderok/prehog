@@ -4,27 +4,44 @@ import { createEffect, mergeProps, on, splitProps, type Accessor } from 'solid-j
 import { createStore, reconcile } from 'solid-js/store'
 import { defaultProps } from './utils'
 
-interface QueryOptions<T, KeepPreviousData extends boolean | undefined> {
+interface BaseQueryOptions {
   enabled?: boolean
-  initialData?: T
-  keepPreviousData?: KeepPreviousData
+  keepPreviousData?: boolean
 }
 
-interface QueryReturn<T, KeepPreviousData extends boolean | undefined> {
-  data: Accessor<KeepPreviousData extends true ? T : T | undefined>
+interface QueryOptionsWithInitialData<T> extends BaseQueryOptions {
+  initialData: T
+}
+
+interface QueryOptions<T> extends BaseQueryOptions {
+  initialData?: T
+}
+
+interface QueryReturn<T, HasInitialData extends boolean> {
+  data: Accessor<HasInitialData extends true ? T : T | undefined>
   error: Accessor<Error | undefined>
   isLoading: Accessor<boolean>
   isStale: Accessor<boolean>
   refetch: () => void
 }
 
-export const useStableQuery = <Query extends FunctionReference<'query'>, KeepPreviousData extends boolean | undefined>(
+export function useStableQuery<Query extends FunctionReference<'query'>>(
+  query: Query,
+  args: FunctionArgs<Query> & { reconcileKey?: string | undefined },
+  options: QueryOptionsWithInitialData<FunctionReturnType<Query>>,
+): QueryReturn<FunctionReturnType<Query>, true>
+export function useStableQuery<Query extends FunctionReference<'query'>>(
   query: Query,
   args?: FunctionArgs<Query> & { reconcileKey?: string | undefined },
-  options?: QueryOptions<FunctionReturnType<Query>, KeepPreviousData>,
-): QueryReturn<FunctionReturnType<Query>, KeepPreviousData> => {
-  const [state, setState] = createStore<{ data: FunctionReturnType<Query> | undefined }>({ data: undefined })
-  const mergedOptions = defaultProps(options ?? {}, { keepPreviousData: true })
+  options?: QueryOptions<FunctionReturnType<Query>>,
+): QueryReturn<FunctionReturnType<Query>, false>
+export function useStableQuery<Query extends FunctionReference<'query'>>(
+  query: Query,
+  args?: FunctionArgs<Query> & { reconcileKey?: string | undefined },
+  options?: QueryOptions<FunctionReturnType<Query>>,
+): QueryReturn<FunctionReturnType<Query>, boolean> {
+  const [state, setState] = createStore({ data: options?.initialData })
+  const mergedOptions = defaultProps(options ?? {}, { keepPreviousData: true, initialData: options?.initialData })
   const [customArgs, queryArgs] = splitProps(args ?? ({} as NonNullable<typeof args>), ['reconcileKey'])
   const { data: originalData, ...result } = useQuery(query, () => queryArgs, mergedOptions)
 

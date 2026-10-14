@@ -4,11 +4,10 @@ import { For, Index, Show, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { Asset, type AssetProps } from './Asset'
 import { useGlobalState } from './GlobalStateContext'
-import { Hat } from './Hat'
-import { OtherPlayer } from './OtherPlayer'
+import { Player } from './Player'
+import { DialogLayer } from './interactive-layer/Dialog.layer'
 import { MarkersLayer } from './interactive-layer/Markers.layer'
 import { PopoverLayer } from './interactive-layer/Popover.layer'
-import { DialogLayer } from './interactive-layer/Dialog.layer'
 import { SlotLayer } from './interactive-layer/Slot.layer'
 
 const DEBUG = false
@@ -66,6 +65,17 @@ export function Background<K extends keyof Assets, A extends keyof Assets[K]>(pr
   )
 }
 
+export function Players() {
+  const { otherPlayersIds } = useGlobalState()
+  return (
+    <>
+      <For each={otherPlayersIds()}>{(userId) => <Player.Other id={userId} />}</For>
+      <Player.Me />
+      <MarkersLayer />
+    </>
+  )
+}
+
 export function Debug() {
   const { debugData } = useGlobalState()
   return (
@@ -108,28 +118,4 @@ export function Debug() {
       </Portal>
     </Show>
   )
-}
-
-export function Players() {
-  return (
-    <>
-      <OtherPlayers />
-      <MyPlayer />
-      <MarkersLayer />
-    </>
-  )
-}
-
-function MyPlayer() {
-  const { player } = useGlobalState()
-  return (
-    <div ref={(el) => (player.ref = el)} class="player player-idle" data-me={true} data-is-admin={player.isAdmin()}>
-      <Hat hat={player.hat()} />
-    </div>
-  )
-}
-
-function OtherPlayers() {
-  const { otherPlayersIds } = useGlobalState()
-  return <For each={otherPlayersIds()}>{(userId) => <OtherPlayer id={userId} />}</For>
 }
