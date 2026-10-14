@@ -340,7 +340,7 @@ function createPlayer() {
       batch(() => {
         player.x = data.x
         setHat(data.hat)
-        setSkin(data.skin)
+        setSkin(1)
         setDirection(0)
         setFacingDirection(data.direction)
         setIsInitialDataLoaded(true)

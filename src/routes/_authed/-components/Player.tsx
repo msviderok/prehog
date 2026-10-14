@@ -19,7 +19,7 @@ function PlayerDiv(props: Props) {
   return (
     <div
       ref={props.ref}
-      class={cn('player', props.class)}
+      class={cn('player player-with-hat', props.class)}
       data-me={props.myPlayer}
       data-is-admin={props.player.isAdmin()}
       data-direction={props.player.facingDirection() === 'left' ? -1 : 1}

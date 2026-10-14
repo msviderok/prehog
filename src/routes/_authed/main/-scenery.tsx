@@ -282,46 +282,6 @@ function WardrobeCarousel() {
       <div class="relative flex items-center justify-center size-150 scale-80">
         <Carousel
           class="absolute inset-0"
-          orientation="horizontal"
-          list={hats()}
-          value={player.hat()!}
-          getLabel={(value) => HATS_BY_INDEX[value]}
-          onValueChange={player.setHat}
-          onConfirm={(value) => {
-            batch(() => {
-              player.setHat(value)
-              interaction.finish('confirm')
-              void updateHat.mutate({ hat: value })
-            })
-          }}
-          onDiscard={(value) => {
-            batch(() => {
-              player.setHat(value)
-              interaction.finish('cancel')
-              void updateHat.mutate({ hat: value })
-            })
-          }}
-        >
-          {(hat, label) => (
-            <>
-              <CardHeader class="border-none absolute w-full top-0">
-                <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
-                  {label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent class="size-full">
-                <div class="relative  h-full aspect-square mx-auto">
-                  <div
-                    class="player animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]"
-                    data-hat={hat()}
-                  />
-                </div>
-              </CardContent>
-            </>
-          )}
-        </Carousel>
-        <Carousel
-          class="absolute inset-0"
           orientation="vertical"
           list={SKINS}
           value={player.skin()!}
@@ -353,8 +313,47 @@ function WardrobeCarousel() {
                 <div class="relative size-full">
                   <div
                     class="player animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]"
-                    data-skin={skin()}
+                    data-action="idle"
+                    data-skin={SKINS_BY_INDEX[skin()]}
                   />
+                </div>
+              </CardContent>
+            </>
+          )}
+        </Carousel>
+        <Carousel
+          class="absolute inset-0"
+          orientation="horizontal"
+          list={hats()}
+          value={player.hat()!}
+          getLabel={(value) => HATS_BY_INDEX[value]}
+          onValueChange={player.setHat}
+          onConfirm={(value) => {
+            batch(() => {
+              player.setHat(value)
+              interaction.finish('confirm')
+              void updateHat.mutate({ hat: value })
+            })
+          }}
+          onDiscard={(value) => {
+            batch(() => {
+              player.setHat(value)
+              interaction.finish('cancel')
+              void updateHat.mutate({ hat: value })
+            })
+          }}
+        >
+          {(hat, label) => (
+            <>
+              <CardHeader class="border-none absolute w-full top-0">
+                <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
+                  {label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent class="size-full">
+                <div class="relative h-full aspect-square mx-auto @container">
+                  <div class="player [--ty:0] left-1/2 top-1/2 [--original-player-width:100%] opacity-20" />
+                  <div class="hat [--original-player-width:100%]" data-hat={hat()} />
                 </div>
               </CardContent>
             </>

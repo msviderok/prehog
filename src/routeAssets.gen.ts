@@ -124,6 +124,46 @@ export const assets = {
       size: { width: 960 as number, height: 80 as number },
       src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_ghost_walk.png']!,
     },
+    'skin_robohog_idle.png': {
+      name: 'skin_robohog_idle.png',
+      size: { width: 4640 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_robohog_idle.png']!,
+    },
+    'skin_robohog_jump.png': {
+      name: 'skin_robohog_jump.png',
+      size: { width: 800 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_robohog_jump.png']!,
+    },
+    'skin_robohog_walk.png': {
+      name: 'skin_robohog_walk.png',
+      size: { width: 800 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_robohog_walk.png']!,
+    },
+    'skin_robohog_wave.png': {
+      name: 'skin_robohog_wave.png',
+      size: { width: 2640 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_robohog_wave.png']!,
+    },
+    'skin_spidey_idle.png': {
+      name: 'skin_spidey_idle.png',
+      size: { width: 4640 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_spidey_idle.png']!,
+    },
+    'skin_spidey_jump.png': {
+      name: 'skin_spidey_jump.png',
+      size: { width: 880 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_spidey_jump.png']!,
+    },
+    'skin_spidey_walk.png': {
+      name: 'skin_spidey_walk.png',
+      size: { width: 800 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_spidey_walk.png']!,
+    },
+    'skin_spidey_wave.png': {
+      name: 'skin_spidey_wave.png',
+      size: { width: 2160 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_spidey_wave.png']!,
+    },
   },
   '/_authed/application/': {
     'BG.png': {

@@ -92,16 +92,15 @@
 /*player-admin-hue var(--hue-speed) infinite;*/
 
 @utility player {
-  @apply game-transform after:hat before:fire;
-
-  --hat-index: attr(data-hat type(<number>), 0);
+  @apply game-transform before:fire;
   --is-walking: attr(data-is-walking type(<number>), 0);
   --is-running: attr(data-is-running type(<number>), 0);
   --facing-dir: attr(data-direction type(<number>), 1);
   --hat-animation: hat-idle;
   --base-movement-speed: 1;
   --movement-speed: calc(var(--base-movement-speed) + (var(--is-running, 0) * 1.5));
-  --hat-offset: 1cqw;
+  --hat-offset-y: 0cqw;
+  --hat-offset-x: 1cqw;
   --animation-speed: 7000ms;
   --hue-speed: 500ms;
   --is-skewed: max(0, calc(var(--is-running) + var(--is-walking) - 1));
@@ -138,35 +137,90 @@
 
   &[data-action='idle'] {
     animation-name: player-idle;
-    --hat-animation: hat-idle;
+
     &[data-skin='default'] {
       --anim-steps: 86;
+      --hat-animation: hat-idle;
       --bg-sprite: url('../routes/_authed/-assets/skin_default_idle.png');
     }
     &[data-skin='dyno'] {
       --anim-steps: 9;
+      --animation-speed: 1s;
+      --hat-animation: none;
+      --hat-offset-x: 5cqw;
       --bg-sprite: url('../routes/_authed/-assets/skin_dyno_idle.png');
+    }
+    &[data-skin='robohog'] {
+      --anim-steps: 58;
+      --jump-start: 35;
+      --jump-end: 45;
+      --hat-animation: none;
+      --hat-offset-y: -5cqw;
+      --hat-offset-x: 1cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_robohog_idle.png');
+    }
+    &[data-skin='spidey'] {
+      --anim-steps: 58;
+      --jump-start: 35;
+      --jump-end: 45;
+      --hat-animation: none;
+      --hat-offset-x: 0cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_spidey_idle.png');
+    }
+    &[data-skin='ghost'] {
+      --anim-steps: 12;
+      --hat-animation: none;
+      --animation-speed: 1000ms;
+      --hat-offset-y: -10cqw;
+      --hat-offset-x: 8cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_ghost_walk.png');
     }
   }
 
   &[data-action='walk'] {
-    --hat-offset: 0cqw;
     --hat-animation: none;
+    --animation-speed: 900ms;
     animation-name: player-walk;
-    animation-duration: calc(900ms / var(--movement-speed));
+    animation-duration: calc(var(--animation-speed) / var(--movement-speed));
 
     &[data-skin='default'] {
       --anim-steps: 11;
+      --hat-offset-x: 0cqw;
       --bg-sprite: url('../routes/_authed/-assets/skin_default_walk.png');
     }
     &[data-skin='dyno'] {
       --anim-steps: 10;
+      --hat-offset-x: 5cqw;
       --bg-sprite: url('../routes/_authed/-assets/skin_dyno_walk.png');
+    }
+    &[data-skin='robohog'] {
+      --anim-steps: 10;
+      --hat-offset-y: -5cqw;
+      --hat-offset-x: 1cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_robohog_walk.png');
+    }
+    &[data-skin='spidey'] {
+      --anim-steps: 10;
+      --hat-offset-x: 0cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_spidey_walk.png');
+    }
+    &[data-skin='ghost'] {
+      --anim-steps: 12;
+      --hat-animation: none;
+      --hat-offset-y: -10cqw;
+      --hat-offset-x: 8cqw;
+      --animation-speed: 500ms;
+      --bg-sprite: url('../routes/_authed/-assets/skin_ghost_walk.png');
     }
   }
 }
 
+@utility player-with-hat {
+  @apply after:hat;
+}
+
 @utility hat {
+  --hat-index: attr(data-hat type(<number>), 0);
   --hats-count: 16;
   --hat-width: calc(100% / var(--hats-count));
   position: absolute;
@@ -175,8 +229,8 @@
   height: 100%;
   box-sizing: content-box;
   background-image: url('../routes/_authed/-assets/hats.png');
-  background-position-y: -1cqw;
-  background-position-x: calc((var(--hat-index, 0) * var(--hat-width)) + var(--hat-offset, 0cqw) + 1cqw);
+  background-position-y: var(--hat-offset-y, 0cqw);
+  background-position-x: calc((var(--hat-index, 0) * var(--hat-width)) + var(--hat-offset-x, 0cqw) + 1cqw);
   image-rendering: pixelated;
   background-repeat: no-repeat;
   background-size: cover;
