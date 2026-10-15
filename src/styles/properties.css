@@ -75,11 +75,11 @@
 }
 @property --pp {
   syntax: '<length>';
-  inherits: false;
-  initial-value: none;
+  inherits: true;
+  initial-value: 500px;
 }
 @property --boxShadowY-dynamic {
   syntax: '<length>';
   inherits: false;
-  initial-value: 0.6em;
+  initial-value: 0px;
 }
