@@ -117,12 +117,17 @@ export function GlobalStateProvider(props: ParentProps) {
   }
 
   const [isInteractionActive, setIsInteractionActive] = createSignal<boolean>(false)
+  const [hostRef, setHostRef] = createSignal<HTMLElement>()
   const movementBlocked = createMemo(() => isInteractionActive())
-
+  createEffect(on(movementBlocked, (blocked) => (player.__gameloop.isHijacked = blocked)))
   const interaction: GlobalState['interaction'] = {
+    hostRef,
+    setHostRef,
     isActive: isInteractionActive,
     setIsActive: setIsInteractionActive,
-    start() {
+    initialData: undefined,
+    start<T>(initialData: T) {
+      this.initialData = initialData
       setIsInteractionActive(true)
     },
     finish() {
@@ -313,9 +318,12 @@ function createPlayer() {
   const [direction, setDirection] = createSignal<MovementDirection>(0)
   const [facingDirection, setFacingDirection] = createSignal<FacingDirection>('right')
   const [isInitialDataLoaded, setIsInitialDataLoaded] = createSignal(false)
+  const [renderedSlotRef, setRenderedSlotRef] = createSignal<HTMLElement>()
   const player: GlobalState['player'] = {
     x: 0,
     ref: undefined,
+    renderedSlotRef,
+    setRenderedSlotRef,
     isWalking,
     setIsWalking,
     isRunning,
@@ -335,12 +343,13 @@ function createPlayer() {
       speed: 1,
       hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
       shouldSendBatches: false,
+      isHijacked: false,
     },
     setInitialData(data) {
       batch(() => {
         player.x = data.x
         setHat(data.hat)
-        setSkin(1)
+        setSkin(data.skin)
         setDirection(0)
         setFacingDirection(data.direction)
         setIsInitialDataLoaded(true)

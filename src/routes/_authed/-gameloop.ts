@@ -29,6 +29,7 @@ export function runGameLoop() {
   })
 
   function movePlayerAndCamera(dt: number) {
+    if (player.__gameloop.isHijacked) return
     const velocity = player.__gameloop.direction * player.__gameloop.speed * dt
     const distanceThisFrameWU = (velocity * PLAYER_BASE_SPEED_PX_PER_SEC) / scene.worldUnit.x
 

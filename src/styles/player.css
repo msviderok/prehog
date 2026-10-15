@@ -138,7 +138,7 @@
   &[data-action='idle'] {
     animation-name: player-idle;
 
-    &[data-skin='default'] {
+    &[data-skin='hog'] {
       --anim-steps: 86;
       --hat-animation: hat-idle;
       --bg-sprite: url('../routes/_authed/-assets/skin_default_idle.png');
@@ -183,8 +183,9 @@
     animation-name: player-walk;
     animation-duration: calc(var(--animation-speed) / var(--movement-speed));
 
-    &[data-skin='default'] {
+    &[data-skin='hog'] {
       --anim-steps: 11;
+      --hat-offset-y: -1cqw;
       --hat-offset-x: 0cqw;
       --bg-sprite: url('../routes/_authed/-assets/skin_default_walk.png');
     }

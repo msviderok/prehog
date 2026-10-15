@@ -66,11 +66,13 @@ export function Background<K extends keyof Assets, A extends keyof Assets[K]>(pr
 }
 
 export function Players() {
-  const { otherPlayersIds } = useGlobalState()
+  const { player, otherPlayersIds } = useGlobalState()
   return (
     <>
       <For each={otherPlayersIds()}>{(userId) => <Player.Other id={userId} />}</For>
-      <Player.Me />
+      <div ref={player.setRenderedSlotRef}>
+        <Player.Me />
+      </div>
       <MarkersLayer />
     </>
   )

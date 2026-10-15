@@ -1,6 +1,6 @@
 import { Prose } from '@/components/Prose'
-import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Carousel } from '@/components/ui/carousel'
+import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { DialogContent } from '@/components/ui/dialog'
 import { PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
@@ -12,17 +12,18 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { api } from '@/convex/api'
 import { HAT_INDEX, HATS_BY_INDEX, SKIN_INDEX, SKINS_BY_INDEX } from '@/lib/constants'
+import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
 import { assets } from '@/routeAssets.gen'
 import { Asset } from '@/routes/_authed/-components/Asset'
 import * as Scene from '@/routes/_authed/-components/Scene'
 import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
 import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
-import { batch, createMemo, Show } from 'solid-js'
+import { animate } from 'motion'
+import { batch, createMemo, onMount, Show } from 'solid-js'
 import { useGlobalState } from '../-components/GlobalStateContext'
-import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
-import { api } from '@/convex/api'
 
 const SCALE = 1.475
 const MARKER_Y = 94
@@ -30,7 +31,7 @@ const HATS = Object.values(HAT_INDEX) as number[]
 const SKINS = Object.values(SKIN_INDEX) as number[]
 
 export function Scenery() {
-  const { interaction } = useGlobalState()
+  const { interaction, player } = useGlobalState()
   return (
     <Scene.Elements>
       <InteractiveNode.Root id="intro">
@@ -136,7 +137,11 @@ export function Scenery() {
         />
 
         <InteractiveNode.Marker.Root x={29.5} y={MARKER_Y}>
-          <InteractiveNode.Marker.Pill offsetY={-30} label="Explore" onInteract={interaction.start} />
+          <InteractiveNode.Marker.Pill
+            offsetY={-30}
+            label="Explore"
+            onInteract={() => interaction.start({ hat: player.hat(), skin: player.skin() })}
+          />
         </InteractiveNode.Marker.Root>
 
         <InteractiveNode.Popover anchorX={30} anchorY={34} side="top" align="center">
@@ -272,93 +277,130 @@ export function Scenery() {
 }
 
 function WardrobeCarousel() {
+  let containerRef!: HTMLDivElement
+  let playerHostRef!: HTMLDivElement
   const { interaction, player } = useGlobalState()
   const updateHat = useSingleFlightMutation(api.gameState.updateHat)
   const updateSkin = useSingleFlightMutation(api.gameState.updateSkin)
   const hats = createMemo(() => (player.isAdmin() ? HATS : HATS.filter((i) => i !== HAT_INDEX.admin)))
 
+  onMount(() => {
+    interaction.setHostRef(playerHostRef)
+    const ratio = 1
+
+    animate(
+      player.ref!,
+      { '--tx': 0, '--ty': 0, '--sx': ratio, '--sy': ratio },
+      { type: 'spring', duration: 0.2, damping: 25, stiffness: 300 },
+    )
+  })
+
   return (
     <Show when={player.hat() != null && player.skin() != null}>
-      <div class="relative flex items-center justify-center size-150 scale-80">
-        <Carousel
-          class="absolute inset-0"
-          orientation="vertical"
-          list={SKINS}
-          value={player.skin()!}
-          getLabel={(value) => SKINS_BY_INDEX[value]}
-          onValueChange={player.setSkin}
-          onConfirm={(value) => {
-            batch(() => {
-              player.setSkin(value)
-              interaction.finish('confirm')
-              void updateSkin.mutate({ skin: value })
-            })
-          }}
-          onDiscard={(value) => {
-            batch(() => {
-              player.setSkin(value)
-              interaction.finish('cancel')
-              void updateSkin.mutate({ skin: value })
-            })
-          }}
-        >
-          {(skin, label) => (
-            <>
-              <CardHeader class="border-none absolute w-full top-0">
-                <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
-                  {label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent class="size-full">
-                <div class="relative size-full">
-                  <div
-                    class="player animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]"
-                    data-action="idle"
-                    data-skin={SKINS_BY_INDEX[skin()]}
-                  />
-                </div>
-              </CardContent>
-            </>
-          )}
-        </Carousel>
-        <Carousel
-          class="absolute inset-0"
-          orientation="horizontal"
-          list={hats()}
-          value={player.hat()!}
-          getLabel={(value) => HATS_BY_INDEX[value]}
-          onValueChange={player.setHat}
-          onConfirm={(value) => {
-            batch(() => {
-              player.setHat(value)
-              interaction.finish('confirm')
-              void updateHat.mutate({ hat: value })
-            })
-          }}
-          onDiscard={(value) => {
-            batch(() => {
-              player.setHat(value)
-              interaction.finish('cancel')
-              void updateHat.mutate({ hat: value })
-            })
-          }}
-        >
-          {(hat, label) => (
-            <>
-              <CardHeader class="border-none absolute w-full top-0">
-                <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
-                  {label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent class="size-full">
-                <div class="relative h-full aspect-square mx-auto @container">
-                  <div class="player [--ty:0] left-1/2 top-1/2 [--original-player-width:100%] opacity-20" />
-                  <div class="hat [--original-player-width:100%]" data-hat={hat()} />
-                </div>
-              </CardContent>
-            </>
-          )}
-        </Carousel>
+      <div
+        ref={containerRef}
+        class="relative flex items-center justify-center size-150 scale-80 rounded-3xl border-2 border-red-400"
+      >
+        <div data-carousels>
+          <Carousel
+            class="absolute inset-0 size-full"
+            orientation="vertical"
+            variant="bare"
+            list={SKINS}
+            opts={() => ({ align: 'start' })}
+            value={player.skin()!}
+            onValueChange={player.setSkin}
+            onConfirm={(value) => {
+              batch(() => {
+                player.setSkin(value)
+                interaction.finish('confirm')
+                void updateSkin.mutate({ skin: value })
+              })
+            }}
+            onDiscard={(value) => {
+              batch(() => {
+                player.setSkin(value)
+                interaction.finish('cancel')
+                void updateSkin.mutate({ skin: value })
+              })
+            }}
+          >
+            <CarouselContent>
+              {(skin, ctx) => (
+                <CarouselItem value={skin()} class="basis-full">
+                  <CardContent class="size-full">
+                    <div class="relative size-full">
+                      <div
+                        class="player animate-none [--tx:0] [--ty:0] left-1/2 top-1/2 [--original-player-width:100%]"
+                        data-action="idle"
+                        data-skin={SKINS_BY_INDEX[skin()]}
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter class="border-none absolute basis-[inherit] top-4 left-1/2 flex -translate-x-1/2">
+                    <CardTitle class="flex justify-center text-lg capitalize text-ph-mustard-yellow comic">
+                      {SKINS_BY_INDEX[skin()]}
+                    </CardTitle>
+                  </CardFooter>
+                </CarouselItem>
+              )}
+            </CarouselContent>
+
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+          <Carousel
+            class="absolute inset-0 size-full"
+            orientation="horizontal"
+            variant="bare"
+            list={hats()}
+            opts={() => ({ align: 'start' })}
+            value={player.hat()!}
+            onValueChange={player.setHat}
+            onConfirm={(value) => {
+              batch(() => {
+                player.setHat(value)
+                interaction.finish('confirm')
+                void updateHat.mutate({ hat: value })
+              })
+            }}
+            onDiscard={(value) => {
+              batch(() => {
+                player.setHat(value)
+                interaction.finish('cancel')
+                void updateHat.mutate({ hat: value })
+              })
+            }}
+          >
+            <CarouselContent>
+              {(hat, ctx) => (
+                <CarouselItem value={hat()} class="basis-full border-ph-dark-cornflower-blue">
+                  <CardHeader class="border-none absolute w-full top-0">
+                    <CardTitle class="flex justify-center text-3xl capitalize text-ph-mustard-yellow comic">
+                      {HATS_BY_INDEX[hat()]}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent class="size-full">
+                    <div class="relative h-full aspect-square mx-auto @container">
+                      {/*<div
+                        class={cn(
+                          'player [--ty:0] left-1/2  top-1/2 [--original-player-width:100%] opacity-10 transition-opacity ease-out duration-1000 grayscale-50',
+                          ctx.value === hat() && 'opacity-0',
+                        )}
+                      />*/}
+                      <div class="hat [--original-player-width:100%]" data-hat={hat()} />
+                    </div>
+                  </CardContent>
+                </CarouselItem>
+              )}
+            </CarouselContent>
+
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+
+        <div data-player ref={playerHostRef} class="absolute bottom-0 right-0 -translate-x-1/2 -translate-y-1/2" />
       </div>
     </Show>
   )

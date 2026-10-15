@@ -37,7 +37,7 @@ export const HATS_BY_INDEX = Object.entries(HAT_INDEX).reduce(
 )
 
 export const SKIN_INDEX = {
-  default: 0,
+  hog: 0,
   dyno: 1,
   robohog: 2,
   spidey: 3,

@@ -22,15 +22,13 @@ import {
 import { Motion } from 'solid-motionone'
 import { Card } from './card'
 
-type CarouselApi = NonNullable<ReturnType<UseEmblaCarouselType[1]>>
+export type CarouselApi = UseEmblaCarouselType[2]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
 type CarouselOptions = UseCarouselParameters[0]
 type CarouselPlugin = UseCarouselParameters[1]
 
-interface ItemsProps<T extends readonly any[], U extends JSX.Element, L extends JSX.Element> {
+interface ItemsProps<T extends readonly any[]> {
   list: T
-  getLabel: (item: T[number]) => L
-  children: (item: Accessor<T[number]>, label: L, index: number) => U
   value: T[number]
   onValueChange: (value: T[number]) => void
   onConfirm: (newValue: T[number]) => void
@@ -43,12 +41,12 @@ interface CarouselProps {
   orientation?: 'horizontal' | 'vertical'
   setApi?: Setter<CarouselApi>
   class?: string
+  variant?: 'default' | 'bare'
+  children?: JSX.Element
 }
 
-interface CarouselContextProps<T extends readonly any[], U extends JSX.Element, L extends JSX.Element> extends Omit<
-  CarouselProps,
-  'orientation'
-> {
+interface CarouselContextProps<T extends readonly any[]>
+  extends Omit<CarouselProps, 'orientation' | 'variant'>, ItemsProps<T> {
   carouselRef: ReturnType<typeof useEmblaCarousel>[0]
   api: ReturnType<typeof useEmblaCarousel>[1]
   scrollPrev: () => void
@@ -56,16 +54,13 @@ interface CarouselContextProps<T extends readonly any[], U extends JSX.Element, 
   canScrollPrev: Accessor<boolean>
   canScrollNext: Accessor<boolean>
   orientation: Accessor<'horizontal' | 'vertical' | undefined>
-  selectedValue: ItemsProps<T, U, L>['value']
-  onSelect: ItemsProps<T, U, L>['onValueChange']
   currentIndex: Accessor<number>
   setCurrentIndex: Setter<number>
-  onConfirm: () => void
-  onDiscard: () => void
+  variant: Accessor<'default' | 'bare'>
   readonly valueInView: Accessor<T[number]>
 }
 
-const CarouselContext = createContext<CarouselContextProps<any[], JSX.Element, string> | null>(null)
+const CarouselContext = createContext<CarouselContextProps<any[]> | null>(null)
 
 export function useCarousel() {
   const context = useContext(CarouselContext)
@@ -77,14 +72,12 @@ export function useCarousel() {
   return context
 }
 
-export function Carousel<T extends readonly any[], U extends JSX.Element, L extends JSX.Element>(
-  componentProps: CarouselProps & ItemsProps<T, U, L>,
-) {
-  const props = defaultProps(componentProps, { orientation: 'horizontal' })
+export function Carousel<T extends readonly any[]>(componentProps: CarouselProps & ItemsProps<T>) {
+  const props = defaultProps(componentProps, { orientation: 'horizontal', variant: 'default' })
   const [local, list, rest] = splitProps(
     props,
-    ['orientation', 'opts', 'setApi', 'plugins', 'class'],
-    ['list', 'children', 'value', 'onValueChange', 'onConfirm', 'onDiscard', 'getLabel'],
+    ['orientation', 'opts', 'setApi', 'plugins', 'class', 'children'],
+    ['list', 'value', 'onValueChange', 'onConfirm', 'onDiscard'],
   )
   const [carouselRef, emblaApi] = useEmblaCarousel(
     () => ({ loop: true, ...local.opts?.(), axis: local.orientation === 'horizontal' ? 'x' : 'y' }),
@@ -129,7 +122,7 @@ export function Carousel<T extends readonly any[], U extends JSX.Element, L exte
   onMount(() => {
     const api = emblaApi()
     if (!api) throw new Error('EmblaCarousel is not initialized')
-    local.setApi?.(() => api)
+    local.setApi?.(api)
 
     api.on('reinit', onSelect)
     api.on('select', onSelect)
@@ -140,6 +133,7 @@ export function Carousel<T extends readonly any[], U extends JSX.Element, L exte
     })
   })
 
+  const variant = createMemo(() => props.variant)
   const orientation = createMemo(() => local.orientation || (local.opts()?.axis === 'y' ? 'vertical' : 'horizontal'))
 
   return (
@@ -155,13 +149,17 @@ export function Carousel<T extends readonly any[], U extends JSX.Element, L exte
         scrollNext,
         canScrollPrev,
         canScrollNext,
-        selectedValue: list.value as any,
-        onSelect: list.onValueChange as any,
         currentIndex,
         setCurrentIndex,
+        valueInView,
+        variant,
         onConfirm,
         onDiscard,
-        valueInView,
+        get value() {
+          return list.value
+        },
+        onValueChange: list.onValueChange,
+        list: list.list as any,
       }}
     >
       <div
@@ -174,53 +172,32 @@ export function Carousel<T extends readonly any[], U extends JSX.Element, L exte
             scrollNext()
           }
         }}
-        class={cn('relative grid size-full grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]', local.class)}
+        class={cn(
+          'relative grid grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]',
+          orientation() === 'horizontal' && 'w-full h-min',
+          orientation() === 'vertical' && 'size-full',
+          local.class,
+        )}
         role="region"
         aria-roledescription="carousel"
         data-slot="carousel"
         {...rest}
       >
-        <CarouselContent>
-          <Index each={list.list}>
-            {(item, idx) => (
-              <CarouselItem value={item()}>{props.children(item, list.getLabel(item()), idx)}</CarouselItem>
-            )}
-          </Index>
-        </CarouselContent>
-
-        <CarouselPrevious />
-        <CarouselNext />
-
-        {/*<div class="absolute size-auto bottom-0 left-1/2 -translate-x-1/2 translate-y-[150%] flex items-center justify-between gap-6">
-          <KeycapButton
-            data-slot="carousel-next"
-            size="lg"
-            hotkey="Enter"
-            class="touch-manipulation flex-1 px-8 pl-16"
-            onPress={onConfirm}
-          >
-            <CornerDownLeftIcon class="absolute left-4 stroke-3" />
-            <span class="text-base absolute bottom-0">to confirm</span>
-          </KeycapButton>
-          <KeycapButton
-            data-slot="carousel-next"
-            size="lg"
-            hotkey="Escape"
-            label="Esc"
-            class="touch-manipulation flex-1 px-8"
-            onPress={onDiscard}
-          >
-            <span class="text-base absolute bottom-0">to discard</span>
-          </KeycapButton>
-        </div>*/}
+        {local.children}
       </div>
     </CarouselContext.Provider>
   )
 }
 
-function CarouselContent(props: ComponentProps<'div'>) {
-  const [local, rest] = splitProps(props, ['class'])
-  const { carouselRef, orientation } = useCarousel()
+export function CarouselContent<T extends readonly any[], U extends JSX.Element>(
+  props: Omit<ComponentProps<'div'>, 'children'> & {
+    children: (item: Accessor<T[number]>, ctx: CarouselContextProps<T>, index: number) => U
+  },
+) {
+  const [local, rest] = splitProps(props, ['class', 'children'])
+  const ctx = useCarousel()
+  const { carouselRef, list, orientation } = ctx
+
   return (
     <div ref={carouselRef} class="overflow-hidden min-h-0 [--cspace:0.25rem]" data-slot="carousel-content">
       <div
@@ -231,15 +208,16 @@ function CarouselContent(props: ComponentProps<'div'>) {
           local.class,
         )}
         {...rest}
-      />
+      >
+        <Index each={list}>{(item, idx) => <>{props.children(item, ctx as any, idx)}</>}</Index>
+      </div>
     </div>
   )
 }
 
-function CarouselItem<T extends any>(props: ComponentProps<'div'> & { value: T }) {
+export function CarouselItem<T extends any>(props: ComponentProps<'div'> & { value: T }) {
   const [local, rest] = splitProps(props, ['class', 'children', 'value'])
-  const { orientation, selectedValue, valueInView } = useCarousel()
-  const isActive = createMemo(() => local.value === selectedValue)
+  const { orientation, valueInView, variant } = useCarousel()
   const isInView = createMemo(() => local.value === valueInView())
 
   return (
@@ -248,7 +226,7 @@ function CarouselItem<T extends any>(props: ComponentProps<'div'> & { value: T }
       aria-roledescription="slide"
       data-slot="carousel-item"
       class={cn(
-        'carousel-item aspect-square',
+        'flex items-center justify-center basis-1/3 min-w-0 min-h-0 shrink-0 grow-0 relative aspect-square',
         orientation() === 'horizontal' && 'pl-(--cspace)',
         orientation() === 'vertical' && 'pt-(--cspace)',
         local.class,
@@ -258,9 +236,12 @@ function CarouselItem<T extends any>(props: ComponentProps<'div'> & { value: T }
       <Motion.div class={cn('size-[calc(100%-var(--cspace))]')} animate={{ scale: isInView() ? 1 : 0.8 }}>
         <Card
           class={cn(
-            'py-4 border-6 bg-glass-ph-dark-grey/20! size-full relative',
-            isInView() && 'bg-glass-ph-soft-green/20!',
-            isActive() && '',
+            'py-4 size-full relative',
+            variant() === 'default' && 'border-6 bg-glass-ph-dark-grey/20!',
+            variant() === 'default' && isInView() && 'bg-glass-ph-soft-green/20!',
+
+            variant() === 'bare' && 'border-none bg-transparent ring-0!',
+            variant() === 'bare' && isInView() && 'bg-transparent',
           )}
         >
           {local.children}
@@ -270,14 +251,15 @@ function CarouselItem<T extends any>(props: ComponentProps<'div'> & { value: T }
   )
 }
 
-function CarouselPrevious() {
-  const { orientation, scrollPrev, canScrollPrev } = useCarousel()
+export function CarouselPrevious(props: JSX.HTMLAttributes<HTMLButtonElement>) {
+  const [local, rest] = splitProps(props, ['class'])
+  const { orientation, scrollPrev, canScrollPrev, variant } = useCarousel()
   return (
     <div
       class={cn(
         'absolute z-1',
-        orientation() === 'horizontal' && 'left-0 top-1/2 translate-x-[-150%] -translate-y-1/2',
-        orientation() === 'vertical' && 'top-0 left-1/2 -translate-x-1/2 translate-y-[-150%]',
+        orientation() === 'horizontal' && 'left-0 top-1/2 translate-x-[-110%] -translate-y-1/2',
+        orientation() === 'vertical' && 'top-0 left-1/2 -translate-x-1/2 translate-y-[-110%]',
       )}
     >
       <Show when={orientation() === 'horizontal'}>
@@ -285,10 +267,12 @@ function CarouselPrevious() {
           data-slot="carousel-previous"
           size="lg"
           hotkey="A"
-          class="*:first:relative *:first:-top-1"
+          sound={{ keydown: 'carouselChangeSlideHorizontal', keyup: null }}
+          class={cn(variant() === 'default' && '*:first:relative *:first:-top-1', local.class)}
           disabled={!canScrollPrev()}
           onPress={scrollPrev}
           onHold={scrollPrev}
+          {...rest}
         >
           <MoveLeftIcon class="absolute bottom-0 size-8" />
         </KeycapButton>
@@ -298,10 +282,12 @@ function CarouselPrevious() {
           data-slot="carousel-previous"
           size="lg"
           hotkey="W"
-          class="*:first:relative *:first:top-1 *:first:right-2"
+          sound={{ keydown: 'carouselChangeSlideVertical', keyup: null }}
+          class={cn(variant() === 'default' && '*:first:relative *:first:top-1 *:first:right-2', local.class)}
           disabled={!canScrollPrev()}
           onPress={scrollPrev}
           onHold={scrollPrev}
+          {...rest}
         >
           <MoveUpIcon class="absolute right-0 size-8" />
         </KeycapButton>
@@ -310,14 +296,15 @@ function CarouselPrevious() {
   )
 }
 
-function CarouselNext() {
-  const { orientation, scrollNext, canScrollNext } = useCarousel()
+export function CarouselNext(props: JSX.HTMLAttributes<HTMLButtonElement>) {
+  const [local, rest] = splitProps(props, ['class'])
+  const { orientation, scrollNext, canScrollNext, variant } = useCarousel()
   return (
     <div
       class={cn(
         'absolute z-1',
-        orientation() === 'horizontal' && 'right-0 top-1/2 translate-x-[150%] -translate-y-1/2',
-        orientation() === 'vertical' && 'bottom-0 left-1/2 -translate-x-1/2 translate-y-[150%]',
+        orientation() === 'horizontal' && 'right-0 top-1/2 translate-x-[110%] -translate-y-1/2',
+        orientation() === 'vertical' && 'bottom-0 left-1/2 -translate-x-1/2 translate-y-[120%]',
       )}
     >
       <Show when={orientation() === 'horizontal'}>
@@ -325,10 +312,12 @@ function CarouselNext() {
           data-slot="carousel-next"
           size="lg"
           hotkey="D"
-          class="*:first:relative *:first:-top-1"
+          sound={{ keydown: 'carouselChangeSlideHorizontal', keyup: null }}
+          class={cn(variant() === 'default' && '*:first:relative *:first:-top-1', local.class)}
           disabled={!canScrollNext()}
           onPress={scrollNext}
           onHold={scrollNext}
+          {...rest}
         >
           <MoveRightIcon class="absolute bottom-0 size-8" />
         </KeycapButton>
@@ -338,14 +327,48 @@ function CarouselNext() {
           data-slot="carousel-next"
           size="lg"
           hotkey="S"
-          class="*:first:relative *:first:top-1 *:first:right-2"
+          sound={{ keydown: 'carouselChangeSlideVertical', keyup: null }}
+          class={cn(variant() === 'default' && '*:first:relative *:first:top-1 *:first:right-2', local.class)}
           disabled={!canScrollNext()}
           onPress={scrollNext}
           onHold={scrollNext}
+          {...rest}
         >
           <MoveDownIcon class="absolute right-0 size-8" />
         </KeycapButton>
       </Show>
     </div>
+  )
+}
+
+export function CarouselConfirm() {
+  const { onConfirm } = useCarousel()
+  return (
+    <KeycapButton
+      data-slot="carousel-next"
+      size="lg"
+      hotkey="Enter"
+      class="touch-manipulation flex-1 px-8 pl-16"
+      onPress={onConfirm}
+    >
+      <CornerDownLeftIcon class="absolute left-4 stroke-3" />
+      <span class="text-base absolute bottom-0">to confirm</span>
+    </KeycapButton>
+  )
+}
+
+export function CarouselDiscard() {
+  const { onDiscard } = useCarousel()
+  return (
+    <KeycapButton
+      data-slot="carousel-next"
+      size="lg"
+      hotkey="Escape"
+      label="Esc"
+      class="touch-manipulation flex-1 px-8"
+      onPress={onDiscard}
+    >
+      <span class="text-base absolute bottom-0">to discard</span>
+    </KeycapButton>
   )
 }

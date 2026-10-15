@@ -9,6 +9,7 @@ import { useMutation, useQuery } from 'convex-solidjs'
 import { createEffect, createMemo, on, onMount, type ComponentProps } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
 import { createInteractiveNode } from './interactive-layer/createInteractiveNode'
+import { Portal } from 'solid-js/web'
 
 interface Props extends Pick<ComponentProps<'div'>, 'ref' | 'class'> {
   myPlayer?: boolean
@@ -34,8 +35,12 @@ function PlayerDiv(props: Props) {
 
 export const Player = {
   Me() {
-    const { player } = useGlobalState()
-    return <PlayerDiv myPlayer ref={player.ref} player={player} />
+    const { player, interaction } = useGlobalState()
+    return (
+      <Portal mount={interaction.hostRef() ?? player.renderedSlotRef()}>
+        <PlayerDiv myPlayer ref={player.ref} player={player} />
+      </Portal>
+    )
   },
 
   Other(props: { id: Id<'users'> }) {

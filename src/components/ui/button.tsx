@@ -3,7 +3,7 @@ import { defaultProps } from '@/lib/utils'
 import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
-import { createEffect, createSignal, splitProps } from 'solid-js'
+import { createEffect, createMemo, createSignal, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 import { debounce, throttle } from '@solid-primitives/scheduled'
 
@@ -72,11 +72,15 @@ type KeycapProps = Omit<ButtonProps, 'variant'> & {
   label?: string
   onPress: HotkeyCallback
   onHold?: () => void
+  sound?: {
+    keydown?: Sound['ui'] | null
+    keyup?: Sound['ui'] | null
+  }
 }
 
 export function KeycapButton(componentProps: KeycapProps) {
   let ref!: HTMLButtonElement
-  const props = defaultProps(componentProps, { hotkey: 'E' })
+  const props = defaultProps(componentProps, { hotkey: 'E', sound: { keydown: 'keydown', keyup: 'keyup' } })
   const [local, rest] = splitProps(props, [
     'hotkey',
     'onPress',
@@ -86,20 +90,52 @@ export function KeycapButton(componentProps: KeycapProps) {
     'children',
     'label',
     'onHold',
+    'sound',
   ])
   const [pressed, setPressed] = createSignal(false)
 
   let interval: NodeJS.Timeout | undefined
   let cleared = false
+
+  const soundKeyup = createMemo(() => {
+    if (local.sound.keyup === null) return
+    if (local.sound.keyup === undefined) return SOUNDS.ui['keyup']
+    return SOUNDS.ui[local.sound.keyup]
+  })
+  const soundKeydown = createMemo(() => {
+    if (local.sound.keydown === null) return
+    if (local.sound.keydown === undefined) return SOUNDS.ui['keydown']
+    return SOUNDS.ui[local.sound.keydown]
+  })
+
+  function playSoundKeyup() {
+    const up = soundKeyup()
+    if (!up) return
+    up.play('_sprite' in up && 'default' in (up._sprite as string[]) ? 'default' : undefined)
+  }
+
+  function playSoundKeydown() {
+    const down = soundKeydown()
+    const up = soundKeyup()
+    if (!down) return
+    if (up && up.playing()) up.stop()
+    down.play('_sprite' in down && 'default' in (down._sprite as string[]) ? 'default' : undefined)
+  }
+
   function stopInterval() {
     if (interval) clearInterval(interval)
     interval = undefined
   }
 
+  function onHold() {
+    playSoundKeydown()
+    local.onHold()
+  }
+
   const hold = debounce(() => {
     if (interval) clearInterval(interval)
-    interval = setInterval(() => (cleared ? stopInterval() : local.onHold()), 200)
-    local.onHold()
+    interval = setInterval(() => (cleared ? stopInterval() : onHold()), 200)
+    onHold()
   }, 200)
 
   function release() {
@@ -126,8 +162,7 @@ export function KeycapButton(componentProps: KeycapProps) {
           if (local.disabled) return
           setPressed(true)
           hold()
-          if (SOUNDS.ui.keyup.playing()) SOUNDS.ui.keyup.stop()
-          SOUNDS.ui.keydown.play('default')
+          playSoundKeydown()
         },
       },
       {
@@ -141,7 +176,7 @@ export function KeycapButton(componentProps: KeycapProps) {
         callback: (e, ctx) => {
           setPressed(false)
           release()
-          SOUNDS.ui.keyup.play('default')
+          playSoundKeyup()
           local.onPress(e, ctx)
         },
       },

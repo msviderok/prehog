@@ -5,6 +5,7 @@ import type { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import type { RtcState } from './lib/createRtcState'
 import type { NodeRegistry } from './routes/_authed/-components/NodeRegistry'
+import type { SoundsUI } from './audio/index'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -112,6 +113,7 @@ declare global {
       tx: number
       speed: number
       shouldSendBatches: boolean
+      isHijacked: boolean
     }
     direction: Accessor<MovementDirection>
     setIsWalking: Setter<boolean>
@@ -121,6 +123,8 @@ declare global {
     setDirection: Setter<MovementDirection>
     setInitialData: (data: FunctionReturnType<typeof api.gameState.getMyInitialState>) => void
     isInitialDataLoaded: Accessor<boolean>
+    renderedSlotRef: Accessor<HTMLElement | undefined>
+    setRenderedSlotRef: Setter<HTMLElement | undefined>
   }
 
   interface Scene {
@@ -173,10 +177,13 @@ declare global {
     setActiveNode: (id: string | undefined) => void
   }
 
-  interface Interaction {
+  interface Interaction<T extends unknown = unknown> {
+    hostRef: Accessor<HTMLElement | undefined>
+    setHostRef: Setter<HTMLElement | undefined>
     isActive: Accessor<boolean>
     setIsActive: Setter<boolean>
-    start: () => void
+    initialData?: T
+    start: (initialData: T) => void
     finish: (type: 'confirm' | 'cancel') => void
   }
 
@@ -192,6 +199,10 @@ declare global {
     otherPlayersIds: Accessor<Id<'users'>[]>
     debugData: Accessor<DebugData>
     recalculate: () => void
+  }
+
+  interface Sound {
+    ui: SoundsUI
   }
 }
 

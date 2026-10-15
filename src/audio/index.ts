@@ -13,6 +13,11 @@ import toggleOn from './files/toggle_on.webm'
 
 const VOLUME = 1
 
+export type SoundsUI = keyof typeof SOUNDS.ui
+export type SoundsUIType = {
+  [K in keyof typeof SOUNDS.ui]: (typeof SOUNDS.ui)[K] & { _sprite: string[] }
+}
+
 export const SOUNDS = {
   dial: new Howl({ src: dial, loop: true, volume: VOLUME }),
   call: new Howl({ src: call, loop: true, volume: VOLUME }),
@@ -34,5 +39,7 @@ export const SOUNDS = {
     cancel: new Howl({ src: cancel, volume: VOLUME, rate: 1 }),
     keydown: new Howl({ src: toggleOn, volume: VOLUME * 0.3, rate: 1.5, sprite: { default: [100, 200] } }),
     keyup: new Howl({ src: toggleOn, volume: VOLUME * 0.3, rate: 1, sprite: { default: [150, 300] } }),
+    carouselChangeSlideHorizontal: new Howl({ src: cancel, volume: VOLUME * 0.7, rate: 4 }),
+    carouselChangeSlideVertical: new Howl({ src: cancel, volume: VOLUME * 0.7, rate: 3 }),
   },
 } as const
