@@ -21,7 +21,7 @@ import * as Scene from '@/routes/_authed/-components/Scene'
 import * as InteractiveNode from '@/routes/_authed/-components/interactive-layer'
 import { cn } from 'cn'
 import { InfoIcon } from 'lucide-solid'
-import { animate } from 'motion'
+import { animate, animateView } from 'motion'
 import { batch, createMemo, onMount, Show } from 'solid-js'
 import { useGlobalState } from '../-components/GlobalStateContext'
 
@@ -285,13 +285,15 @@ function WardrobeCarousel() {
   const hats = createMemo(() => (player.isAdmin() ? HATS : HATS.filter((i) => i !== HAT_INDEX.admin)))
 
   onMount(() => {
-    interaction.setHostRef(playerHostRef)
+    animateView(() => {
+      interaction.setHostRef(playerHostRef)
+    })
     const ratio = 1
 
     animate(
       player.ref!,
       { '--tx': 0, '--ty': 0, '--sx': ratio, '--sy': ratio },
-      { type: 'spring', duration: 0.2, damping: 25, stiffness: 300 },
+      // { type: 'spring', duration: 0.2, damping: 25, stiffness: 300 },
     )
   })
 

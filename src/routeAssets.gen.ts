@@ -74,6 +74,11 @@ export const assets = {
       size: { width: 6880 as number, height: 80 as number },
       src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_idle.png']!,
     },
+    'skin_default_jump.png': {
+      name: 'skin_default_jump.png',
+      size: { width: 640 as number, height: 80 as number },
+      src: globPaths['/_authed/']['/src/routes/_authed/-assets/skin_default_jump.png']!,
+    },
     'skin_default_jumps_twice.png': {
       name: 'skin_default_jumps_twice.png',
       size: { width: 1280 as number, height: 80 as number },

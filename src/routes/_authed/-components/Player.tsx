@@ -11,22 +11,23 @@ import { useGlobalState } from './GlobalStateContext'
 import { createInteractiveNode } from './interactive-layer/createInteractiveNode'
 import { Portal } from 'solid-js/web'
 
-interface Props extends Pick<ComponentProps<'div'>, 'ref' | 'class'> {
-  myPlayer?: boolean
-  player: CommonPlayerProps
+interface Props<MyPlayer extends boolean | undefined> extends Pick<ComponentProps<'div'>, 'ref' | 'class'> {
+  myPlayer?: MyPlayer
+  player: CommonPlayerProps<MyPlayer extends true ? MyPlayerAction : OtherPlayerAction>
 }
 
-function PlayerDiv(props: Props) {
+function PlayerDiv<MyPlayer extends boolean | undefined>(props: Props<MyPlayer>) {
   return (
     <div
       ref={props.ref}
       class={cn('player player-with-hat', props.class)}
       data-me={props.myPlayer}
+      data-layout-id={props.myPlayer ? 'my-player' : undefined}
       data-is-admin={props.player.isAdmin()}
       data-direction={props.player.facingDirection() === 'left' ? -1 : 1}
       data-is-walking={+props.player.isWalking()}
       data-is-running={+props.player.isRunning()}
-      data-action={props.player.isWalking() ? 'walk' : 'idle'}
+      data-action={props.player.action()}
       data-hat={props.player.hat()}
       data-skin={SKINS_BY_INDEX[props.player.skin()]}
     />
@@ -65,6 +66,8 @@ export const Player = {
       isRunning: createMemo(() => state()?.isRunning ?? false),
       hat: createMemo(() => state()?.hat ?? DEFAULT_HAT_INDEX),
       skin: createMemo(() => state()?.skin ?? DEFAULT_SKIN_INDEX),
+      action: createMemo(() => 'idle' as const),
+      isJumping: createMemo(() => false),
     })
 
     const getInitialState = useMutation(api.gameState.getInitialState)

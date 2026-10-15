@@ -58,6 +58,7 @@ declare global {
     hitbox: { x1: number; y1: number; x2: number; y2: number }
   }
 
+  type OtherPlayerAction = CommonPlayerAction | 'jump'
   type InteractiveNode = CollisionNode & {
     collided: Accessor<boolean>
     setCollided: Setter<boolean>
@@ -73,7 +74,9 @@ declare global {
         }
       | {
           type: 'player'
-          data: CommonPlayerProps & { batchQueue: GameEventBatch }
+          data: CommonPlayerProps<OtherPlayerAction> & {
+            batchQueue: GameEventBatch
+          }
         }
     )
 
@@ -95,18 +98,25 @@ declare global {
   type Standing = 0
   type MovementDirection = Left | Standing | Right
   type FacingDirection = 'left' | 'right'
-  interface CommonPlayerProps {
+  type JumpStage = false | 'jump-start' | 'jump-midair' | 'jump-end'
+  type CommonPlayerAction = 'idle' | 'walk'
+
+  interface CommonPlayerProps<Actions extends string> {
     ref: HTMLDivElement | undefined
     x: number
     facingDirection: Accessor<FacingDirection>
     isWalking: Accessor<boolean>
     isRunning: Accessor<boolean>
+    isJumping: Accessor<boolean>
     hat: Accessor<number | undefined>
     skin: Accessor<number>
     isAdmin: Accessor<boolean>
+    action: Accessor<Actions>
   }
 
-  interface MyPlayer extends CommonPlayerProps {
+  type MyPlayerAction = CommonPlayerAction | 'jump-start' | 'jump-midair' | 'jump-end'
+  type MyPlayerJumpAction = Extract<MyPlayerAction, `jump-${string}`>
+  interface MyPlayer extends CommonPlayerProps<MyPlayerAction> {
     __gameloop: {
       direction: 1 | 0 | -1 // 1 – right, 0 – stopped, -1 – left
       hitbox: { x1: number; y1: number; x2: number; y2: number }
@@ -121,6 +131,7 @@ declare global {
     setHat: Setter<number | undefined>
     setSkin: Setter<number>
     setDirection: Setter<MovementDirection>
+    setAction: Setter<MyPlayerAction>
     setInitialData: (data: FunctionReturnType<typeof api.gameState.getMyInitialState>) => void
     isInitialDataLoaded: Accessor<boolean>
     renderedSlotRef: Accessor<HTMLElement | undefined>
@@ -177,12 +188,15 @@ declare global {
     setActiveNode: (id: string | undefined) => void
   }
 
+  type InteractionStatus = 'idle' | 'enter-marker'
   interface Interaction<T extends unknown = unknown> {
     hostRef: Accessor<HTMLElement | undefined>
     setHostRef: Setter<HTMLElement | undefined>
     isActive: Accessor<boolean>
     setIsActive: Setter<boolean>
     initialData?: T
+    status: Accessor<InteractionStatus>
+    setStatus: Setter<InteractionStatus>
     start: (initialData: T) => void
     finish: (type: 'confirm' | 'cancel') => void
   }

@@ -16,6 +16,33 @@
   }
 }
 
+@keyframes player-jump {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps));
+  }
+}
+
+@keyframes player-jump-start {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps));
+  }
+}
+
+@keyframes player-jump-end {
+  from {
+    background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps-start));
+  }
+  to {
+    background-position-x: calc(-1 * var(--original-player-width) * var(--anim-steps-end));
+  }
+}
+
 @keyframes player-on-fire {
   from {
     background-position-x: 0;
@@ -137,7 +164,6 @@
 
   &[data-action='idle'] {
     animation-name: player-idle;
-
     &[data-skin='hog'] {
       --anim-steps: 86;
       --hat-animation: hat-idle;
@@ -182,7 +208,6 @@
     --animation-speed: 900ms;
     animation-name: player-walk;
     animation-duration: calc(var(--animation-speed) / var(--movement-speed));
-
     &[data-skin='hog'] {
       --anim-steps: 11;
       --hat-offset-y: -1cqw;
@@ -212,6 +237,59 @@
       --hat-offset-x: 8cqw;
       --animation-speed: 500ms;
       --bg-sprite: url('../routes/_authed/-assets/skin_ghost_walk.png');
+    }
+  }
+
+  &[data-action='jump'] {
+    --hat-animation: none;
+    animation-duration: var(--player-jump-animation-ms);
+    animation-name: player-jump;
+    /*animation-iteration-count: 1;*/
+    &[data-skin='hog'] {
+      --anim-steps: 8;
+      --hat-offset-y: -1cqw;
+      --hat-offset-x: 0cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_jump.png');
+    }
+  }
+
+  &[data-action='jump-start'] {
+    --hat-animation: none;
+    animation-duration: var(--player-jump-start-animation-ms);
+    animation-name: player-jump-start;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    &[data-skin='hog'] {
+      --anim-steps: 5;
+      --hat-offset-y: -1cqw;
+      --hat-offset-x: 0cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_jump.png');
+    }
+  }
+
+  &[data-action='jump-end'] {
+    --hat-animation: none;
+    animation-duration: var(--player-jump-end-animation-ms);
+    animation-name: player-jump-end;
+    animation-iteration-count: 1;
+    &[data-skin='hog'] {
+      --anim-steps-start: 4;
+      --anim-steps-end: 8;
+      --anim-steps: 4;
+      --hat-offset-y: -1cqw;
+      --hat-offset-x: 0cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_jump.png');
+    }
+  }
+
+  &[data-action='jump-midair'] {
+    --hat-animation: none;
+    animation: none;
+    &[data-skin='hog'] {
+      --hat-offset-y: -1cqw;
+      --hat-offset-x: 0cqw;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_jump.png');
+      background-position-x: calc(-1 * var(--original-player-width) * 4);
     }
   }
 }

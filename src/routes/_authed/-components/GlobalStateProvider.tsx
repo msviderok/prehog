@@ -5,6 +5,9 @@ import {
   EVENT_MARKER_SIZE,
   GAME_CONTENT_HEIGHT_RATIO,
   PLAYER_HITBOX_SIZE,
+  PLAYER_JUMP_ANIMATION_MS,
+  PLAYER_JUMP_END_ANIMATION_MS,
+  PLAYER_JUMP_START_ANIMATION_MS,
   PLAYER_SIZE,
   SCENE,
 } from '@/lib/constants'
@@ -118,6 +121,7 @@ export function GlobalStateProvider(props: ParentProps) {
 
   const [isInteractionActive, setIsInteractionActive] = createSignal<boolean>(false)
   const [hostRef, setHostRef] = createSignal<HTMLElement>()
+  const [status, setStatus] = createSignal<InteractionStatus>('enter-marker')
   const movementBlocked = createMemo(() => isInteractionActive())
   createEffect(on(movementBlocked, (blocked) => (player.__gameloop.isHijacked = blocked)))
   const interaction: GlobalState['interaction'] = {
@@ -125,10 +129,13 @@ export function GlobalStateProvider(props: ParentProps) {
     setHostRef,
     isActive: isInteractionActive,
     setIsActive: setIsInteractionActive,
+    status,
+    setStatus,
     initialData: undefined,
     start<T>(initialData: T) {
       this.initialData = initialData
-      setIsInteractionActive(true)
+
+      // setIsInteractionActive(true)
     },
     finish() {
       setIsInteractionActive(false)
@@ -188,13 +195,17 @@ export function GlobalStateProvider(props: ParentProps) {
     batch(() => {
       player.setDirection(-1)
       player.setIsWalking(true)
+      player.setAction('walk')
     })
   })
 
   const stopMovingLeft = updateGameStateIfChanged(() => {
     batch(() => {
       player.setIsWalking(keytracker.isKeyHeld('D') || keytracker.isKeyHeld('ArrowRight') ? true : false)
-      if (player.isWalking() === false) player.setDirection(0)
+      if (player.isWalking() === false) {
+        player.setDirection(0)
+        player.setAction('idle')
+      }
     })
   })
 
@@ -202,13 +213,33 @@ export function GlobalStateProvider(props: ParentProps) {
     batch(() => {
       player.setIsWalking(true)
       player.setDirection(1)
+      player.setAction('walk')
     })
   })
 
   const stopMovingRight = updateGameStateIfChanged(() => {
     batch(() => {
       player.setIsWalking(keytracker.isKeyHeld('A') || keytracker.isKeyHeld('ArrowLeft') ? true : false)
-      if (player.isWalking() === false) player.setDirection(0)
+      if (player.isWalking() === false) {
+        player.setDirection(0)
+        player.setAction('idle')
+      }
+    })
+  })
+
+  const jump = updateGameStateIfChanged(() => {
+    if (player.isJumping()) return
+    console.log('Jump')
+    let timeout: NodeJS.Timeout
+    batch(() => {
+      player.setAction('jump-start')
+      timeout = setTimeout(() => {
+        player.setAction('jump-end')
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+          player.setAction(player.isWalking() ? 'walk' : 'idle')
+        }, PLAYER_JUMP_END_ANIMATION_MS)
+      }, PLAYER_JUMP_START_ANIMATION_MS)
     })
   })
 
@@ -224,7 +255,6 @@ export function GlobalStateProvider(props: ParentProps) {
       { hotkey: 'ArrowLeft', callback: stopMovingLeft, options: { eventType: 'keyup' } },
       { hotkey: 'Shift+ArrowLeft', callback: stopMovingLeft, options: { eventType: 'keyup' } },
 
-      /* Move right */
       { hotkey: 'D', callback: startMovingRight, options: { eventType: 'keydown' } },
       { hotkey: 'Shift+D', callback: startMovingRight, options: { eventType: 'keydown' } },
       { hotkey: 'ArrowRight', callback: startMovingRight, options: { eventType: 'keydown' } },
@@ -234,6 +264,9 @@ export function GlobalStateProvider(props: ParentProps) {
       { hotkey: 'Shift+D', callback: stopMovingRight, options: { eventType: 'keyup' } },
       { hotkey: 'ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
       { hotkey: 'Shift+ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
+
+      { hotkey: 'Space', callback: jump, options: { eventType: 'keydown', requireReset: false } },
+      { hotkey: 'Shift+Space', callback: jump, options: { eventType: 'keydown', requireReset: false } },
     ],
     {
       requireReset: true,
@@ -255,6 +288,9 @@ export function GlobalStateProvider(props: ParentProps) {
   onMount(() => {
     const root = document.documentElement
     root.style.setProperty('--game-content-height-ratio', `${GAME_CONTENT_HEIGHT_RATIO}`)
+    root.style.setProperty('--player-jump-animation-ms', `${PLAYER_JUMP_ANIMATION_MS}ms`)
+    root.style.setProperty('--player-jump-start-animation-ms', `${PLAYER_JUMP_START_ANIMATION_MS}ms`)
+    root.style.setProperty('--player-jump-end-animation-ms', `${PLAYER_JUMP_END_ANIMATION_MS}ms`)
   })
 
   if (import.meta.hot) {
@@ -319,6 +355,8 @@ function createPlayer() {
   const [facingDirection, setFacingDirection] = createSignal<FacingDirection>('right')
   const [isInitialDataLoaded, setIsInitialDataLoaded] = createSignal(false)
   const [renderedSlotRef, setRenderedSlotRef] = createSignal<HTMLElement>()
+  const [action, setAction] = createSignal<MyPlayerAction>('idle')
+  const isJumping = createMemo(() => action().startsWith('jump-'))
   const player: GlobalState['player'] = {
     x: 0,
     ref: undefined,
@@ -328,7 +366,11 @@ function createPlayer() {
     setIsWalking,
     isRunning,
     setIsRunning,
+    isJumping,
+    action,
+    setAction,
     isAdmin,
+
     hat,
     setHat,
     skin,
