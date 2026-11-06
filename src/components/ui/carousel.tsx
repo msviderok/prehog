@@ -31,8 +31,8 @@ interface ItemsProps<T extends readonly any[]> {
   list: T
   value: T[number]
   onValueChange: (value: T[number]) => void
-  onConfirm: (newValue: T[number]) => void
-  onDiscard: (originalValue: T[number]) => void
+  onConfirm?: (newValue: T[number]) => void
+  onDiscard?: (originalValue: T[number]) => void
 }
 
 interface CarouselProps {
@@ -251,15 +251,22 @@ export function CarouselItem<T extends any>(props: ComponentProps<'div'> & { val
   )
 }
 
-export function CarouselPrevious(props: JSX.HTMLAttributes<HTMLButtonElement>) {
-  const [local, rest] = splitProps(props, ['class'])
+export function CarouselPrevious(
+  componentProps: JSX.HTMLAttributes<HTMLButtonElement> & { variant?: 'default' | 'freemove' },
+) {
+  const props = defaultProps(componentProps, { variant: 'default' })
+  const [local, rest] = splitProps(props, ['class', 'variant'])
   const { orientation, scrollPrev, canScrollPrev, variant } = useCarousel()
   return (
     <div
       class={cn(
         'absolute z-1',
-        orientation() === 'horizontal' && 'left-0 top-1/2 translate-x-[-110%] -translate-y-1/2',
-        orientation() === 'vertical' && 'top-0 left-1/2 -translate-x-1/2 translate-y-[-110%]',
+        variant() === 'default' &&
+          orientation() === 'horizontal' &&
+          'left-0 top-1/2 translate-x-[-110%] -translate-y-1/2',
+        variant() === 'default' &&
+          orientation() === 'vertical' &&
+          'top-0 left-1/2 -translate-x-1/2 translate-y-[-110%]',
       )}
     >
       <Show when={orientation() === 'horizontal'}>

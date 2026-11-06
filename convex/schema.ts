@@ -34,15 +34,13 @@ export default defineSchema({
     hat: v.number(),
     skin: v.number(),
     y: v.number(),
-    lastKnownXPosition: v.optional(
-      v.object({
-        main: v.optional(v.number()),
-        tour: v.optional(v.number()),
-        application: v.optional(v.number()),
-        pet: v.optional(v.number()),
-        personal: v.optional(v.number()),
-      }),
-    ),
+    lastKnownXPosition: v.object({
+      main: v.optional(v.number()),
+      tour: v.optional(v.number()),
+      application: v.optional(v.number()),
+      pet: v.optional(v.number()),
+      personal: v.optional(v.number()),
+    }),
   }),
   game_event_batches: defineTable({
     batch: v.array(

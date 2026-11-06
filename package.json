@@ -21,6 +21,7 @@
     "@dnd-kit/dom": "catalog:",
     "@dnd-kit/solid": "catalog:",
     "@msviderok/base-ui-solid": "catalog:",
+    "@opentelemetry/api": "catalog:",
     "@posthog/convex": "catalog:",
     "@solid-primitives/scheduled": "catalog:",
     "@t3-oss/env-core": "catalog:",
@@ -67,7 +68,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.10.1",
+      "version": "12.16.1",
       "onFail": "download"
     }
   }

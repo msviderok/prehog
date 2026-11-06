@@ -1,12 +1,14 @@
-import { createSignal, onCleanup } from 'solid-js'
+import { createSignal } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
+import { useSceneContext } from '../Scene.context'
 
 export function createInteractiveNode<T extends InteractiveNode['type']>(
   id: string,
   type: T,
   data: InteractiveNodeOf<T>['data'],
 ): InteractiveNodeOf<T> {
-  const { nodes } = useGlobalState()
+  const { gameState } = useGlobalState()
+  const sceneName = useSceneContext()
   const [collided, setCollided] = createSignal(false)
   const [status, setStatus] = createSignal<InteractiveNodeStatus>('idle')
 
@@ -21,8 +23,6 @@ export function createInteractiveNode<T extends InteractiveNode['type']>(
     data,
   } as InteractiveNodeOf<T>
 
-  nodes.set(id, node)
-  onCleanup(() => nodes.delete(id))
-
+  gameState.scene(sceneName).nodes.register(id, node)
   return node
 }

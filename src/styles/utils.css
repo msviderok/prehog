@@ -15,6 +15,12 @@
   will-change: transform;
   /* oxfmt-ignore */
   transform:
+    scale3d(var(--pre-sx, 1), var(--pre-sy, 1), var(--pre-sz, 1))
+    rotateX(var(--pre-rx, 0deg))
+    rotateY(var(--pre-ry, 0deg))
+    rotateZ(var(--pre-rz, 0deg))
+    skewX(var(--pre-skx, 0deg))
+    skewY(var(--pre-sky, 0deg))
     translate3d(var(--tx, 0), var(--ty, 0), var(--tz, 0))
     perspective(var(--pp, none))
     rotateX(var(--rx, 0deg))
@@ -57,4 +63,14 @@
 
 @utility quick-hide {
   @apply opacity-0! delay-0! duration-0!;
+}
+
+@utility absolute-center {
+  @apply left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2;
+}
+@utility absolute-center-x {
+  @apply left-1/2 top-1/2 -translate-x-1/2;
+}
+@utility absolute-center-y {
+  @apply left-1/2 top-1/2 -translate-y-1/2;
 }

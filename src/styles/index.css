@@ -125,10 +125,6 @@
     @apply font-heading;
   }
 
-  * {
-    @apply text-pretty;
-  }
-
   p {
     @apply font-normal;
   }

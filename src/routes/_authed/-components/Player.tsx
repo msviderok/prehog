@@ -7,9 +7,10 @@ import { useStableQuery } from '@/lib/useStableQuery'
 import { cn } from 'cn'
 import { useMutation, useQuery } from 'convex-solidjs'
 import { createEffect, createMemo, on, onMount, type ComponentProps } from 'solid-js'
+import { Portal } from 'solid-js/web'
 import { useGlobalState } from './GlobalStateContext'
 import { createInteractiveNode } from './interactive-layer/createInteractiveNode'
-import { Portal } from 'solid-js/web'
+import { isMarkerAction } from '@/lib/utils'
 
 interface Props<MyPlayer extends boolean | undefined> extends Pick<ComponentProps<'div'>, 'ref' | 'class'> {
   myPlayer?: MyPlayer
@@ -20,7 +21,8 @@ function PlayerDiv<MyPlayer extends boolean | undefined>(props: Props<MyPlayer>)
   return (
     <div
       ref={props.ref}
-      class={cn('player player-with-hat', props.class)}
+      class={cn('player', props.class)}
+      // class={cn('player player-with-hat', props.class)}
       data-me={props.myPlayer}
       data-layout-id={props.myPlayer ? 'my-player' : undefined}
       data-is-admin={props.player.isAdmin()}
@@ -37,15 +39,37 @@ function PlayerDiv<MyPlayer extends boolean | undefined>(props: Props<MyPlayer>)
 export const Player = {
   Me() {
     const { player, interaction } = useGlobalState()
+
+    const markerAction = createMemo(() => {
+      const data = interaction.data()
+      if (isMarkerAction(data) && data.type === 'marker-enter') return data
+      return undefined
+    })
+
+    // createEffect(() => {
+    //   const data = interaction.data()
+    //   if (data.type === 'marker-enter') {
+    //     player.playAnimation.enterMarker(data.isDrama)
+    //   }
+    // })
+
     return (
       <Portal mount={interaction.hostRef() ?? player.renderedSlotRef()}>
-        <PlayerDiv myPlayer ref={player.ref} player={player} />
+        <PlayerDiv
+          myPlayer
+          ref={player.ref}
+          player={player}
+          class={cn({
+            'player-marker-enter': interaction.data().type === 'marker-enter',
+            '[--is-dramatic:1]': markerAction()?.isDrama,
+          })}
+        />
       </Portal>
     )
   },
 
   Other(props: { id: Id<'users'> }) {
-    const { misc } = useGlobalState()
+    const { gameState } = useGlobalState()
 
     const { data: userProfile } = useQuery(api.users.getProfile, { userId: props.id })
     const { data: actionsBatch } = useQuery(api.gameState.getPlayerBatch, { userId: props.id })
@@ -75,12 +99,13 @@ export const Player = {
     createEffect(on(actionsBatch, (b) => b && otherPlayer.data.batchQueue.push(...b.batch)))
 
     onMount(() => {
+      const staticCache = gameState.scene().static
       void getInitialState.mutate({ userId: props.id }).then((s) => {
         otherPlayer.data.x = s.x
-        otherPlayer.hitbox.x1 = s.x - misc.player.size.halfWidth
-        otherPlayer.hitbox.x2 = s.x + misc.player.size.halfWidth
-        otherPlayer.hitbox.y1 = misc.player.hitbox.y1
-        otherPlayer.hitbox.y2 = misc.player.hitbox.y2
+        otherPlayer.hitbox.x1 = s.x - staticCache.playerWidth
+        otherPlayer.hitbox.x2 = s.x + staticCache.playerWidth
+        otherPlayer.hitbox.y1 = staticCache.playerHitboxY1
+        otherPlayer.hitbox.y2 = staticCache.playerHitboxY2
         otherPlayer.data.ref?.style.setProperty('--tx', `${otherPlayer.data.x}px`)
       })
     })

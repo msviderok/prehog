@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { Dialog as DialogPrimitive } from '@msviderok/base-ui-solid/dialog'
 import { cn } from 'cn'
 import { XIcon } from 'lucide-solid'
@@ -53,7 +54,6 @@ function DialogContent(
 ) {
   const mergedProps = mergeProps({ showCloseButton: false }, props)
   const [local, rest] = splitProps(mergedProps, ['class', 'children', 'showCloseButton', 'wrapperClass'])
-
   return (
     <DialogPortal>
       <div class="z-1 fixed inset-0 flex items-center justify-center">

@@ -1,11 +1,11 @@
 import { SOUNDS } from '@/audio'
 import { defaultProps } from '@/lib/utils'
-import { createHotkeys, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
+import { debounce } from '@solid-primitives/scheduled'
+import { createHotkeys, formatForDisplay, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
 import { createEffect, createMemo, createSignal, splitProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
-import { debounce, throttle } from '@solid-primitives/scheduled'
 
 export const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm bg-(--v-color) border-shade-(--v-color)/30 font-base transition-all gap-2 [&_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-transparent focus-visible:ring-offset-accent/30 focus-visible:ring-offset-1 disabled:*:pointer-events-none disabled:opacity-50 border-2 hover:[--boxShadowY-dynamic:3px] active:[--boxShadowY-dynamic:0px] cursor-pointer disabled:cursor-not-allowed will-change-[transform,colors] [&_svg]:will-change-transform [&_svg]:transition-transform ease-out duration-150 [&_svg]:ease-out [&_svg]:duration-150',
@@ -66,7 +66,7 @@ export function Button(componentProps: ButtonProps) {
   return <ButtonPrimitive data-slot="button" class={cn(buttonVariants(local))} {...rest} />
 }
 
-type KeycapProps = Omit<ButtonProps, 'variant'> & {
+interface KeycapProps extends ButtonProps {
   /** @default "E" */
   hotkey?: Hotkey
   label?: string
@@ -80,8 +80,7 @@ type KeycapProps = Omit<ButtonProps, 'variant'> & {
 
 export function KeycapButton(componentProps: KeycapProps) {
   let ref!: HTMLButtonElement
-  const props = defaultProps(componentProps, { hotkey: 'E', sound: { keydown: 'keydown', keyup: 'keyup' } })
-  const [local, rest] = splitProps(props, [
+  const [local, rest] = splitProps(componentProps, [
     'hotkey',
     'onPress',
     'ref',
@@ -98,13 +97,13 @@ export function KeycapButton(componentProps: KeycapProps) {
   let cleared = false
 
   const soundKeyup = createMemo(() => {
-    if (local.sound.keyup === null) return
-    if (local.sound.keyup === undefined) return SOUNDS.ui['keyup']
+    if (local.sound?.keyup === null) return
+    if (local.sound?.keyup === undefined) return SOUNDS.ui['keyup']
     return SOUNDS.ui[local.sound.keyup]
   })
   const soundKeydown = createMemo(() => {
-    if (local.sound.keydown === null) return
-    if (local.sound.keydown === undefined) return SOUNDS.ui['keydown']
+    if (local.sound?.keydown === null) return
+    if (local.sound?.keydown === undefined) return SOUNDS.ui['keydown']
     return SOUNDS.ui[local.sound.keydown]
   })
 
@@ -129,7 +128,7 @@ export function KeycapButton(componentProps: KeycapProps) {
 
   function onHold() {
     playSoundKeydown()
-    local.onHold()
+    local.onHold?.()
   }
 
   const hold = debounce(() => {
@@ -151,7 +150,7 @@ export function KeycapButton(componentProps: KeycapProps) {
   createHotkeys(
     [
       {
-        hotkey: local.hotkey,
+        hotkey: local.hotkey ?? 'E',
         options: {
           eventType: 'keydown',
           get enabled() {
@@ -166,7 +165,7 @@ export function KeycapButton(componentProps: KeycapProps) {
         },
       },
       {
-        hotkey: local.hotkey,
+        hotkey: local.hotkey ?? 'E',
         options: {
           eventType: 'keyup',
           get enabled() {
@@ -187,15 +186,15 @@ export function KeycapButton(componentProps: KeycapProps) {
   return (
     <Button
       variant="keycap"
+      disabled={local.disabled}
+      class={cn('touch-manipulation', local.class)}
       ref={(el) => {
         ref = el
         typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
       }}
-      disabled={local.disabled}
-      class={cn('touch-manipulation', local.class)}
       {...rest}
     >
-      <span>{local.label ?? local.hotkey}</span>
+      <span>{local.label ?? formatForDisplay(local.hotkey ?? 'E', { separatorToken: '' })}</span>
       {local.children}
     </Button>
   )

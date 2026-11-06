@@ -1,4 +1,4 @@
-import { createRouter, ErrorComponent, CatchBoundary } from '@tanstack/solid-router'
+import { createRouter, ErrorComponent } from '@tanstack/solid-router'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -6,7 +6,6 @@ export function getRouter() {
     routeTree,
     defaultStructuralSharing: true,
     defaultPendingMs: 0,
-    defaultViewTransition: true,
     defaultErrorComponent(props) {
       console.trace(props.error)
       return <ErrorComponent {...props} />

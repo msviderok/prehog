@@ -357,15 +357,240 @@ export const assets = {
     },
   },
   '/_authed/tour/': {
+    'Brick_17-128x128.png': {
+      name: 'Brick_17-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Brick_17-128x128.png']!,
+    },
+    'Brick_18-128x128.png': {
+      name: 'Brick_18-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Brick_18-128x128.png']!,
+    },
+    'Brick_19-128x128.png': {
+      name: 'Brick_19-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Brick_19-128x128.png']!,
+    },
+    'Brick_20-128x128.png': {
+      name: 'Brick_20-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Brick_20-128x128.png']!,
+    },
+    'Dirt_05-128x128.png': {
+      name: 'Dirt_05-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Dirt_05-128x128.png']!,
+    },
+    'Plaster_07-128x128.png': {
+      name: 'Plaster_07-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Plaster_07-128x128.png']!,
+    },
+    'Plaster_08-128x128.png': {
+      name: 'Plaster_08-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Plaster_08-128x128.png']!,
+    },
+    'Plaster_08-256x256.png': {
+      name: 'Plaster_08-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Plaster_08-256x256.png']!,
+    },
+    'Stone_01-128x128.png': {
+      name: 'Stone_01-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Stone_01-128x128.png']!,
+    },
+    'Stone_02-128x128.png': {
+      name: 'Stone_02-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Stone_02-128x128.png']!,
+    },
+    'Stone_07-128x128.png': {
+      name: 'Stone_07-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Stone_07-128x128.png']!,
+    },
+    'Stone_08-128x128.png': {
+      name: 'Stone_08-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Stone_08-128x128.png']!,
+    },
+    'Stone_15-128x128.png': {
+      name: 'Stone_15-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Stone_15-128x128.png']!,
+    },
+    'Stone_16-128x128.png': {
+      name: 'Stone_16-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Stone_16-128x128.png']!,
+    },
+    'Tile_05-128x128.png': {
+      name: 'Tile_05-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_05-128x128.png']!,
+    },
+    'Tile_05-256x256.png': {
+      name: 'Tile_05-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_05-256x256.png']!,
+    },
+    'Tile_05-512x512.png': {
+      name: 'Tile_05-512x512.png',
+      size: { width: 512 as number, height: 512 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_05-512x512.png']!,
+    },
+    'Tile_06-128x128.png': {
+      name: 'Tile_06-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_06-128x128.png']!,
+    },
+    'Tile_06-256x256.png': {
+      name: 'Tile_06-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_06-256x256.png']!,
+    },
+    'Tile_06-512x512.png': {
+      name: 'Tile_06-512x512.png',
+      size: { width: 512 as number, height: 512 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_06-512x512.png']!,
+    },
+    'Tile_07-256x256.png': {
+      name: 'Tile_07-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_07-256x256.png']!,
+    },
+    'Tile_13-128x128.png': {
+      name: 'Tile_13-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_13-128x128.png']!,
+    },
+    'Tile_15-512x512.png': {
+      name: 'Tile_15-512x512.png',
+      size: { width: 512 as number, height: 512 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_15-512x512.png']!,
+    },
+    'Tile_16-512x512.png': {
+      name: 'Tile_16-512x512.png',
+      size: { width: 512 as number, height: 512 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Tile_16-512x512.png']!,
+    },
+    'Wood_01-256x256.png': {
+      name: 'Wood_01-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_01-256x256.png']!,
+    },
+    'Wood_02-256x256.png': {
+      name: 'Wood_02-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_02-256x256.png']!,
+    },
+    'Wood_03-256x256.png': {
+      name: 'Wood_03-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_03-256x256.png']!,
+    },
+    'Wood_04-256x256.png': {
+      name: 'Wood_04-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_04-256x256.png']!,
+    },
+    'Wood_05-256x256.png': {
+      name: 'Wood_05-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_05-256x256.png']!,
+    },
+    'Wood_06-256x256.png': {
+      name: 'Wood_06-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_06-256x256.png']!,
+    },
+    'Wood_07-256x256.png': {
+      name: 'Wood_07-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_07-256x256.png']!,
+    },
+    'Wood_08-256x256.png': {
+      name: 'Wood_08-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_08-256x256.png']!,
+    },
+    'Wood_09-256x256.png': {
+      name: 'Wood_09-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_09-256x256.png']!,
+    },
+    'Wood_10-256x256.png': {
+      name: 'Wood_10-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_10-256x256.png']!,
+    },
+    'Wood_11-256x256.png': {
+      name: 'Wood_11-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_11-256x256.png']!,
+    },
+    'Wood_12-128x128.png': {
+      name: 'Wood_12-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_12-128x128.png']!,
+    },
+    'Wood_12-256x256.png': {
+      name: 'Wood_12-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_12-256x256.png']!,
+    },
+    'Wood_13-128x128.png': {
+      name: 'Wood_13-128x128.png',
+      size: { width: 128 as number, height: 128 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_13-128x128.png']!,
+    },
+    'Wood_13-256x256.png': {
+      name: 'Wood_13-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_13-256x256.png']!,
+    },
+    'Wood_14-256x256.png': {
+      name: 'Wood_14-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_14-256x256.png']!,
+    },
+    'Wood_15-256x256.png': {
+      name: 'Wood_15-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_15-256x256.png']!,
+    },
+    'Wood_16-256x256.png': {
+      name: 'Wood_16-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_16-256x256.png']!,
+    },
+    'Wood_17-256x256.png': {
+      name: 'Wood_17-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_17-256x256.png']!,
+    },
+    'Wood_18-256x256.png': {
+      name: 'Wood_18-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_18-256x256.png']!,
+    },
+    'Wood_19-256x256.png': {
+      name: 'Wood_19-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_19-256x256.png']!,
+    },
+    'Wood_20-256x256.png': {
+      name: 'Wood_20-256x256.png',
+      size: { width: 256 as number, height: 256 as number },
+      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/Wood_20-256x256.png']!,
+    },
     'evolution.png': {
       name: 'evolution.png',
-      size: { width: 2324 as number, height: 698 as number },
+      size: { width: 4163 as number, height: 397 as number },
       src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/evolution.png']!,
-    },
-    'podium.png': {
-      name: 'podium.png',
-      size: { width: 2324 as number, height: 437 as number },
-      src: globPaths['/_authed/tour/']['/src/routes/_authed/tour/-assets/podium.png']!,
     },
     'shadow.png': {
       name: 'shadow.png',

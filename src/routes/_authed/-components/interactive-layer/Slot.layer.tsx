@@ -1,14 +1,16 @@
 import { createMemo, For } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { useGlobalState } from '../GlobalStateContext'
+import { useSceneContext } from '../Scene.context'
 import { InteractiveNodeContext } from './context'
 
 export function SlotLayer(props: { type: keyof NodeSlots }) {
-  const { nodes } = useGlobalState()
+  const { gameState } = useGlobalState()
+  const sceneName = useSceneContext()
   const entries = createMemo(() => {
-    return Object.entries(nodes.slots).flatMap(([id, slots]) => {
+    return Object.entries(gameState.scene(sceneName).nodes.slots).flatMap(([id, slots]) => {
       const component = slots[props.type]
-      const node = nodes.get(id)
+      const node = gameState.scene(sceneName).nodes.get(id)
       return component && node ? [{ id, node, component }] : []
     })
   })

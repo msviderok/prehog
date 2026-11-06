@@ -6,6 +6,7 @@ import type { Doc, Id } from '../convex/_generated/dataModel'
 import type { RtcState } from './lib/createRtcState'
 import type { NodeRegistry } from './routes/_authed/-components/NodeRegistry'
 import type { SoundsUI } from './audio/index'
+import type { GameState } from './routes/_authed/-components/GameState'
 
 declare global {
   type PanelTypeChat = Extract<Doc<'floating_panels'>, { type: 'chat' }>
@@ -66,16 +67,30 @@ declare global {
     setStatus: Setter<InteractiveNodeStatus>
   } & (
       | {
-          type: 'popover'
-          data: {
-            anchorRef: HTMLButtonElement | undefined
-            positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>
-          }
-        }
-      | {
           type: 'player'
           data: CommonPlayerProps<OtherPlayerAction> & {
             batchQueue: GameEventBatch
+          }
+        }
+      | {
+          type: 'popover'
+          data: {
+            popover: {
+              anchorRef: Accessor<HTMLButtonElement | undefined>
+              setAnchorRef: Setter<HTMLButtonElement | undefined>
+              positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>
+            }
+            dialog: {}
+            marker: {
+              x: number
+              y: number
+              reactive: {
+                hitbox: Accessor<Hitbox>
+                setHitbox: Setter<Hitbox>
+                size: Accessor<Size>
+                setSize: Setter<Size>
+              }
+            }
           }
         }
     )
@@ -87,6 +102,7 @@ declare global {
     marker?: () => JSX.Element
     popoverAnchor?: () => JSX.Element
     popoverContent?: () => JSX.Element
+    dialogContent?: () => JSX.Element
     interaction?: Record<string, () => JSX.Element>
   }
 
@@ -116,6 +132,7 @@ declare global {
 
   type MyPlayerAction = CommonPlayerAction | 'jump-start' | 'jump-midair' | 'jump-end'
   type MyPlayerJumpAction = Extract<MyPlayerAction, `jump-${string}`>
+  type MyPlayerTeleportAction = Extract<MyPlayerAction, `teleport-${string}`>
   interface MyPlayer extends CommonPlayerProps<MyPlayerAction> {
     __gameloop: {
       direction: 1 | 0 | -1 // 1 – right, 0 – stopped, -1 – left
@@ -124,6 +141,8 @@ declare global {
       speed: number
       shouldSendBatches: boolean
       isHijacked: boolean
+      lastPosition: Record<string, any> | null
+      paused: boolean
     }
     direction: Accessor<MovementDirection>
     setIsWalking: Setter<boolean>
@@ -133,9 +152,12 @@ declare global {
     setDirection: Setter<MovementDirection>
     setAction: Setter<MyPlayerAction>
     setInitialData: (data: FunctionReturnType<typeof api.gameState.getMyInitialState>) => void
-    isInitialDataLoaded: Accessor<boolean>
     renderedSlotRef: Accessor<HTMLElement | undefined>
     setRenderedSlotRef: Setter<HTMLElement | undefined>
+    playAnimation: {
+      jump: () => void
+      enterMarker: (isDrama?: boolean) => void
+    }
   }
 
   interface Scene {
@@ -147,72 +169,60 @@ declare global {
     popupContainerRef: HTMLElement | undefined
     /** Ref to the scene elements container element */
     elementsContainerRef: HTMLElement | undefined
-    /**
-     * Scale of the scene calculated by the formula:
-     * Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1)
-     */
-    scale: number
-    /** The size of a single world unit in px */
-    worldUnit: { x: number; y: number }
-    /** The original size of the scene in px */
-    originalSize: { width: number; height: number }
-    /** `DEBUG ONLY`: The scaled size of the scene in px. */
-    scaledSize: { width: number; height: number }
-    /** Min world unit X of the scene the player should be able to move to */
-    walkableMinX: number
-    /** Max world unit X of the scene the player should be able to move to */
-    walkableMaxX: number
+    /** Ref of the viewport which is equal to the size of the screen */
+    viewportRef: Accessor<HTMLDivElement | undefined>
+    setViewportRef: Setter<HTMLDivElement | undefined>
     /** The current position of the viewport a.k.a. "camera" showing the portion of the scene in world units */
     tx: number
-    cameraCenterAtX: number
-    /** 50% of the current viewport width in world units */
-    s50PX: number
-    s50WU: number
-    cameraStartTravelAtX: number
-    cameraEndTravelAtX: number
-    /** The current scene the player is in */
-    currentScene: Accessor<CurrentScene>
-  }
-
-  interface Misc {
-    player: {
-      size: { width: number; height: number; halfWidth: number; halfHeight: number }
-      hitbox: { y1: number; y2: number }
-    }
-    eventMarker: { r: number; h: number }
   }
 
   interface SceneryPopover {
+    isOpen: Accessor<boolean>
     activeNodeId: Accessor<string | undefined>
     prevActiveNodeId: Accessor<string | undefined>
     setActiveNode: (id: string | undefined) => void
   }
 
-  type InteractionStatus = 'idle' | 'enter-marker'
-  interface Interaction<T extends unknown = unknown> {
+  interface SceneryDialog {
+    isOpen: Accessor<boolean>
+    activeNodeId: Accessor<string | undefined>
+    open: (id: string) => void
+    close: () => void
+  }
+
+  type InteractionData =
+    | {
+        type: 'idle'
+      }
+    | {
+        type: 'marker-enter'
+        nodeId: string
+        isDrama: boolean
+      }
+    | {
+        type: 'marker-teleport'
+        nodeId: string
+      }
+  interface Interaction {
     hostRef: Accessor<HTMLElement | undefined>
     setHostRef: Setter<HTMLElement | undefined>
     isActive: Accessor<boolean>
-    setIsActive: Setter<boolean>
-    initialData?: T
-    status: Accessor<InteractionStatus>
-    setStatus: Setter<InteractionStatus>
-    start: (initialData: T) => void
+    isMovementBlocked: Accessor<boolean>
+    data: Accessor<InteractionData>
+    setData: Setter<InteractionData>
+    start: (initialData: Exclude<InteractionData, { type: 'idle' }>) => void
     finish: (type: 'confirm' | 'cancel') => void
   }
 
   interface GlobalState {
-    viewport: { width: number; height: number; vw: number; vh: number }
+    gameState: GameState
     scene: Scene
-    nodes: NodeRegistry
     popover: SceneryPopover
+    dialog: SceneryDialog
     interaction: Interaction
     player: MyPlayer
     rtc: RtcState
-    misc: Misc
     otherPlayersIds: Accessor<Id<'users'>[]>
-    debugData: Accessor<DebugData>
-    recalculate: () => void
   }
 
   interface Sound {

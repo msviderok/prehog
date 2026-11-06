@@ -1,8 +1,3 @@
-::view-transition-old(scene),
-::view-transition-new(scene) {
-  /*animation: none;*/
-}
-
 /* Slide Left Transition */
 html:active-view-transition-type(slide-left) {
   &::view-transition-old(scene) {
@@ -59,23 +54,94 @@ html:active-view-transition-type(slide-right) {
   }
 }
 
+/* Slide Top Transition */
+html:active-view-transition-type(slide-top) {
+  &::view-transition-old(scene) {
+    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-out-top;
+  }
+  &::view-transition-new(scene) {
+    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-in-top;
+  }
+}
+
+@keyframes slide-out-top {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes slide-in-top {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Slide Bottom Transition */
+html:active-view-transition-type(slide-bottom) {
+  &::view-transition-old(scene) {
+    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-out-bottom;
+  }
+  &::view-transition-new(scene) {
+    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-in-bottom;
+  }
+}
+
+@keyframes slide-out-bottom {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slide-in-bottom {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Warp/Rotate Transition */
 html:active-view-transition-type(warp) {
-  &::view-transition-old(post) {
+  &::view-transition-old(scene) {
     animation: 400ms ease-out both warp-out;
   }
 
-  &::view-transition-new(post) {
+  &::view-transition-new(scene) {
     animation: 400ms ease-out both warp-in;
   }
 }
 
 html:active-view-transition-type(warp-backwards) {
-  &::view-transition-old(post) {
+  &::view-transition-old(scene) {
     animation: 400ms ease-out both warp-out-backwards;
   }
 
-  &::view-transition-new(post) {
+  &::view-transition-new(scene) {
     animation: 400ms ease-out both warp-in-backwards;
   }
 }

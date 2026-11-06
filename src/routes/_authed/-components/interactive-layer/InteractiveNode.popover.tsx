@@ -1,8 +1,9 @@
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
 import { cn } from 'cn'
-import { onCleanup, type ParentProps } from 'solid-js'
+import { type ParentProps } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
 import { useInteractiveNode } from './context'
+import { useSceneContext } from '../Scene.context'
 
 export function Popover(
   props: ParentProps<{
@@ -12,15 +13,16 @@ export function Popover(
     align?: PopoverPrimitive.Positioner.Props['align']
   }>,
 ) {
-  const { nodes } = useGlobalState()
+  const { gameState } = useGlobalState()
   const { id, node } = useInteractiveNode<'popover'>()
+  const sceneName = useSceneContext()
 
-  node.data.positioner = { side: props.side, align: props.align }
+  node.data.popover.positioner = { side: props.side, align: props.align }
 
-  nodes.registerSlot(id, 'popoverContent', () => <>{props.children}</>)
-  nodes.registerSlot(id, 'popoverAnchor', () => (
+  gameState.scene(sceneName).nodes.registerSlot(id, 'popoverContent', () => <>{props.children}</>)
+  gameState.scene(sceneName).nodes.registerSlot(id, 'popoverAnchor', () => (
     <PopoverPrimitive.Trigger
-      ref={node.data.anchorRef}
+      ref={node.data.popover.setAnchorRef}
       data-slot="popover-trigger"
       render="div"
       style={{
@@ -34,11 +36,6 @@ export function Popover(
       `)}
     />
   ))
-
-  onCleanup(() => {
-    nodes.unregisterSlot(id, 'popoverAnchor')
-    nodes.unregisterSlot(id, 'popoverContent')
-  })
 
   return null
 }

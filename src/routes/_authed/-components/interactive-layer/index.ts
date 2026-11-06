@@ -1,5 +1,6 @@
 export * as Marker from './InteractiveNode.marker'
 export * as Preload from './InteractiveNode.preload'
 export { Popover } from './InteractiveNode.popover'
+export { Dialog } from './InteractiveNode.dialog'
 export { Asset } from './InteractiveNode.asset'
 export { Root } from './InteractiveNode.root'

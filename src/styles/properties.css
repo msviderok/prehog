@@ -83,3 +83,8 @@
   inherits: false;
   initial-value: 0px;
 }
+@property --frames {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}

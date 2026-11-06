@@ -116,6 +116,10 @@
   }
 }
 
+@utility player-gif-animation {
+  background-position-x: calc(-1 * var(--original-player-width) * var(--frames));
+}
+
 /*player-admin-hue var(--hue-speed) infinite;*/
 
 @utility player {
@@ -131,7 +135,8 @@
   --animation-speed: 7000ms;
   --hue-speed: 500ms;
   --is-skewed: max(0, calc(var(--is-running) + var(--is-walking) - 1));
-  --ty: calc(var(--player-offset-y) * var(--wuy));
+  --player-y-on-scene: calc(var(--player-offset-y) * var(--wuy));
+  --ty: var(--player-y-on-scene);
   --skx: calc(var(--is-skewed, 0) * var(--facing-dir) * -1 * 10deg);
   --sx: var(--facing-dir);
   --bg-sprite: url('../routes/_authed/-assets/skin_default_idle.png');
@@ -332,4 +337,49 @@
   background-size: cover;
   transform-origin: center bottom;
   opacity: calc(var(--is-running, 0) * 0.5);
+}
+
+html {
+  &.marker-enter {
+    --marker-enter-ms: calc(var(--player-jump-start-animation-ms) + var(--player-jump-end-animation-ms) * 2);
+    & .player[data-me='true'] {
+      @apply player-gif-animation;
+      --frames: 0;
+      --hat-animation: none;
+      --bg-sprite: url('../routes/_authed/-assets/skin_default_jump.png');
+      z-index: 1;
+      animation:
+        player-marker-hop var(--marker-enter-ms) linear forwards,
+        player-marker-frames var(--marker-enter-ms) steps(1, jump-start) forwards;
+    }
+  }
+}
+
+@keyframes player-marker-hop {
+  0%,
+  20% {
+    translate: -50% calc(-50% - 0cqw);
+  }
+  30%,
+  40% {
+    translate: -50% calc(-50% - 20cqw);
+  }
+  100% {
+    translate: -50% calc(-50% + 200cqw);
+  }
+}
+
+/* oxfmt-ignore */
+@keyframes player-marker-frames {
+  0%    {  --frames: 0; }
+  5%    {  --frames: 1 }
+  10%   {  --frames: 2; }
+  15%, 20%   {  --frames: 3; }
+  25%, 30%   {  --frames: 4; }
+  35% {  --frames: 5; clip-path: inset(0 0 0% 0);  }
+  40% {  --frames: 5; clip-path: inset(0 0 0% 0); opacity: 1 }
+  48% {  --frames: 5; clip-path: inset(0 0 30% 0); opacity: 1; }
+  50% {  --frames: 5; clip-path: inset(0 0 60% 0); opacity: 0; }
+  100% {  --frames: 5; clip-path: inset(0 0 60% 0); opacity: 0 }
+
 }

@@ -1,6 +1,13 @@
 @layer components {
   .marker {
     @apply absolute perspective-midrange origin-center top-0 left-0 transform-3d;
+    --delay: attr(data-delay type(<number>), 0);
+    --collided: attr(data-collided type(<number>), 0);
+    --node-tx: attr(data-node-tx type(<number>), 0);
+    --node-ty: attr(data-node-ty type(<number>), 0);
+    --node-width: attr(data-node-width type(<number>), 0);
+    --node-height: attr(data-node-height type(<number>), 0);
+
     --marker-x: calc(var(--node-tx) * var(--wux) + var(--scene-tx));
     --marker-y: calc(var(--node-ty) * var(--wuy));
     --marker-width: calc(var(--node-width) * var(--wux));
@@ -14,6 +21,9 @@
   .marker-polygons {
     @apply transform-3d absolute top-0 left-0 size-full origin-center game-transform transition-[scale] ease-in-out duration-300;
     @apply animate-spinY;
+
+    --len: attr(data-len type(<number>), 0);
+    --bottom-clip-path: attr(data-bottom-clip-path type(*), none);
 
     --rx: -15deg;
     --prism-radius: calc(var(--marker-width) / 2);
@@ -33,7 +43,7 @@
 
     /* Prism side */
     & > * {
-      @apply absolute will-change-transform bg-ph-mustard-yellow border-shade-ph-mustard-yellow/10;
+      @apply absolute will-change-transform bg-ph-mustard-yellow border-shade-ph-mustard-yellow/10 transition-all;
       @apply animate-flactuate-height;
 
       --angle: calc(var(--i) * var(--single-side-angle));
@@ -63,10 +73,58 @@
       clip-path: var(--bottom-clip-path);
       filter: brightness(calc(120% + var(--collided, 0) * 20%));
     }
+
+    &:before {
+      @apply absolute top-1/2 left-1/2 bg-black z-0;
+      --sx: 0;
+      content: '';
+      opacity: 0;
+      width: calc(var(--marker-width) * 1);
+      height: calc(var(--marker-width) * 1);
+      overflow: hidden;
+      transform-origin: center;
+      transform: translate(-50%, -50%) translateY(calc(var(--marker-height) / 2)) rotateX(90deg) scaleX(var(--sx));
+      clip-path: var(--bottom-clip-path);
+      filter: brightness(calc(120% + var(--collided, 0) * 20%));
+    }
+
+    &.marker-enter-anchor {
+      @apply animate-none;
+      --a: var(--player-jump-animation-ms);
+      & > * {
+        @apply animate-none;
+        --sy: 0;
+        filter: brightness(120%);
+        transition: transform var(--a);
+      }
+
+      &:before {
+        --sx: 2.5;
+        z-index: 1;
+        opacity: 1;
+        transition:
+          opacity linear,
+          transform var(--a) ease var(--a);
+      }
+    }
   }
 
   .marker-floating-action {
     @apply game-transform transition-opacity absolute top-0 left-1/2 flex flex-col items-center gap-4 -translate-x-1/2 -z-1 isolate;
     opacity: var(--collided, 0);
   }
+}
+
+/* oxfmt-ignore */
+@keyframes wormhole {
+  10% {}
+  20% {}
+  30% {}
+  40% {}
+  50% {}
+  60% {}
+  70% {}
+  80% {}
+  90% {}
+  100% {}
 }

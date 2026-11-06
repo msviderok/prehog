@@ -5,6 +5,7 @@
     --attr-h: attr(data-height type(<number>), var(--h));
     --attr-x: attr(data-x type(<number>), var(--x, 0));
     --attr-y: attr(data-y type(<number>), var(--y, 0));
+    --attr-rotate: attr(data-rotate type(<number>), 0);
     --tx: calc(var(--scene-tx, 0) + var(--dtx, 0) + (var(--attr-x) * var(--wux)));
     --ty: calc(var(--dty, 0) + var(--attr-y) * var(--wuy));
     width: calc(var(--dw, var(--attr-w)) * 1px);
@@ -39,6 +40,7 @@
       transform-origin: top left;
       transition-property: filter;
       isolation: isolate;
+      transform: rotateZ(calc(var(--attr-rotate) * 1deg));
     }
 
     &[data-open='true'] {

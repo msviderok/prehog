@@ -55,10 +55,11 @@ export const INTERPOLATION_DELAY_MS = 200
 export const HEARTBEAT_MS = 10_000
 
 export const PLAYER_JUMP_ANIMATION_FRAMES = 8
-export const PLAYER_JUMP_ANIMATION_MS = 400
+export const PLAYER_JUMP_ANIMATION_MS = 700
 export const PLAYER_JUMP_ANIMATION_MS_PER_FRAME = PLAYER_JUMP_ANIMATION_MS / PLAYER_JUMP_ANIMATION_FRAMES
 export const PLAYER_JUMP_START_ANIMATION_MS = 5 * PLAYER_JUMP_ANIMATION_MS_PER_FRAME
 export const PLAYER_JUMP_END_ANIMATION_MS = 4 * PLAYER_JUMP_ANIMATION_MS_PER_FRAME
+export const PLAYER_JUMP_END_DRAMATIC_ANIMATION_MS = 10_000
 
 export const PLAYER_BASE_SPEED_PX_PER_SEC = 1000
 export const PLAYER_RUNNING_SPEED_MOD = 2.0
@@ -80,7 +81,7 @@ export const SCENE: Record<
   }
 > = {
   main: { width: 9785, height: COMMON_SCENE_HEIGHT, playerInitialX: 2, playerInitialY: 83 },
-  tour: { width: 3596, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 85 },
+  tour: { width: 5000, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 80 },
   application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 62 },
   pet: { width: 5000, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 80 },
   personal: { width: 0, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 0 },

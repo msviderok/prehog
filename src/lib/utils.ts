@@ -115,3 +115,7 @@ export function hasConvexAudience(token: string) {
   const audiences = Array.isArray(payload?.aud) ? payload.aud : payload?.aud ? [payload.aud] : []
   return audiences.includes('convex')
 }
+
+export function isMarkerAction(data: InteractionData): data is Extract<InteractionData, { type: `marker-${string}` }> {
+  return data.type.startsWith('marker-')
+}

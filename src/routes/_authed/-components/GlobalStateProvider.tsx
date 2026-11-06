@@ -1,347 +1,133 @@
-import { Dialog } from '@/components/ui/dialog'
+import { SOUNDS } from '@/audio'
 import { api } from '@/convex/api'
 import {
-  COMMON_SCENE_HEIGHT,
-  EVENT_MARKER_SIZE,
-  GAME_CONTENT_HEIGHT_RATIO,
-  PLAYER_HITBOX_SIZE,
   PLAYER_JUMP_ANIMATION_MS,
   PLAYER_JUMP_END_ANIMATION_MS,
+  PLAYER_JUMP_END_DRAMATIC_ANIMATION_MS,
   PLAYER_JUMP_START_ANIMATION_MS,
-  PLAYER_SIZE,
-  SCENE,
 } from '@/lib/constants'
 import { useStableQuery } from '@/lib/useStableQuery'
+import { Dialog as DialogPrimitive } from '@msviderok/base-ui-solid/dialog'
 import { Popover as PopoverPrimitive } from '@msviderok/base-ui-solid/popover'
-import { createHotkeys, createKeyHold, getKeyStateTracker } from '@tanstack/solid-hotkeys'
-import { useNavigate } from '@tanstack/solid-router'
+import { debounce } from '@solid-primitives/scheduled'
+import { createHeldKeys, createHotkey } from '@tanstack/solid-hotkeys'
+import { useBlocker } from '@tanstack/solid-router'
 import { useClerk } from 'clerk-solidjs-tanstack-start'
 import { useMutation } from 'convex-solidjs'
-import { batch, createEffect, createMemo, createSignal, on, onMount, type ParentProps } from 'solid-js'
+import type { FunctionReturnType } from 'convex/server'
+import { batch, createEffect, createMemo, createSignal, ErrorBoundary, on, Show, type ParentProps } from 'solid-js'
 import { createRtcState } from '../../../lib/createRtcState'
-import { GlobalStateContext } from './GlobalStateContext'
-import { NodeRegistry } from './NodeRegistry'
+import { GameState } from './GameState'
+import { GlobalStateContext, useGlobalState } from './GlobalStateContext'
+import { Loading } from './Loading'
+import { useGameLoop } from './useGameLoop'
+import { useWatchPresence } from './useWatchPresence'
 
-type DebugData = Pick<GlobalState, 'scene' | 'player'>
+export function GameEngine(props: ParentProps) {
+  const { data: currentScene } = useStableQuery(api.gameState.currentScene)
+  const { data: myPlayerInitialState } = useStableQuery(api.gameState.getMyInitialState)
+  const { data: lastKnownXPositions } = useStableQuery(api.gameState.getLastKnownXPositions)
+  const isMyPlayerStateLoaded = createMemo(() => myPlayerInitialState() !== undefined)
+  const isCurrentSceneFetched = createMemo(() => currentScene() !== undefined)
+  const isLastPositionsLoaded = createMemo(() => lastKnownXPositions() !== undefined)
+  const isEverythingLoaded = createMemo(
+    () => isMyPlayerStateLoaded() && isCurrentSceneFetched() && isLastPositionsLoaded(),
+  )
 
-export function GlobalStateProvider(props: ParentProps) {
+  return (
+    <ErrorBoundary
+      fallback={(err, _reset) => {
+        console.log('🔴')
+        console.error(err)
+      }}
+    >
+      <Show when={isEverythingLoaded()} fallback={<Loading type="convex" />}>
+        <GlobalStateProvider
+          currentScene={currentScene()!}
+          myPlayerInitialState={myPlayerInitialState()!}
+          lastKnownXPositions={lastKnownXPositions()!}
+        >
+          {props.children}
+        </GlobalStateProvider>
+      </Show>
+    </ErrorBoundary>
+  )
+}
+
+function GlobalStateProvider(
+  props: ParentProps<{
+    currentScene: FunctionReturnType<typeof api.gameState.currentScene>
+    myPlayerInitialState: FunctionReturnType<typeof api.gameState.getMyInitialState>
+    lastKnownXPositions: FunctionReturnType<typeof api.gameState.getLastKnownXPositions>
+  }>,
+) {
   const rtc = createRtcState()
   const player = createPlayer()
-  const navigate = useNavigate()
-
-  const nodes: GlobalState['nodes'] = new NodeRegistry()
-  const viewport: GlobalState['viewport'] = { width: 0, height: 0, vw: 0, vh: 0 }
-  const misc: GlobalState['misc'] = {
-    player: {
-      size: { width: 0, height: 0, halfWidth: 0, halfHeight: 0 },
-      hitbox: { y1: 0, y2: 0 },
-    },
-    eventMarker: { r: 0, h: 0 },
-  }
-
-  const { data: currentScene } = useStableQuery(api.gameState.currentScene)
-  const scene: GlobalState['scene'] = {
-    ref: null as unknown as HTMLElement,
-    backgroundRef: null as unknown as HTMLElement,
-    popupContainerRef: null as unknown as HTMLElement,
-    elementsContainerRef: null as unknown as HTMLElement,
-    scale: 1,
-    worldUnit: { x: 0, y: 0 }, // scaled/100 in px
-    originalSize: { width: 0, height: 0 },
-    scaledSize: { width: 0, height: 0 },
-    walkableMinX: 0,
-    walkableMaxX: 0,
-    tx: 0,
-    cameraCenterAtX: 0,
-    s50PX: 0,
-    s50WU: 0,
-    cameraStartTravelAtX: 0,
-    cameraEndTravelAtX: 0,
-    currentScene: () => currentScene()!.scene,
-  }
-  createEffect(
-    on([() => currentScene()?.scene, () => currentScene()?.lastKnownXPosition], ([sceneValue, lastKnownX]) => {
-      if (sceneValue == null) return
-
-      const root = document.documentElement
-      const sceneInitialState = SCENE[sceneValue]
-
-      misc.player.size.width = (PLAYER_HITBOX_SIZE.width / sceneInitialState.width) * 100
-      misc.player.size.height = (PLAYER_HITBOX_SIZE.height / sceneInitialState.height) * 100
-      misc.player.size.halfWidth = misc.player.size.width / 2
-      misc.player.size.halfHeight = misc.player.size.height / 2
-      root.style.setProperty('--original-player-width', `${PLAYER_SIZE.width}px`)
-      root.style.setProperty('--original-player-height', `${PLAYER_SIZE.height}px`)
-      root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)
-      root.style.setProperty('--original-player-hitbox-height', `${PLAYER_HITBOX_SIZE.height}px`)
-
-      misc.player.hitbox.y1 = sceneInitialState.playerInitialY - misc.player.size.halfHeight
-      misc.player.hitbox.y2 = sceneInitialState.playerInitialY + misc.player.size.halfHeight
-      root.style.setProperty('--player-offset-y', `${sceneInitialState.playerInitialY}`)
-
-      scene.originalSize.width = sceneInitialState.width
-      scene.originalSize.height = sceneInitialState.height
-      root.style.setProperty('--original-scene-width', `${scene.originalSize.width}px`)
-      root.style.setProperty('--original-scene-height', `${scene.originalSize.height}px`)
-
-      scene.worldUnit.x = scene.originalSize.width / 100
-      scene.worldUnit.y = scene.originalSize.height / 100
-      root.style.setProperty('--wux', `${scene.worldUnit.x}px`)
-      root.style.setProperty('--wuy', `${scene.worldUnit.y}px`)
-
-      scene.walkableMinX = misc.player.size.halfWidth
-      scene.walkableMaxX = 100 - misc.player.size.halfWidth
-
-      player.x = lastKnownX ?? sceneInitialState.playerInitialX ?? 0
-      player.__gameloop.hitbox.x1 = sceneInitialState.playerInitialX
-      player.__gameloop.hitbox.x2 = sceneInitialState.playerInitialX + misc.player.size.width
-      player.__gameloop.hitbox.y1 = misc.player.hitbox.y1
-      player.__gameloop.hitbox.y2 = misc.player.hitbox.y2
-
-      navigate({ to: `/${sceneValue}` })
-      queueMicrotask(() => calculate())
-    }),
-  )
-
+  const popover = createPopover()
+  const dialog = createDialog()
+  const scene = createScene()
+  const interaction = createInteraction({ player, dialog })
   const { data: otherPlayersIds } = useStableQuery(api.users.listOnlineUsers, {}, { initialData: [] })
-
-  const [activeNodeId, setActiveNodeId] = createSignal<string>()
-  const [prevActiveNodeId, setPrevActiveNodeId] = createSignal<string>()
-  function setActiveNode(id: string | undefined) {
-    batch(() => {
-      setPrevActiveNodeId(activeNodeId())
-      setActiveNodeId(id)
-    })
-  }
-  const popover: GlobalState['popover'] = {
-    activeNodeId,
-    prevActiveNodeId,
-    setActiveNode,
-  }
-
-  const [isInteractionActive, setIsInteractionActive] = createSignal<boolean>(false)
-  const [hostRef, setHostRef] = createSignal<HTMLElement>()
-  const [status, setStatus] = createSignal<InteractionStatus>('enter-marker')
-  const movementBlocked = createMemo(() => isInteractionActive())
-  createEffect(on(movementBlocked, (blocked) => (player.__gameloop.isHijacked = blocked)))
-  const interaction: GlobalState['interaction'] = {
-    hostRef,
-    setHostRef,
-    isActive: isInteractionActive,
-    setIsActive: setIsInteractionActive,
-    status,
-    setStatus,
-    initialData: undefined,
-    start<T>(initialData: T) {
-      this.initialData = initialData
-
-      // setIsInteractionActive(true)
-    },
-    finish() {
-      setIsInteractionActive(false)
-    },
-  }
-
-  function calculate() {
-    viewport.width = window.innerWidth
-    viewport.height = window.innerHeight
-    viewport.vw = viewport.width / 100
-    viewport.vh = viewport.height / 100
-
-    const root = document.documentElement
-    const gameContentHeight = window.innerHeight * GAME_CONTENT_HEIGHT_RATIO
-    scene.scale = Math.min(gameContentHeight / COMMON_SCENE_HEIGHT, 1)
-    root?.style.setProperty('--scale', `${scene.scale}`)
-
-    scene.scaledSize.width = scene.originalSize.width * scene.scale
-    scene.scaledSize.height = scene.originalSize.height * scene.scale
-    root?.style.setProperty('--real-scene-height', `${scene.scaledSize.height}px`)
-
-    scene.s50PX = Math.min(window.innerWidth, scene.scaledSize.width) / 2
-    scene.s50WU = (scene.s50PX / scene.scaledSize.width) * 100
-    scene.cameraStartTravelAtX = scene.s50WU
-    scene.cameraEndTravelAtX = 100 - scene.s50WU
-
-    misc.eventMarker.r = EVENT_MARKER_SIZE.width / scene.worldUnit.x
-    misc.eventMarker.h = EVENT_MARKER_SIZE.height / scene.worldUnit.y
-  }
-
-  const updateIsWalking = useMutation(api.gameState.setIsWalking)
-  const updateIsRunning = useMutation(api.gameState.setIsRunning)
-  const updateDirection = useMutation(api.gameState.setDirection)
-  const isShiftHeld = createKeyHold('Shift')
-  const keytracker = getKeyStateTracker()
-
-  function updateGameStateIfChanged(cb: () => void) {
-    return () => {
-      const prevIsWalking = player.isWalking()
-      const prevDirection = player.direction()
-
-      cb()
-
-      const newIsWalking = player.isWalking()
-      const newDirection = player.direction()
-
-      if (prevIsWalking !== newIsWalking) {
-        void updateIsWalking.mutate({ isWalking: newIsWalking })
-      }
-      if (newDirection !== 0 && prevDirection !== newDirection) {
-        void updateDirection.mutate({ direction: newDirection })
-      }
-    }
-  }
-
-  const startMovingLeft = updateGameStateIfChanged(() => {
-    batch(() => {
-      player.setDirection(-1)
-      player.setIsWalking(true)
-      player.setAction('walk')
-    })
-  })
-
-  const stopMovingLeft = updateGameStateIfChanged(() => {
-    batch(() => {
-      player.setIsWalking(keytracker.isKeyHeld('D') || keytracker.isKeyHeld('ArrowRight') ? true : false)
-      if (player.isWalking() === false) {
-        player.setDirection(0)
-        player.setAction('idle')
-      }
-    })
-  })
-
-  const startMovingRight = updateGameStateIfChanged(() => {
-    batch(() => {
-      player.setIsWalking(true)
-      player.setDirection(1)
-      player.setAction('walk')
-    })
-  })
-
-  const stopMovingRight = updateGameStateIfChanged(() => {
-    batch(() => {
-      player.setIsWalking(keytracker.isKeyHeld('A') || keytracker.isKeyHeld('ArrowLeft') ? true : false)
-      if (player.isWalking() === false) {
-        player.setDirection(0)
-        player.setAction('idle')
-      }
-    })
-  })
-
-  const jump = updateGameStateIfChanged(() => {
-    if (player.isJumping()) return
-    console.log('Jump')
-    let timeout: NodeJS.Timeout
-    batch(() => {
-      player.setAction('jump-start')
-      timeout = setTimeout(() => {
-        player.setAction('jump-end')
-        clearTimeout(timeout)
-        timeout = setTimeout(() => {
-          player.setAction(player.isWalking() ? 'walk' : 'idle')
-        }, PLAYER_JUMP_END_ANIMATION_MS)
-      }, PLAYER_JUMP_START_ANIMATION_MS)
-    })
-  })
-
-  createHotkeys(
-    [
-      { hotkey: 'A', callback: startMovingLeft, options: { eventType: 'keydown' } },
-      { hotkey: 'Shift+A', callback: startMovingLeft, options: { eventType: 'keydown' } },
-      { hotkey: 'ArrowLeft', callback: startMovingLeft, options: { eventType: 'keydown' } },
-      { hotkey: 'Shift+ArrowLeft', callback: startMovingLeft, options: { eventType: 'keydown' } },
-
-      { hotkey: 'A', callback: stopMovingLeft, options: { eventType: 'keyup' } },
-      { hotkey: 'Shift+A', callback: stopMovingLeft, options: { eventType: 'keyup' } },
-      { hotkey: 'ArrowLeft', callback: stopMovingLeft, options: { eventType: 'keyup' } },
-      { hotkey: 'Shift+ArrowLeft', callback: stopMovingLeft, options: { eventType: 'keyup' } },
-
-      { hotkey: 'D', callback: startMovingRight, options: { eventType: 'keydown' } },
-      { hotkey: 'Shift+D', callback: startMovingRight, options: { eventType: 'keydown' } },
-      { hotkey: 'ArrowRight', callback: startMovingRight, options: { eventType: 'keydown' } },
-      { hotkey: 'Shift+ArrowRight', callback: startMovingRight, options: { eventType: 'keydown' } },
-
-      { hotkey: 'D', callback: stopMovingRight, options: { eventType: 'keyup' } },
-      { hotkey: 'Shift+D', callback: stopMovingRight, options: { eventType: 'keyup' } },
-      { hotkey: 'ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
-      { hotkey: 'Shift+ArrowRight', callback: stopMovingRight, options: { eventType: 'keyup' } },
-
-      { hotkey: 'Space', callback: jump, options: { eventType: 'keydown', requireReset: false } },
-      { hotkey: 'Shift+Space', callback: jump, options: { eventType: 'keydown', requireReset: false } },
-    ],
-    {
-      requireReset: true,
-      conflictBehavior: 'allow',
-      get enabled() {
-        return movementBlocked() === false
-      },
-    },
-  )
-
-  createEffect(
-    on(isShiftHeld, (shift) => {
-      player.setIsRunning(shift)
-      player.__gameloop.speed = shift ? 2.0 : 1.0
-      void updateIsRunning.mutate({ isRunning: shift })
-    }),
-  )
-
-  onMount(() => {
-    const root = document.documentElement
-    root.style.setProperty('--game-content-height-ratio', `${GAME_CONTENT_HEIGHT_RATIO}`)
-    root.style.setProperty('--player-jump-animation-ms', `${PLAYER_JUMP_ANIMATION_MS}ms`)
-    root.style.setProperty('--player-jump-start-animation-ms', `${PLAYER_JUMP_START_ANIMATION_MS}ms`)
-    root.style.setProperty('--player-jump-end-animation-ms', `${PLAYER_JUMP_END_ANIMATION_MS}ms`)
+  const gameState = new GameState({
+    player,
+    currentScene: () => props.currentScene,
+    lastKnownXPositions: () => props.lastKnownXPositions,
   })
 
   if (import.meta.hot) {
     import.meta.hot.on('vite:afterUpdate', () => {
-      calculate()
+      gameState.updateScene()
     })
   }
-
-  // const getScene = () => scene
-  // const getPlayer = () => player
-
-  const [debugData, setDebugData] = createSignal<DebugData>({ scene, player })
-  // onMount(() => {
-  //   const i = setInterval(() => {
-  //     const s = getScene()
-  //     const p = getPlayer()
-  //     setDebugData({ scene: s, player: p })
-  //   }, 100)
-  //   onCleanup(() => clearInterval(i))
-  // })
-
-  const isPopoverOpen = createMemo(() => popover.activeNodeId() != null)
 
   return (
     <GlobalStateContext.Provider
       value={{
-        recalculate: calculate,
-        nodes,
+        gameState,
         scene,
         rtc,
         player,
-        misc,
-        viewport,
-        debugData,
         popover,
+        dialog,
         interaction,
         otherPlayersIds,
       }}
     >
-      <Dialog
+      <DialogPrimitive.Root
+        data-slot="dialog"
         modal="trap-focus"
-        open={interaction.isActive()}
-        onOpenChange={(open, _e, _reason) => {
-          // if (reason === 'escape-key') return
-          interaction.setIsActive(open)
+        open={dialog.isOpen()}
+        dismissible={false}
+        onOpenChange={(open, _e, reason) => {
+          console.log(open, reason)
+          if (reason === 'escape-key') return
         }}
       >
-        <PopoverPrimitive.Root open={isPopoverOpen()}>{props.children}</PopoverPrimitive.Root>
-      </Dialog>
+        <PopoverPrimitive.Root open={popover.isOpen()}>
+          <GameInnerImplementaion>
+            {props.children}
+            {/*<GameUI />*/}
+          </GameInnerImplementaion>
+        </PopoverPrimitive.Root>
+      </DialogPrimitive.Root>
     </GlobalStateContext.Provider>
   )
+}
+
+function GameInnerImplementaion(props: ParentProps) {
+  useGameLoop()
+  useWatchPresence()
+  useKeyboardManager()
+
+  useBlocker({
+    enableBeforeUnload: false,
+    shouldBlockFn: ({ action }) => {
+      if (action === 'BACK' || action === 'FORWARD') return true
+      return false
+    },
+  })
+
+  return <>{props.children}</>
 }
 
 function createPlayer() {
@@ -353,7 +139,6 @@ function createPlayer() {
   const [isRunning, setIsRunning] = createSignal(false)
   const [direction, setDirection] = createSignal<MovementDirection>(0)
   const [facingDirection, setFacingDirection] = createSignal<FacingDirection>('right')
-  const [isInitialDataLoaded, setIsInitialDataLoaded] = createSignal(false)
   const [renderedSlotRef, setRenderedSlotRef] = createSignal<HTMLElement>()
   const [action, setAction] = createSignal<MyPlayerAction>('idle')
   const isJumping = createMemo(() => action().startsWith('jump-'))
@@ -370,7 +155,6 @@ function createPlayer() {
     action,
     setAction,
     isAdmin,
-
     hat,
     setHat,
     skin,
@@ -378,7 +162,6 @@ function createPlayer() {
     direction,
     setDirection,
     facingDirection,
-    isInitialDataLoaded,
     __gameloop: {
       tx: 0,
       direction: 0,
@@ -386,6 +169,8 @@ function createPlayer() {
       hitbox: { x1: 0, x2: 0, y1: 0, y2: 0 },
       shouldSendBatches: false,
       isHijacked: false,
+      lastPosition: null,
+      paused: false,
     },
     setInitialData(data) {
       batch(() => {
@@ -394,8 +179,35 @@ function createPlayer() {
         setSkin(data.skin)
         setDirection(0)
         setFacingDirection(data.direction)
-        setIsInitialDataLoaded(true)
       })
+    },
+    playAnimation: {
+      jump() {
+        player.setAction('jump-start')
+        debounce(() => {
+          player.setAction('jump-end')
+          debounce(() => {
+            player.setAction(player.isWalking() ? 'walk' : 'idle')
+          }, PLAYER_JUMP_END_ANIMATION_MS)()
+        }, PLAYER_JUMP_START_ANIMATION_MS)()
+      },
+      enterMarker(isDrama) {
+        if (isDrama === false) return
+
+        const dramaticMusic = isDrama ? SOUNDS.music.dramatic : null
+        player.setAction('jump-start')
+        debounce(() => {
+          player.setAction('jump-midair')
+          if (isDrama) dramaticMusic?.play()
+          debounce(() => {
+            dramaticMusic?.stop()
+            // player.setAction('teleport-from-top')
+          }, 10000)()
+          debounce(() => {
+            player.setAction('jump-end')
+          }, PLAYER_JUMP_END_ANIMATION_MS)()
+        }, PLAYER_JUMP_START_ANIMATION_MS)()
+      },
     },
   }
 
@@ -412,10 +224,185 @@ function createPlayer() {
     {},
     { initialData: false },
   )
+
   createEffect(on(shouldSendBatches, (shouldSend) => (player.__gameloop.shouldSendBatches = shouldSend)))
 
-  const getMyInitialState = useMutation(api.gameState.getMyInitialState)
-  onMount(() => void getMyInitialState.mutate({}).then(player.setInitialData))
-
   return player
+}
+
+function createInteraction(props: Pick<GlobalState, 'player' | 'dialog'>) {
+  const [hostRef, setHostRef] = createSignal<HTMLElement>()
+  const [data, setData] = createSignal<InteractionData>({ type: 'idle' })
+  const isInteractionActive = createMemo(() => data().type !== 'idle')
+  const isMovementBlocked = createMemo(() => isInteractionActive())
+
+  createEffect(on(isMovementBlocked, (blocked) => (props.player.__gameloop.isHijacked = blocked)))
+
+  const interaction: GlobalState['interaction'] = {
+    hostRef,
+    setHostRef,
+    isActive: isInteractionActive,
+    isMovementBlocked,
+    data,
+    setData,
+    start(initialData) {
+      switch (initialData.type) {
+        case 'marker-enter': {
+          debounce(() => props.dialog.open(initialData.nodeId), PLAYER_JUMP_ANIMATION_MS)()
+          if (initialData.isDrama) {
+            const dramaticMusic = SOUNDS.music.dramatic
+            debounce(() => dramaticMusic?.play(), PLAYER_JUMP_END_ANIMATION_MS)()
+            debounce(() => dramaticMusic?.stop(), PLAYER_JUMP_END_DRAMATIC_ANIMATION_MS)()
+          }
+          break
+        }
+      }
+
+      batch(() => {
+        setData(initialData)
+      })
+    },
+    finish() {
+      batch(() => {
+        setData({ type: 'idle' })
+        props.dialog.close()
+      })
+    },
+  }
+
+  createEffect(
+    on(interaction.data, (currentInteraction) => {
+      const root = document.documentElement
+      switch (currentInteraction.type) {
+        case 'marker-enter': {
+          root.classList.add('marker-enter')
+          break
+        }
+
+        default:
+          root.classList.remove('marker-enter')
+      }
+    }),
+  )
+
+  return interaction
+}
+
+function createPopover(): GlobalState['popover'] {
+  const [activeNodeId, setActiveNodeId] = createSignal<string>()
+  const [prevActiveNodeId, setPrevActiveNodeId] = createSignal<string>()
+  const isOpen = createMemo(() => activeNodeId() != null)
+
+  function setActiveNode(id: string | undefined) {
+    batch(() => {
+      setPrevActiveNodeId(activeNodeId())
+      setActiveNodeId(id)
+    })
+  }
+
+  return {
+    isOpen,
+    activeNodeId,
+    prevActiveNodeId,
+    setActiveNode,
+  }
+}
+
+function createDialog(): GlobalState['dialog'] {
+  const [activeNodeId, setActiveNodeId] = createSignal<string>()
+  return {
+    activeNodeId,
+    isOpen: createMemo(() => activeNodeId() != null),
+    open(id) {
+      return setActiveNodeId(id)
+    },
+    close() {
+      return setActiveNodeId(undefined)
+    },
+  }
+}
+
+function createScene(): GlobalState['scene'] {
+  const [viewportRef, setViewportRef] = createSignal<HTMLDivElement>()
+  return {
+    ref: null as unknown as HTMLElement,
+    backgroundRef: null as unknown as HTMLElement,
+    popupContainerRef: null as unknown as HTMLElement,
+    elementsContainerRef: null as unknown as HTMLElement,
+    viewportRef,
+    setViewportRef,
+    tx: 0,
+  }
+}
+
+function useKeyboardManager(): void {
+  const { player, interaction } = useGlobalState()
+  const updateIsWalking = useMutation(api.gameState.setIsWalking)
+  const updateIsRunning = useMutation(api.gameState.setIsRunning)
+  const updateDirection = useMutation(api.gameState.setDirection)
+
+  const heldKeys = createHeldKeys()
+  createEffect(
+    on(
+      () => heldKeys(),
+      (held) => {
+        if (interaction.isMovementBlocked()) return
+
+        const keys = new Set(held.map((k) => k.toLowerCase()))
+        const left = keys.has('a') || keys.has('arrowleft')
+        const right = keys.has('d') || keys.has('arrowright')
+        const walking = left || right
+        const running = keys.has('shift')
+        const direction = left === right ? 0 : left ? -1 : 1
+
+        const prevWalking = player.isWalking()
+        const prevRunning = player.isRunning()
+        const prevDirection = player.direction()
+
+        batch(() => {
+          player.setIsWalking(walking)
+          player.setIsRunning(running)
+          player.setDirection(direction)
+          player.__gameloop.speed = running ? 2 : 1
+          player.setAction(walking ? 'walk' : 'idle')
+        })
+
+        if (prevWalking !== walking) {
+          void updateIsWalking.mutate({ isWalking: walking })
+        }
+        if (prevRunning !== running) {
+          void updateIsRunning.mutate({ isRunning: running })
+        }
+        if (direction !== 0 && prevDirection !== direction) {
+          void updateDirection.mutate({ direction: direction })
+        }
+      },
+    ),
+  )
+
+  createHotkey(
+    'Space',
+    () => {
+      if (player.isJumping()) return
+      let timeout: NodeJS.Timeout
+      batch(() => {
+        player.setAction('jump-start')
+        timeout = setTimeout(() => {
+          player.setAction('jump-end')
+          clearTimeout(timeout)
+          timeout = setTimeout(() => {
+            player.setAction(player.isWalking() ? 'walk' : 'idle')
+            clearTimeout(timeout)
+          }, PLAYER_JUMP_END_ANIMATION_MS)
+        }, PLAYER_JUMP_START_ANIMATION_MS)
+      })
+    },
+    {
+      requireReset: true,
+      conflictBehavior: 'allow',
+      get enabled() {
+        return interaction.isMovementBlocked() === false
+      },
+    },
+  )
 }
