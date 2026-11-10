@@ -1,4 +1,4 @@
-import type { api } from '@/convex/api'
+import { api } from '@/convex/api'
 import {
   COMMON_SCENE_HEIGHT,
   EVENT_MARKER_SIZE,
@@ -11,7 +11,8 @@ import {
   PLAYER_SIZE,
   SCENE,
 } from '@/lib/constants'
-import { useNavigate } from '@tanstack/solid-router'
+import { clamp } from '@/lib/utils'
+import { useQuery } from 'convex-solidjs'
 import type { FunctionReturnType } from 'convex/server'
 import {
   type Accessor,
@@ -29,6 +30,9 @@ import { createStore, type SetStoreFunction, type Store } from 'solid-js/store'
 declare global {
   type SceneCache = _SceneCache
 }
+
+type InitialState = FunctionReturnType<typeof api.gameState.getMyInitialState>
+type _PartialGlobalState = Pick<GlobalState, 'player' | 'scene'>
 
 interface _SceneCache {
   nodes: {
@@ -97,26 +101,23 @@ const NODE_VIEW_NAMES = defineEnumNames<InteractiveNode['type']>()(['player', 'p
 export class GameState {
   public sceneCache = new Map<CurrentScene, SceneCache>()
   public currentScene: Accessor<CurrentScene>
+  public sceneCacheForGameLoop: Accessor<SceneCache>
 
-  #currentSceneCacheAccessor: Accessor<SceneCache>
-  #setCurrentScene: Setter<CurrentScene>
+  #globalState: _PartialGlobalState
+  #lastKnownXPosition = new Map<CurrentScene, number | undefined>()
   #nextScene: Accessor<CurrentScene | null>
   #setNextScene: Setter<CurrentScene | null>
+  #setCurrentScene: Setter<CurrentScene>
 
-  #player: GlobalState['player']
-  #lastKnownXPosition = new Map<CurrentScene, number | undefined>()
-
-  constructor(props: {
-    player: GlobalState['player']
-    currentScene: Accessor<FunctionReturnType<typeof api.gameState.currentScene>>
-    lastKnownXPositions: Accessor<FunctionReturnType<typeof api.gameState.getLastKnownXPositions>>
-  }) {
+  constructor(props: { globalState: _PartialGlobalState; initialState: InitialState }) {
     for (const scene of SCENE_NAMES) {
       const sceneStatic = createSceneStatic(scene)
+      const sceneScaled = createSceneScaled(sceneStatic)
       const [slots, setSlots] = createStore<Record<string, NodeSlots>>({})
+
       this.sceneCache.set(scene, {
         static: sceneStatic,
-        scaled: createSceneScaled(sceneStatic),
+        scaled: sceneScaled,
         nodes: {
           list: new Map(),
           views: new Map(NODE_VIEW_NAMES.map((view) => [view, new Map()])),
@@ -144,76 +145,73 @@ export class GameState {
       })
     }
 
-    this.#player = props.player
-
-    const initialScene = props.currentScene().scene
-    const [__currentScene, __setCurrentScene] = createSignal(initialScene)
+    const [__currentScene, __setCurrentScene] = createSignal(props.initialState.scene)
+    const [__nextScene, __setNextScene] = createSignal<CurrentScene | null>(null)
     this.currentScene = __currentScene
     this.#setCurrentScene = __setCurrentScene
-    this.#currentSceneCacheAccessor = createMemo(() => {
-      const scene = this.currentScene()
-      const cache = this.sceneCache.get(scene)
-      if (!cache) throw new Error(`No cache for scene "${scene}".`)
-      return cache
-    })
-
-    const [__nextScene, __setNextScene] = createSignal<CurrentScene | null>(null)
     this.#nextScene = __nextScene
     this.#setNextScene = __setNextScene
+    this.sceneCacheForGameLoop = createMemo(() => this.sceneCache.get(this.#nextScene() ?? this.currentScene())!)
+    this.#globalState = props.globalState
 
-    const navigate = useNavigate()
-    createEffect(
-      on(
-        () => props.currentScene().scene,
-        async (newScene) => {
-          this.#setNextScene(newScene)
-          const transition = document.startViewTransition({
-            types: ['slide-bottom'],
-            update: async () => await navigate({ to: `/${newScene}` }),
-          })
-
-          // this.#player.__gameloop.paused = true
-
-          try {
-            await transition.finished
-          } catch (e) {
-            console.error('VT Error', e)
-          } finally {
-            batch(() => {
-              this.#setCurrentScene(this.#nextScene()!)
-              this.#setNextScene(null)
-            })
-            // this.#player.__gameloop.paused = false
-            this.#updateSceneCssVariables()
-          }
-        },
-      ),
-    )
-
-    this.#registerSceneChangeCalculator()
     this.#registerWindowResizeListener()
     this.#registerStaticCssVariables()
-
-    this.#updateSceneCssVariables()
+    this.#registerLastKnownXPositionsListener(props.initialState)
+    this.update()
   }
 
   public scene(): SceneCache
   public scene(sceneName: CurrentScene): SceneCache
   public scene(sceneName?: CurrentScene): SceneCache {
-    return sceneName ? this.sceneCache.get(sceneName)! : this.#currentSceneCacheAccessor()
+    return this.sceneCache.get(sceneName ?? this.currentScene())!
   }
 
-  #registerSceneChangeCalculator() {
+  public update(scene = this.currentScene()) {
+    const cache = this.sceneCache.get(scene)!
+    this.updateSceneCssVariables(scene)
+    this.#globalState.player.updateForNewScene(cache, this.#lastKnownXPosition.get(scene))
+    this.#globalState.scene.centerCameraAtPlayer(this.#globalState.player, cache)
+  }
+
+  public initiateSceneChange(newScene: CurrentScene) {
+    this.#lastKnownXPosition.set(this.currentScene(), this.#globalState.player.x)
+    this.#setNextScene(newScene)
+  }
+
+  public sceneChangeSettled() {
+    const next = this.#nextScene()
+    if (!next) throw new Error('No next scene to settle to')
+    batch(() => {
+      this.#setCurrentScene(next)
+      this.#setNextScene(null)
+    })
+  }
+
+  public updateSceneCssVariables(scene = this.currentScene()) {
+    const root = document.documentElement
+    const cache = this.sceneCache.get(scene)!
+    root.style.setProperty('--player-offset-y', `${cache.static.initialPositionOnSceneY}`)
+    root.style.setProperty('--original-scene-width', `${cache.static.originalSceneWidth}px`)
+    root.style.setProperty('--original-scene-height', `${cache.static.originalSceneHeight}px`)
+    root.style.setProperty('--wux', `${cache.static.worldUnitX}px`)
+    root.style.setProperty('--wuy', `${cache.static.worldUnitY}px`)
+    root.style.setProperty('--scale', `${cache.scaled.scale}`)
+    root.style.setProperty('--real-scene-width', `${cache.scaled.width}px`)
+    root.style.setProperty('--real-scene-height', `${cache.scaled.height}px`)
+  }
+
+  #registerLastKnownXPositionsListener(initialState: InitialState) {
+    const { data: lastKnownX } = useQuery(api.gameState.getLastKnownXPositions, {})
+    this.#lastKnownXPosition.set(initialState.scene, initialState.x)
+
     createEffect(
       on(
-        () => this.currentScene(),
-        (newScene) => {
-          const cache = this.sceneCache.get(newScene)!
-          this.#player.x = this.#lastKnownXPosition.get(newScene) ?? cache.static.initialPositionOnSceneX ?? 0
-          this.#player.__gameloop.hitbox.x1 = cache.static.initialPositionOnSceneX
-          this.#player.__gameloop.hitbox.x2 = cache.static.initialPositionOnSceneX + cache.static.playerWidth
-          this.#player.__gameloop.hitbox.y1 = cache.static.playerHitboxY1
-          this.#player.__gameloop.hitbox.y2 = cache.static.playerHitboxY2
+        () => lastKnownX(),
+        (lastKnown) => {
+          if (lastKnownX == null) return
+          for (const x in lastKnown) {
+            this.#lastKnownXPosition.set(x as CurrentScene, lastKnown[x as CurrentScene])
+          }
         },
       ),
     )
@@ -224,14 +222,12 @@ export class GameState {
       for (const scene of SCENE_NAMES) {
         const cache = this.sceneCache.get(scene)!
         cache.scaled = createSceneScaled(cache.static)
-        this.#updateSceneCssVariables()
+        this.updateSceneCssVariables()
       }
     }
     onMount(() => {
       window.addEventListener('resize', onResize)
-      onCleanup(() => {
-        window.removeEventListener('resize', onResize)
-      })
+      onCleanup(() => window.removeEventListener('resize', onResize))
     })
   }
 
@@ -248,25 +244,6 @@ export class GameState {
       root.style.setProperty('--original-player-hitbox-width', `${PLAYER_HITBOX_SIZE.width}px`)
       root.style.setProperty('--original-player-hitbox-height', `${PLAYER_HITBOX_SIZE.height}px`)
     })
-  }
-
-  public updateScene() {
-    this.#updateSceneCssVariables()
-  }
-
-  #updateSceneCssVariables() {
-    const root = document.documentElement
-    root.style.setProperty('--player-offset-y', `${this.#currentSceneCacheAccessor().static.initialPositionOnSceneY}`)
-    root.style.setProperty('--original-scene-width', `${this.#currentSceneCacheAccessor().static.originalSceneWidth}px`)
-    root.style.setProperty(
-      '--original-scene-height',
-      `${this.#currentSceneCacheAccessor().static.originalSceneHeight}px`,
-    )
-    root.style.setProperty('--wux', `${this.#currentSceneCacheAccessor().static.worldUnitX}px`)
-    root.style.setProperty('--wuy', `${this.#currentSceneCacheAccessor().static.worldUnitY}px`)
-    root.style.setProperty('--scale', `${this.#currentSceneCacheAccessor().scaled.scale}`)
-    root.style.setProperty('--real-scene-width', `${this.#currentSceneCacheAccessor().scaled.width}px`)
-    root.style.setProperty('--real-scene-height', `${this.#currentSceneCacheAccessor().scaled.height}px`)
   }
 }
 
@@ -314,4 +291,8 @@ function createSceneScaled(staticCache: SceneCache['static']): SceneCache['scale
     cameraStartTravelAtX: s50WU,
     cameraEndTravelAtX: 100 - s50WU,
   }
+}
+
+export function getCameraOffset(player: MyPlayer, sceneCache: SceneCache) {
+  return clamp(0, player.x - sceneCache.scaled.s50WU, sceneCache.scaled.cameraEndTravelAtX - sceneCache.scaled.s50WU)
 }

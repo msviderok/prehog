@@ -3,9 +3,9 @@ import type { Doc } from '@/convex/dataModel'
 import { INTERPOLATION_DELAY_MS, PLAYER_BASE_SPEED_PX_PER_SEC } from '@/lib/constants'
 import { createRAFLoop } from '@/lib/createRAFLoop'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
-import { clamp, lerp } from '@/lib/utils'
+import { clamp, fastRound, lerp } from '@/lib/utils'
 import { useMutation } from 'convex-solidjs'
-import { createEffect, on } from 'solid-js'
+import { createRenderEffect, on, onMount } from 'solid-js'
 import { useGlobalState } from './GlobalStateContext'
 
 export function useGameLoop() {
@@ -14,11 +14,10 @@ export function useGameLoop() {
   const updateMyPosition = useSingleFlightMutation(api.gameState.updateMyPosition)
   let eventBatch: Doc<'game_event_batches'>['batch'] = []
   let sceneCache: SceneCache
-  let players: InteractiveNodeOf<'player'>[]
 
-  createEffect(
+  createRenderEffect(
     on(
-      () => gameState.scene(),
+      () => gameState.sceneCacheForGameLoop(),
       (currentSceneCache) => {
         sceneCache = currentSceneCache
       },
@@ -38,27 +37,33 @@ export function useGameLoop() {
 
       processMyOfflineMovement(offlinePositionUpdateTick)
       checkCollisions()
+
+      player.ref?.setAttribute('content', `${fastRound(player.x)}`)
     },
   })
+
+  onMount(() => {
+    window.addEventListener('beforeunload', () => {
+      void updatePos()
+    })
+  })
+
+  function updatePos() {
+    // console.log('ℹ️ Update my position', player.x)
+    void updateMyPosition.mutate({ x: player.x })
+  }
 
   function movePlayerAndCamera(dt: number) {
     if (player.__gameloop.isHijacked) return
     const velocity = player.__gameloop.direction * player.__gameloop.speed * dt
     const distanceThisFrameWU = (velocity * PLAYER_BASE_SPEED_PX_PER_SEC) / sceneCache.static.worldUnitX
 
-    player.x = clamp(sceneCache.static.walkableMinX, player.x + distanceThisFrameWU, sceneCache.static.walkableMaxX)
-    player.__gameloop.hitbox.x1 = player.x - sceneCache.static.playerHalfWidth
-    player.__gameloop.hitbox.x2 = player.x + sceneCache.static.playerHalfWidth
-
-    const cameraLeftX = clamp(
-      0,
-      player.x - sceneCache.scaled.s50WU,
-      sceneCache.scaled.cameraEndTravelAtX - sceneCache.scaled.s50WU,
+    player.updatePosition(
+      clamp(sceneCache.static.walkableMinX, player.x + distanceThisFrameWU, sceneCache.static.walkableMaxX),
+      sceneCache,
     )
-    player.__gameloop.tx = (player.x - cameraLeftX) * sceneCache.static.worldUnitX
-    scene.tx = cameraLeftX * sceneCache.static.worldUnitX
-    player.ref?.style.setProperty('--tx', `${Math.round(player.__gameloop.tx)}px`)
-    scene.ref?.style.setProperty('--scene-tx', `${-Math.round(scene.tx)}px`)
+
+    scene.centerCameraAtPlayer(player, sceneCache)
   }
 
   function moveOtherPlayers() {
@@ -98,14 +103,13 @@ export function useGameLoop() {
   function processMyOfflineMovement(offlinePositionUpdateTick: boolean) {
     if (player.__gameloop.shouldSendBatches === false) {
       if (offlinePositionUpdateTick) {
-        void updateMyPosition.mutate({ x: player.x })
+        updatePos()
       }
     }
   }
 
   function checkCollisions() {
     let collided = false
-    console.log()
     for (const node of sceneCache.nodes.list.values()) {
       const nodeCollided = collisionDetected(player.__gameloop.hitbox, node.hitbox)
       if (node.collided() !== nodeCollided) node.setCollided(nodeCollided)

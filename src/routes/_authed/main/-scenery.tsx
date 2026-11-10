@@ -51,7 +51,6 @@ export function Scenery() {
           </PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="experience">
         <InteractiveNode.Preload.Route route="tour" />
 
@@ -122,8 +121,7 @@ export function Scenery() {
           </PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-      {/**
-
+      *
       <InteractiveNode.Root id="wardrobe">
         <InteractiveNode.Preload.Asset routeId="/_authed/" asset="skin_dyno_idle.png" />
         <InteractiveNode.Preload.Asset routeId="/_authed/" asset="skin_dyno_walk.png" />
@@ -169,7 +167,6 @@ export function Scenery() {
           <WardrobeCarousel />
         </InteractiveNode.Dialog>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="pet">
         <InteractiveNode.Asset
           routeId="/_authed/main/"
@@ -190,7 +187,6 @@ export function Scenery() {
           </PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="application">
         <InteractiveNode.Preload.Route route="application" />
         <InteractiveNode.Asset routeId="/_authed/main/" asset="application.png" x={43.1} y={-0.1} scale={SCALE} />
@@ -206,7 +202,6 @@ export function Scenery() {
           <PopoverDescription>This is my job application for the Posthog Product engineer position.</PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="wardrobe2">
         <InteractiveNode.Asset
           routeId="/_authed/main/"
@@ -225,7 +220,6 @@ export function Scenery() {
           <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="drawboard">
         <InteractiveNode.Asset routeId="/_authed/main/" asset="building_1.png" x={63.35} y={-0.1} scale={SCALE} />
         <InteractiveNode.Marker.Root x={65} y={MARKER_Y} />
@@ -239,7 +233,6 @@ export function Scenery() {
           </PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="personal">
         <InteractiveNode.Preload.Route route="personal" />
         <InteractiveNode.Asset x={74.46} y={-0.3} scale={SCALE} routeId="/_authed/main/" asset="personal.png" />
@@ -255,7 +248,6 @@ export function Scenery() {
           <PopoverDescription>Here you can get to know me better.</PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="temp1">
         <InteractiveNode.Asset x={82} y={46} scale={SCALE} routeId="/_authed/main/" asset="temp1_with_table.png" />
         <InteractiveNode.Marker.Root x={82} y={MARKER_Y} />
@@ -264,7 +256,6 @@ export function Scenery() {
           <span>hey, yo</span>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="temp2">
         <InteractiveNode.Asset x={86.44} y={43.2} scale={SCALE} routeId="/_authed/main/" asset="temp2.png" />
         <InteractiveNode.Marker.Root x={86} y={MARKER_Y} />
@@ -273,7 +264,6 @@ export function Scenery() {
           <span>wassup, homie</span>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
-
       <InteractiveNode.Root id="last-door">
         <InteractiveNode.Marker.Root x={95} y={MARKER_Y} />
 
@@ -284,7 +274,6 @@ export function Scenery() {
           <PopoverDescription>You can proceed with your life</PopoverDescription>
         </InteractiveNode.Popover>
       </InteractiveNode.Root>
- */}
       <Scene.Players />
     </Scene.Elements>
   )

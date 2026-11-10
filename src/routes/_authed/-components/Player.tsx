@@ -11,6 +11,7 @@ import { Portal } from 'solid-js/web'
 import { useGlobalState } from './GlobalStateContext'
 import { createInteractiveNode } from './interactive-layer/createInteractiveNode'
 import { isMarkerAction } from '@/lib/utils'
+import { throttle } from '@solid-primitives/scheduled'
 
 interface Props<MyPlayer extends boolean | undefined> extends Pick<ComponentProps<'div'>, 'ref' | 'class'> {
   myPlayer?: MyPlayer
@@ -21,8 +22,7 @@ function PlayerDiv<MyPlayer extends boolean | undefined>(props: Props<MyPlayer>)
   return (
     <div
       ref={props.ref}
-      class={cn('player', props.class)}
-      // class={cn('player player-with-hat', props.class)}
+      class={cn('player player-with-hat', props.class)}
       data-me={props.myPlayer}
       data-layout-id={props.myPlayer ? 'my-player' : undefined}
       data-is-admin={props.player.isAdmin()}
@@ -39,31 +39,9 @@ function PlayerDiv<MyPlayer extends boolean | undefined>(props: Props<MyPlayer>)
 export const Player = {
   Me() {
     const { player, interaction } = useGlobalState()
-
-    const markerAction = createMemo(() => {
-      const data = interaction.data()
-      if (isMarkerAction(data) && data.type === 'marker-enter') return data
-      return undefined
-    })
-
-    // createEffect(() => {
-    //   const data = interaction.data()
-    //   if (data.type === 'marker-enter') {
-    //     player.playAnimation.enterMarker(data.isDrama)
-    //   }
-    // })
-
     return (
       <Portal mount={interaction.hostRef() ?? player.renderedSlotRef()}>
-        <PlayerDiv
-          myPlayer
-          ref={player.ref}
-          player={player}
-          class={cn({
-            'player-marker-enter': interaction.data().type === 'marker-enter',
-            '[--is-dramatic:1]': markerAction()?.isDrama,
-          })}
-        />
+        <PlayerDiv myPlayer ref={player.ref} player={player} />
       </Portal>
     )
   },

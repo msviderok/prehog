@@ -2,9 +2,9 @@ import type { UserJSON } from '@clerk/backend'
 import { asyncMap } from 'convex-helpers'
 import { SCENE } from '../../src/lib/constants'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
+import { authMismtach, unauthenticated } from '../errors'
 import * as Calls from './calls'
 import * as FloatingPanels from './floatingPanels'
-import { authMismtach, unauthenticated } from '../errors'
 
 /** @throws */
 export async function getCurrentUser(ctx: QueryCtx) {
@@ -46,7 +46,6 @@ export async function ensureUserExists(ctx: MutationCtx, userData: UserJSON | { 
     hat: 0,
     skin: 0,
     y: SCENE.main.playerInitialY,
-    lastKnownXPosition: {},
   })
 
   await ctx.db.insert('users', {
@@ -70,6 +69,13 @@ export async function eraseUserFromExistence(ctx: MutationCtx, externalId: strin
   await ctx.db.delete('users', user._id)
   await ctx.db.delete('game_event_batches', user.gameEventBatchesId)
   await ctx.db.delete('game_user_positions', user.gameUserPositionId)
+  await asyncMap(
+    await ctx.db
+      .query('game_user_last_known_x')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect(),
+    async (pos) => await ctx.db.delete('game_user_last_known_x', pos._id),
+  )
 
   const presence = (await ctx.db.get('presence', user.presenceId))!
   await ctx.db.delete('presence', presence._id)

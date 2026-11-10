@@ -119,3 +119,13 @@ export function hasConvexAudience(token: string) {
 export function isMarkerAction(data: InteractionData): data is Extract<InteractionData, { type: `marker-${string}` }> {
   return data.type.startsWith('marker-')
 }
+
+export async function waitForPlayerHop(player: GlobalState['player']) {
+  await new Promise<void>((res) => requestAnimationFrame(() => res()))
+
+  const hop = player.ref
+    ?.getAnimations()
+    .find((a) => a instanceof CSSAnimation && a.animationName === 'player-marker-hop')
+
+  if (hop) await hop.finished.then(() => console.log('ye')).catch(() => {})
+}

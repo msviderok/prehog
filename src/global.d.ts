@@ -145,6 +145,8 @@ declare global {
       paused: boolean
     }
     direction: Accessor<MovementDirection>
+    isLocked: Accessor<boolean>
+    setLocked: Setter<boolean>
     setIsWalking: Setter<boolean>
     setIsRunning: Setter<boolean>
     setHat: Setter<number | undefined>
@@ -154,10 +156,10 @@ declare global {
     setInitialData: (data: FunctionReturnType<typeof api.gameState.getMyInitialState>) => void
     renderedSlotRef: Accessor<HTMLElement | undefined>
     setRenderedSlotRef: Setter<HTMLElement | undefined>
-    playAnimation: {
-      jump: () => void
-      enterMarker: (isDrama?: boolean) => void
-    }
+    playAnimation: Record<'jump', () => void>
+    updatePosition: (newPlayerX: number, sceneCache: SceneCache) => void
+    updateForNewScene: (sceneCache: SceneCache, lastKnownX: number | undefined) => void
+    updateTx: (sceneCache: SceneCache) => void
   }
 
   interface Scene {
@@ -174,6 +176,7 @@ declare global {
     setViewportRef: Setter<HTMLDivElement | undefined>
     /** The current position of the viewport a.k.a. "camera" showing the portion of the scene in world units */
     tx: number
+    centerCameraAtPlayer: (player: MyPlayer, sceneCache: SceneCache) => void
   }
 
   interface SceneryPopover {
@@ -203,11 +206,13 @@ declare global {
         type: 'marker-teleport'
         nodeId: string
       }
+    | {
+        type: 'scene-change'
+      }
   interface Interaction {
     hostRef: Accessor<HTMLElement | undefined>
     setHostRef: Setter<HTMLElement | undefined>
     isActive: Accessor<boolean>
-    isMovementBlocked: Accessor<boolean>
     data: Accessor<InteractionData>
     setData: Setter<InteractionData>
     start: (initialData: Exclude<InteractionData, { type: 'idle' }>) => void
@@ -223,6 +228,9 @@ declare global {
     player: MyPlayer
     rtc: RtcState
     otherPlayersIds: Accessor<Id<'users'>[]>
+    animations: {
+      enterMarker: (nodeId: string, isDrama?: boolean) => Promise<void>
+    }
   }
 
   interface Sound {

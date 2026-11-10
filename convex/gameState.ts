@@ -13,6 +13,7 @@ function pickInitialData(pos: Doc<'game_user_positions'>, state: Doc<'game_user_
     direction: state.movementDir,
     hat: state.hat,
     skin: state.skin,
+    scene: state.scene,
   }
 }
 
@@ -146,7 +147,7 @@ export const setIsRunning = mutation({
 export const setScene = mutation({
   args: {
     scene: sceneSchema,
-    x: v.number().optional(),
+    x: v.number(),
   },
   handler: async (ctx, args) => {
     const user = await Users.getCurrentUser(ctx)
@@ -170,6 +171,21 @@ export const setScene = mutation({
     await ctx.db.patch('game_user_positions', user.gameUserPositionId, {
       x: currentState.lastKnownXPosition?.[args.scene] ?? sceneInitialData.playerInitialX,
     })
+
+    const existingLastKnownX = await ctx.db
+      .query('game_user_last_known_x')
+      .withIndex('by_user_scene', (q) => q.eq('userId', user._id).eq('scene', currentState.scene))
+      .first()
+    console.log({ existingLastKnownX, args })
+    if (existingLastKnownX) {
+      await ctx.db.patch('game_user_last_known_x', existingLastKnownX._id, { x: args.x })
+    } else {
+      await ctx.db.insert('game_user_last_known_x', {
+        userId: user._id,
+        scene: currentState.scene,
+        x: args.x ?? currentPosition.x,
+      })
+    }
   },
 })
 
@@ -177,7 +193,7 @@ export const currentScene = query({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
     const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
-    return { scene: state.scene, lastKnownXPosition: state.lastKnownXPosition }
+    return { scene: state.scene, lastKnownXPosition: state.lastKnownXPosition?.[state.scene] }
   },
 })
 
@@ -202,6 +218,14 @@ export const getMyHat = query({
     const user = await Users.getCurrentUser(ctx)
     const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
     return state.hat
+  },
+})
+
+export const getMySkin = query({
+  handler: async (ctx) => {
+    const user = await Users.getCurrentUser(ctx)
+    const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
+    return state.skin
   },
 })
 
@@ -260,7 +284,13 @@ export const updateVisuals = mutation({
 export const getLastKnownXPositions = query({
   handler: async (ctx) => {
     const user = await Users.getCurrentUser(ctx)
-    const state = (await ctx.db.get('game_user_state', user.gameUserStateId))!
-    return state.lastKnownXPosition
+    const lastKnownX = await ctx.db
+      .query('game_user_last_known_x')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect()
+    return lastKnownX.reduce(
+      (acc, pos) => ((acc[pos.scene] = pos.x), acc),
+      {} as Partial<Record<(typeof lastKnownX)[number]['scene'], number | undefined>>,
+    )
   },
 })

@@ -1,4 +1,9 @@
 /* Slide Left Transition */
+
+html {
+  --animspeed: 500ms;
+}
+
 html:active-view-transition-type(slide-left) {
   &::view-transition-old(scene) {
     animation: 300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-out-left;
@@ -57,10 +62,10 @@ html:active-view-transition-type(slide-right) {
 /* Slide Top Transition */
 html:active-view-transition-type(slide-top) {
   &::view-transition-old(scene) {
-    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-out-top;
+    animation: var(--animspeed) cubic-bezier(0.4, 0, 0.2, 1) both slide-out-top;
   }
   &::view-transition-new(scene) {
-    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-in-top;
+    animation: var(--animspeed) cubic-bezier(0.4, 0, 0.2, 1) both slide-in-top;
   }
 }
 
@@ -90,10 +95,10 @@ html:active-view-transition-type(slide-top) {
 /* Slide Bottom Transition */
 html:active-view-transition-type(slide-bottom) {
   &::view-transition-old(scene) {
-    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-out-bottom;
+    animation: var(--animspeed) cubic-bezier(0.4, 0, 0.2, 1) both slide-out-bottom;
   }
   &::view-transition-new(scene) {
-    animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both slide-in-bottom;
+    animation: var(--animspeed) cubic-bezier(0.4, 0, 0.2, 1) both slide-in-bottom;
   }
 }
 

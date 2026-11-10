@@ -19,13 +19,16 @@ export function Root(props: { children: JSX.Element }) {
 
   return (
     <SceneContext.Provider value={sceneName() as any}>
-      <div data-viewport class="box-content w-min h-(--real-scene-height) overflow-hidden relative">
+      <div
+        data-viewport
+        class="box-content w-min h-(--real-scene-height) overflow-hidden relative [view-transition-name:scene]"
+      >
         <div data-scaled-box class="relative z-1 box-content w-(--real-scene-width) h-(--real-scene-height)">
           <div
             data-scrollable-scene
             class="w-(--original-scene-width) h-(--original-scene-height) scale-(--scale) origin-top-left"
           >
-            <div ref={(el) => (scene.ref = el)} class="size-full relative z-1 [view-transition-npame:scene]">
+            <div ref={(el) => (scene.ref = el)} class="size-full relative z-1">
               {props.children}
             </div>
           </div>

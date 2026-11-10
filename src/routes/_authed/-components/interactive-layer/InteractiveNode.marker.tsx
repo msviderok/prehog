@@ -2,13 +2,16 @@ import { SOUNDS } from '@/audio'
 import { KeycapButton } from '@/components/ui/button'
 import { api } from '@/convex/api'
 import { useSingleFlightMutation } from '@/lib/useSingleFlightMutation'
-import { createPolygonClipPath, isMarkerAction, random } from '@/lib/utils'
+import { createPolygonClipPath, isMarkerAction, random, waitForPlayerHop } from '@/lib/utils'
 import type { Hotkey } from '@tanstack/solid-hotkeys'
 import { cn } from 'cn'
-import { createEffect, createMemo, createSignal, Index, on, type JSX, type ParentProps } from 'solid-js'
+import { batch, createEffect, createMemo, createSignal, Index, on, type JSX, type ParentProps } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
 import { useSceneContext } from '../Scene.context'
 import { useInteractiveNode } from './context'
+import { throttle } from '@solid-primitives/scheduled'
+import { PLAYER_JUMP_ANIMATION_MS } from '@/lib/constants'
+import { useNavigate } from '@tanstack/solid-router'
 
 const POLYGON_SIDES = 14
 const POLYGON_ARR = Array.from({ length: POLYGON_SIDES }, (_, i) => i)
@@ -68,6 +71,7 @@ function EventMarker(props: ParentProps<{ x: number; y: number }>) {
     >
       <div
         class={cn('marker-polygons', action()?.type === 'marker-enter' && 'marker-enter-anchor')}
+        data-anchor-node-id={id}
         data-len={POLYGON_SIDES}
         data-bottom-clip-path={POLYGON_BOTTOM_PLANE_CLIP_PATH}
       >
@@ -99,8 +103,9 @@ export function Pill(
       }
   ),
 ) {
-  const { node } = useInteractiveNode()
-  const { player, interaction, gameState } = useGlobalState()
+  const navigate = useNavigate()
+  const { node, id } = useInteractiveNode()
+  const { player, interaction, gameState, animations } = useGlobalState()
   const sceneName = useSceneContext()
   const setScene = useSingleFlightMutation(api.gameState.setScene)
   const y = createMemo(
@@ -123,9 +128,37 @@ export function Pill(
             disabled={disabled()}
             hotkey={props.hotkey ?? 'E'}
             class="w-auto"
-            onPress={() => {
-              if (props.onInteract) return props.onInteract(node)
-              if (props.goTo) return void setScene.mutate({ scene: props.goTo, x: player.x })
+            onPress={async () => {
+              if (props.onInteract) {
+                return props.onInteract(node)
+              }
+
+              if (props.goTo) {
+                const newScene = props.goTo
+                const lastKnownX = player.x
+
+                gameState.initiateSceneChange(newScene)
+                await animations.enterMarker(id)
+                void setScene.mutate({ scene: props.goTo!, x: lastKnownX })
+
+                const transition = document.startViewTransition({
+                  types: ['slide-top'],
+                  update: async () => {
+                    await navigate({ to: `/${newScene}` })
+                    gameState.update(newScene)
+                  },
+                })
+
+                try {
+                  await transition.finished
+                } catch (e) {
+                  console.error('VT Error', e)
+                } finally {
+                  gameState.sceneChangeSettled()
+                }
+                return
+              }
+
               throw new Error('Unhandled event interaction')
             }}
           />

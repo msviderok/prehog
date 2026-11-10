@@ -88,24 +88,23 @@
       filter: brightness(calc(120% + var(--collided, 0) * 20%));
     }
 
-    &.marker-enter-anchor {
+    html.marker-enter & {
       @apply animate-none;
-      --a: var(--player-jump-animation-ms);
       & > * {
         @apply animate-none;
         --sy: 0;
         filter: brightness(120%);
-        transition: transform var(--a);
+        transition: transform var(--player-jump-start-animation-ms);
       }
 
-      &:before {
+      /*&:before {
         --sx: 2.5;
         z-index: 1;
         opacity: 1;
         transition:
           opacity linear,
-          transform var(--a) ease var(--a);
-      }
+          transform var(--player-jump-animation-ms) ease var(--player-jump-animation-ms);
+      }*/
     }
   }
 
