@@ -78,7 +78,7 @@ declare global {
             popover: {
               anchorRef: Accessor<HTMLButtonElement | undefined>
               setAnchorRef: Setter<HTMLButtonElement | undefined>
-              positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align'>
+              positioner: Pick<PopoverPrimitive.Positioner.Props, 'side' | 'align' | 'class'>
             }
             dialog: {}
             marker: {
@@ -97,14 +97,12 @@ declare global {
 
   type InteractiveNodeOf<K extends InteractiveNode['type']> = Extract<InteractiveNode, { type: K }>
 
-  interface NodeSlots {
-    asset?: () => JSX.Element
-    marker?: () => JSX.Element
-    popoverAnchor?: () => JSX.Element
-    popoverContent?: () => JSX.Element
-    dialogContent?: () => JSX.Element
-    interaction?: Record<string, () => JSX.Element>
+  interface Slot {
+    component: () => JSX.Element
+    containerRef: Accessor<HTMLElement | undefined>
+    setContainerRef: Setter<HTMLElement | undefined>
   }
+  type NodeSlots = Record<'asset' | 'marker' | 'popoverAnchor' | 'popoverContent' | 'dialogContent', Slot | undefined>
 
   type CurrentScene = Doc<'game_user_state'>['scene']
   type LoadingStatus = 'not-initiated' | 'signed-out' | 'loading-clerk' | 'loading-game-state' | UserData
@@ -149,7 +147,7 @@ declare global {
     setLocked: Setter<boolean>
     setIsWalking: Setter<boolean>
     setIsRunning: Setter<boolean>
-    setHat: Setter<number | undefined>
+    setHat: Setter<number>
     setSkin: Setter<number>
     setDirection: Setter<MovementDirection>
     setAction: Setter<MyPlayerAction>
@@ -186,11 +184,14 @@ declare global {
     setActiveNode: (id: string | undefined) => void
   }
 
+  type SceneryDialogVariant = 'blue' | 'black'
   interface SceneryDialog {
+    ref: HTMLElement
     isOpen: Accessor<boolean>
     activeNodeId: Accessor<string | undefined>
-    open: (id: string) => void
+    open: (id: string, variant?: SceneryDialogVariant) => void
     close: () => void
+    variant: Accessor<SceneryDialogVariant>
   }
 
   type InteractionData =
@@ -208,6 +209,10 @@ declare global {
       }
     | {
         type: 'scene-change'
+      }
+    | {
+        type: 'dialog'
+        nodeId: string
       }
   interface Interaction {
     hostRef: Accessor<HTMLElement | undefined>

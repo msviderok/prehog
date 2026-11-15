@@ -176,7 +176,6 @@ export const setScene = mutation({
       .query('game_user_last_known_x')
       .withIndex('by_user_scene', (q) => q.eq('userId', user._id).eq('scene', currentState.scene))
       .first()
-    console.log({ existingLastKnownX, args })
     if (existingLastKnownX) {
       await ctx.db.patch('game_user_last_known_x', existingLastKnownX._id, { x: args.x })
     } else {

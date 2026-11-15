@@ -12,8 +12,9 @@ import { onMount, Suspense, type ParentProps } from 'solid-js'
 import { HydrationScript } from 'solid-js/web'
 import styleCss from '../styles/index.css?url'
 import { AudioManagerProvider } from '@/audio/AudioManagerProvider'
+import type { ConvexHttpClient } from 'convex/browser'
 
-export const Route = createRootRouteWithContext()({
+export const Route = createRootRouteWithContext<{ convexHttpClient: ConvexHttpClient }>()({
   staticData: { scene: null },
   head: () => ({ links: [{ rel: 'stylesheet', href: styleCss }] }),
   /**
@@ -35,6 +36,7 @@ export const Route = createRootRouteWithContext()({
     const convexHttpClient = setupConvexHttp(env.VITE_CONVEX_URL)
     convexHttpClient.setAuth(clerkAuth.token)
     await convexHttpClient.mutation(api.users.ensureCurrent, { clerkUserId: clerkAuth.userId })
+    return { convexHttpClient }
   },
   shellComponent() {
     return (

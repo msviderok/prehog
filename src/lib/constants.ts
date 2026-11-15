@@ -81,7 +81,7 @@ export const SCENE: Record<
   }
 > = {
   main: { width: 9785, height: COMMON_SCENE_HEIGHT, playerInitialX: 2, playerInitialY: 83 },
-  tour: { width: 5000, height: COMMON_SCENE_HEIGHT, playerInitialX: 5, playerInitialY: 80 },
+  tour: { width: 6000, height: COMMON_SCENE_HEIGHT, playerInitialX: 8, playerInitialY: 80 },
   application: { width: 1920, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 62 },
   pet: { width: 5000, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 80 },
   personal: { width: 0, height: COMMON_SCENE_HEIGHT, playerInitialX: 1, playerInitialY: 0 },

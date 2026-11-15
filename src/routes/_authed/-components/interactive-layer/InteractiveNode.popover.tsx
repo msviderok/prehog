@@ -11,13 +11,14 @@ export function Popover(
     anchorY: number
     side?: PopoverPrimitive.Positioner.Props['side']
     align?: PopoverPrimitive.Positioner.Props['align']
+    class?: PopoverPrimitive.Positioner.Props['class']
   }>,
 ) {
   const { gameState } = useGlobalState()
   const { id, node } = useInteractiveNode<'popover'>()
   const sceneName = useSceneContext()
 
-  node.data.popover.positioner = { side: props.side, align: props.align }
+  node.data.popover.positioner = { side: props.side, align: props.align, class: props.class }
 
   gameState.scene(sceneName).nodes.registerSlot(id, 'popoverContent', () => <>{props.children}</>)
   gameState.scene(sceneName).nodes.registerSlot(id, 'popoverAnchor', () => (

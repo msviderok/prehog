@@ -6,6 +6,7 @@ export function getRouter() {
     routeTree,
     defaultStructuralSharing: true,
     defaultPendingMs: 0,
+    context: { convexHttpClient: undefined as any },
     defaultErrorComponent(props) {
       console.trace(props.error)
       return <ErrorComponent {...props} />

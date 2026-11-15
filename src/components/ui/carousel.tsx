@@ -270,7 +270,7 @@ export function CarouselPrevious(
       )}
     >
       <Show when={orientation() === 'horizontal'}>
-        <KeycapButton
+        <KeycapButton.Keycap
           data-slot="carousel-previous"
           size="lg"
           hotkey="A"
@@ -282,10 +282,10 @@ export function CarouselPrevious(
           {...rest}
         >
           <MoveLeftIcon class="absolute bottom-0 size-8" />
-        </KeycapButton>
+        </KeycapButton.Keycap>
       </Show>
       <Show when={orientation() === 'vertical'}>
-        <KeycapButton
+        <KeycapButton.Keycap
           data-slot="carousel-previous"
           size="lg"
           hotkey="W"
@@ -297,7 +297,7 @@ export function CarouselPrevious(
           {...rest}
         >
           <MoveUpIcon class="absolute right-0 size-8" />
-        </KeycapButton>
+        </KeycapButton.Keycap>
       </Show>
     </div>
   )
@@ -315,7 +315,7 @@ export function CarouselNext(props: JSX.HTMLAttributes<HTMLButtonElement>) {
       )}
     >
       <Show when={orientation() === 'horizontal'}>
-        <KeycapButton
+        <KeycapButton.Keycap
           data-slot="carousel-next"
           size="lg"
           hotkey="D"
@@ -327,10 +327,10 @@ export function CarouselNext(props: JSX.HTMLAttributes<HTMLButtonElement>) {
           {...rest}
         >
           <MoveRightIcon class="absolute bottom-0 size-8" />
-        </KeycapButton>
+        </KeycapButton.Keycap>
       </Show>
       <Show when={orientation() === 'vertical'}>
-        <KeycapButton
+        <KeycapButton.Keycap
           data-slot="carousel-next"
           size="lg"
           hotkey="S"
@@ -342,7 +342,7 @@ export function CarouselNext(props: JSX.HTMLAttributes<HTMLButtonElement>) {
           {...rest}
         >
           <MoveDownIcon class="absolute right-0 size-8" />
-        </KeycapButton>
+        </KeycapButton.Keycap>
       </Show>
     </div>
   )
@@ -351,7 +351,7 @@ export function CarouselNext(props: JSX.HTMLAttributes<HTMLButtonElement>) {
 export function CarouselConfirm() {
   const { onConfirm } = useCarousel()
   return (
-    <KeycapButton
+    <KeycapButton.Keycap
       data-slot="carousel-next"
       size="lg"
       hotkey="Enter"
@@ -360,14 +360,14 @@ export function CarouselConfirm() {
     >
       <CornerDownLeftIcon class="absolute left-4 stroke-3" />
       <span class="text-base absolute bottom-0">to confirm</span>
-    </KeycapButton>
+    </KeycapButton.Keycap>
   )
 }
 
 export function CarouselDiscard() {
   const { onDiscard } = useCarousel()
   return (
-    <KeycapButton
+    <KeycapButton.Keycap
       data-slot="carousel-next"
       size="lg"
       hotkey="Escape"
@@ -376,6 +376,6 @@ export function CarouselDiscard() {
       onPress={onDiscard}
     >
       <span class="text-base absolute bottom-0">to discard</span>
-    </KeycapButton>
+    </KeycapButton.Keycap>
   )
 }

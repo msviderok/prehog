@@ -4,7 +4,7 @@ import { debounce } from '@solid-primitives/scheduled'
 import { createHotkeys, formatForDisplay, type Hotkey, type HotkeyCallback } from '@tanstack/solid-hotkeys'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
-import { createEffect, createMemo, createSignal, splitProps } from 'solid-js'
+import { createEffect, createMemo, createSignal, Show, splitProps, type ComponentProps } from 'solid-js'
 import { Button as ButtonPrimitive } from './button-primitive'
 
 export const buttonVariants = cva(
@@ -78,7 +78,7 @@ interface KeycapProps extends ButtonProps {
   }
 }
 
-export function KeycapButton(componentProps: KeycapProps) {
+function KeycapButtonImpl(componentProps: KeycapProps) {
   let ref!: HTMLButtonElement
   const [local, rest] = splitProps(componentProps, [
     'hotkey',
@@ -126,15 +126,10 @@ export function KeycapButton(componentProps: KeycapProps) {
     interval = undefined
   }
 
-  function onHold() {
-    playSoundKeydown()
-    local.onHold?.()
-  }
-
   const hold = debounce(() => {
     if (interval) clearInterval(interval)
-    interval = setInterval(() => (cleared ? stopInterval() : onHold()), 200)
-    onHold()
+    interval = setInterval(() => (cleared ? stopInterval() : local.onHold?.()), 200)
+    local.onHold?.()
   }, 200)
 
   function release() {
@@ -198,4 +193,20 @@ export function KeycapButton(componentProps: KeycapProps) {
       {local.children}
     </Button>
   )
+}
+
+function KeycapButtonContainer(props: ComponentProps<'div'>) {
+  const [local, rest] = splitProps(props, ['class'])
+  return <div class={cn('flex items-center justify-center gap-3 w-max', local.class)} {...rest} />
+}
+
+function KeycapButtonLabel(props: ComponentProps<'span'>) {
+  const [local, rest] = splitProps(props, ['class'])
+  return <span class={cn('comic text-xl', local.class)} {...rest} />
+}
+
+export const KeycapButton = {
+  Container: KeycapButtonContainer,
+  Keycap: KeycapButtonImpl,
+  Label: KeycapButtonLabel,
 }

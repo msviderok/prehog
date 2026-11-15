@@ -19,7 +19,7 @@ export function PopoverLayer() {
 
   const content = createMemo(() => {
     const id = activeId()
-    return id ? gameState.scene(sceneName).nodes.slots[id]?.popoverContent : undefined
+    return id ? gameState.scene(sceneName).nodes.slots[id]?.popoverContent?.component : undefined
   })
 
   const backdropVariant = createMemo(() => {
@@ -33,7 +33,7 @@ export function PopoverLayer() {
       <PopoverPrimitive.Backdrop
         data-slot="popover-backdrop"
         data-variant={backdropVariant()}
-        class="fixed inset-0 z-1 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-[variant=engaged]:opacity-50 data-[variant=collided]:opacity-30 ease-in-out"
+        class="fixed -inset-100 z-1 bg-black opacity-0 transition-opacity data-starting-style:opacity-0 data-closed:opacity-0 data-[variant=engaged]:opacity-50 data-[variant=collided]:opacity-30 ease-in-out"
       />
 
       <PopoverPrimitive.Portal keepMounted container={scene.ref}>
@@ -42,7 +42,7 @@ export function PopoverLayer() {
             <Show when={currentlyRenderedElement()?.data.popover.anchorRef()}>
               {(anchor) => (
                 <PopoverPrimitive.Positioner
-                  class="isolate z-50"
+                  class={cn('isolate z-50', currentlyRenderedElement()?.data.popover.positioner.class)}
                   align={currentlyRenderedElement()?.data.popover.positioner.align}
                   side={currentlyRenderedElement()?.data.popover.positioner.side}
                   anchor={anchor()}
@@ -56,7 +56,7 @@ export function PopoverLayer() {
                     data-slot="popover-content"
                     data-variant="scenery"
                     class={cn(
-                      'group z-50 rounded-lg origin-(--transform-origin) p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all bg-glass-ph-very-dark-cornflower-blue/5 text-ph-light-cornflower-blue [--arrow-offset:0px] data-starting-style:opacity-0 data-ending-style:opacity-0 data-closed:opacity-0 duration-200 ease-out border-2 [--bc:var(--ph-light-cornflower-blue)] border-(--bc) delay-100 flex flex-col gap-6 animate-pulseY',
+                      'group z-50 rounded-lg origin-(--transform-origin) p-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 transition-all bg-glass-ph-very-dark-cornflower-blue/5 text-ph-light-cornflower-blue [--arrow-offset:0px] data-starting-style:opacity-0 data-ending-style:opacity-0 data-closed:opacity-0 duration-200 ease-out border-2 [--bc:var(--ph-light-cornflower-blue)] border-(--bc) delay-100 flex flex-col gap-4 animate-pulseY',
                       interaction.isActive() && 'quick-hide',
                       content() == null && 'hidden',
                     )}

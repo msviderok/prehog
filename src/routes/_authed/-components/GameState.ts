@@ -20,6 +20,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  type JSX,
   on,
   onCleanup,
   onMount,
@@ -40,7 +41,7 @@ interface _SceneCache {
     views: Map<InteractiveNode['type'], Map<string, InteractiveNode>>
     slots: Store<Record<string, NodeSlots>>
     setSlots: SetStoreFunction<Record<string, NodeSlots>>
-    registerSlot<K extends keyof NodeSlots>(interactiveNodeId: string, slot: K, component: NodeSlots[K]): void
+    registerSlot(interactiveNodeId: string, slot: keyof NodeSlots, component: () => JSX.Element): void
     register<T extends InteractiveNode>(id: string, node: T): void
     get<
       K extends InteractiveNode['type'] | undefined = undefined,
@@ -135,8 +136,9 @@ export class GameState {
             const view = this.views.get(node.type) ?? new Map()
             view.set(id, node)
           },
-          registerSlot<K extends keyof NodeSlots>(interactiveNodeId: string, slot: K, component: NodeSlots[K]) {
-            setSlots(interactiveNodeId, slot, () => component)
+          registerSlot(interactiveNodeId: string, slot: keyof NodeSlots, component: () => JSX.Element) {
+            const [containerRef, setContainerRef] = createSignal<HTMLElement>()
+            setSlots(interactiveNodeId, slot, () => ({ component, containerRef, setContainerRef }))
           },
           byType<K extends InteractiveNode['type'], R = Map<string, InteractiveNodeOf<K>>>(type: K): R {
             return this.views.get(type) as R

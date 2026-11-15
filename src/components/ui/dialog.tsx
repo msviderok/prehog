@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button'
-import { useGlobalState } from '@/routes/_authed/-components/GlobalStateContext'
 import { Dialog as DialogPrimitive } from '@msviderok/base-ui-solid/dialog'
 import { cn } from 'cn'
 import { XIcon } from 'lucide-solid'

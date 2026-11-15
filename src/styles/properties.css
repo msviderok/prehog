@@ -53,6 +53,11 @@
   inherits: false;
   initial-value: 1;
 }
+@property --s3d {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
 @property --skx {
   syntax: '<angle>';
   inherits: false;

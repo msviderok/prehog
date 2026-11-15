@@ -10,7 +10,7 @@ import { useGlobalState } from '../GlobalStateContext'
 import { useSceneContext } from '../Scene.context'
 import { useInteractiveNode } from './context'
 import { throttle } from '@solid-primitives/scheduled'
-import { PLAYER_JUMP_ANIMATION_MS } from '@/lib/constants'
+import { PLAYER_JUMP_ANIMATION_MS, SCENE } from '@/lib/constants'
 import { useNavigate } from '@tanstack/solid-router'
 
 const POLYGON_SIDES = 14
@@ -92,6 +92,7 @@ export function Pill(
     offsetY?: number
     /** @default "E" */
     hotkey?: Hotkey
+    static?: boolean
   } & (
     | {
         onInteract: (node: InteractiveNode) => void
@@ -122,9 +123,9 @@ export function Pill(
       class={cn('marker-floating-action', disabled() && 'quick-hide')}
       style={{ '--ty': `${y()}px`, '--tx': `${x()}px` }}
     >
-      <div class="animate-pulseY">
+      <div class={cn((props.static === false || props.static === undefined) && 'animate-pulseY')}>
         <div class="bg-shade-ph-dark-cornflower-blue/60 border-6 rounded-full flex items-center justify-center gap-3 h-18 px-5 border-glow-ph-light-cornflower-blue w-max">
-          <KeycapButton
+          <KeycapButton.Keycap
             disabled={disabled()}
             hotkey={props.hotkey ?? 'E'}
             class="w-auto"
@@ -135,7 +136,7 @@ export function Pill(
 
               if (props.goTo) {
                 const newScene = props.goTo
-                const lastKnownX = player.x
+                const lastKnownX = props.goTo === 'main' ? SCENE[sceneName].playerInitialX : player.x
 
                 gameState.initiateSceneChange(newScene)
                 await animations.enterMarker(id)

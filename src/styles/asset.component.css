@@ -43,7 +43,7 @@
       transform: rotateZ(calc(var(--attr-rotate) * 1deg));
     }
 
-    &[data-open='true'] {
+    &[data-highlight='true'] {
       z-index: 1 !important;
 
       &:before {

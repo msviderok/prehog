@@ -3,6 +3,7 @@ import { assets, type Assets, type Asset as AssetItem, type RouteAsset } from '@
 import { cn } from 'cn'
 import { createMemo, splitProps, type JSX } from 'solid-js'
 import { useInteractiveNodeContext } from './interactive-layer/context'
+import { Portal } from 'solid-js/web'
 
 export interface AssetProps<K extends keyof Assets, A extends keyof Assets[K]>
   extends AssetItem<K, A>, JSX.HTMLAttributes<HTMLDivElement> {
@@ -13,6 +14,7 @@ export interface AssetProps<K extends keyof Assets, A extends keyof Assets[K]>
   scale?: number
   repeat?: boolean | 'x' | 'y'
   rotate?: number
+  highlight?: boolean
 }
 
 export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(componentProps: AssetProps<K, A>) {
@@ -29,10 +31,11 @@ export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(compone
     'class',
     'repeat',
     'rotate',
+    'highlight',
   ])
 
   const node = useInteractiveNodeContext()
-  const isOpen = createMemo(() => node?.node.collided())
+  const isHighlighted = createMemo(() => local.highlight ?? node?.node.collided())
 
   return (
     <div
@@ -47,7 +50,7 @@ export function Asset<K extends keyof Assets, A extends keyof Assets[K]>(compone
       data-x={local.x}
       data-y={local.y}
       data-rotate={local.rotate}
-      data-open={isOpen()}
+      data-highlight={isHighlighted()}
       data-width={(local.width ?? asset.size.width) * (local.scale ?? 1)}
       data-height={(local.height ?? asset.size.height) * (local.scale ?? 1)}
       {...rest}

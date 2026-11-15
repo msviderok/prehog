@@ -10,8 +10,6 @@ import { createEffect, createMemo, on, onMount, type ComponentProps } from 'soli
 import { Portal } from 'solid-js/web'
 import { useGlobalState } from './GlobalStateContext'
 import { createInteractiveNode } from './interactive-layer/createInteractiveNode'
-import { isMarkerAction } from '@/lib/utils'
-import { throttle } from '@solid-primitives/scheduled'
 
 interface Props<MyPlayer extends boolean | undefined> extends Pick<ComponentProps<'div'>, 'ref' | 'class'> {
   myPlayer?: MyPlayer
@@ -94,7 +92,7 @@ export const Player = {
           <TooltipPortal>
             <TooltipPositioner anchor={otherPlayer.data.ref} side="top" align="center">
               <TooltipPopup>
-                <KeycapButton
+                <KeycapButton.Keycap
                   onPress={() => {
                     console.log('Interact with', userProfile()?.fullname ?? 'USER_FULLNAME')
                   }}

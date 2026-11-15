@@ -28,7 +28,7 @@ export function Root(props: { children: JSX.Element }) {
             data-scrollable-scene
             class="w-(--original-scene-width) h-(--original-scene-height) scale-(--scale) origin-top-left"
           >
-            <div ref={(el) => (scene.ref = el)} class="size-full relative z-1">
+            <div data-scene ref={(el) => (scene.ref = el)} class="size-full relative z-1">
               {props.children}
             </div>
           </div>

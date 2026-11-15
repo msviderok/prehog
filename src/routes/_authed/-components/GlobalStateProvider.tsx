@@ -57,6 +57,7 @@ function GlobalStateProvider(props: ParentProps<{ initialState: InitialState }>)
   if (import.meta.hot) {
     import.meta.hot.on('vite:afterUpdate', () => {
       gameState.updateSceneCssVariables()
+      player.setLocked(false)
     })
   }
 
@@ -207,6 +208,7 @@ function createPlayer(initialState: InitialState) {
 
   createEffect(
     on(player.isLocked, (isLocked) => {
+      player.__gameloop.paused = isLocked
       player.__gameloop.isHijacked = isLocked
     }),
   )
@@ -258,14 +260,25 @@ function createInteraction(props: Pick<GlobalState, 'player' | 'dialog'>) {
           }
           break
         }
+
+        case 'dialog': {
+          props.dialog.open(initialData.nodeId, 'black')
+          break
+        }
       }
 
-      setData(initialData)
+      batch(() => {
+        props.player.setLocked(true)
+        setData(initialData)
+      })
     },
     finish() {
       batch(() => {
-        setData({ type: 'idle' })
-        if (props.dialog.isOpen()) props.dialog.close()
+        batch(() => {
+          props.player.setLocked(false)
+          setData({ type: 'idle' })
+          if (props.dialog.isOpen()) props.dialog.close()
+        })
       })
     },
   }
@@ -311,10 +324,13 @@ function createPopover(): GlobalState['popover'] {
 
 function createDialog(): GlobalState['dialog'] {
   const [activeNodeId, setActiveNodeId] = createSignal<string>()
+  const [variant, setVariant] = createSignal<SceneryDialogVariant>('blue')
   return {
     activeNodeId,
     isOpen: createMemo(() => activeNodeId() != null),
-    open(id) {
+    variant,
+    open(id, withVariant = 'blue') {
+      setVariant(withVariant)
       return setActiveNodeId(id)
     },
     close() {

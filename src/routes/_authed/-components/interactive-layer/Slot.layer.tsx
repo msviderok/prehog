@@ -9,7 +9,7 @@ export function SlotLayer(props: { type: keyof NodeSlots }) {
   const sceneName = useSceneContext()
   const entries = createMemo(() => {
     return Object.entries(gameState.scene(sceneName).nodes.slots).flatMap(([id, slots]) => {
-      const component = slots[props.type]
+      const component = slots[props.type]?.component
       const node = gameState.scene(sceneName).nodes.get(id)
       return component && node ? [{ id, node, component }] : []
     })

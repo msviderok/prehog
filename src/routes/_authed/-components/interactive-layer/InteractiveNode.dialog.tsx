@@ -1,12 +1,23 @@
-import { onCleanup, type ParentProps } from 'solid-js'
+import { cn } from 'cn'
+import { splitProps, type ComponentProps } from 'solid-js'
 import { useGlobalState } from '../GlobalStateContext'
-import { useInteractiveNode } from './context'
 import { useSceneContext } from '../Scene.context'
+import { useInteractiveNode } from './context'
 
-export function Dialog(props: ParentProps) {
-  const { gameState } = useGlobalState()
+export function Dialog(props: ComponentProps<'div'>) {
+  const [local, rest] = splitProps(props, ['class', 'ref'])
+  const { gameState, dialog } = useGlobalState()
   const { id } = useInteractiveNode<'popover'>()
   const sceneName = useSceneContext()
-  gameState.scene(sceneName).nodes.registerSlot(id, 'dialogContent', () => <>{props.children}</>)
+  gameState.scene(sceneName).nodes.registerSlot(id, 'dialogContent', () => (
+    <div
+      class={cn('relative flex items-center justify-center rounded-3xl', local.class)}
+      ref={(el) => {
+        typeof local.ref === 'function' ? local.ref(el) : (local.ref = el)
+        dialog.ref = el
+      }}
+      {...rest}
+    />
+  ))
   return null
 }

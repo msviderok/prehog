@@ -53,7 +53,6 @@ export function Scenery() {
       </InteractiveNode.Root>
       <InteractiveNode.Root id="experience">
         <InteractiveNode.Preload.Route route="tour" />
-
         <InteractiveNode.Asset
           routeId="/_authed/main/"
           asset="intro.png"
@@ -163,7 +162,7 @@ export function Scenery() {
           <PopoverDescription>You can change your clothes here – free of charge!</PopoverDescription>
         </InteractiveNode.Popover>
 
-        <InteractiveNode.Dialog>
+        <InteractiveNode.Dialog class="size-150 rounded-3xl">
           <WardrobeCarousel />
         </InteractiveNode.Dialog>
       </InteractiveNode.Root>
@@ -280,7 +279,6 @@ export function Scenery() {
 }
 
 function WardrobeCarousel() {
-  let containerRef!: HTMLDivElement
   let playerHostRef!: HTMLDivElement
   const { interaction, player } = useGlobalState()
   const updateVisuals = useSingleFlightMutation(api.gameState.updateVisuals)
@@ -309,7 +307,7 @@ function WardrobeCarousel() {
   })
 
   return (
-    <div ref={containerRef} class="relative flex items-center justify-center size-150 rounded-3xl">
+    <>
       <div data-carousels>
         <Carousel
           class="absolute inset-0 size-full"
@@ -376,7 +374,7 @@ function WardrobeCarousel() {
           <CarouselNext />
         </Carousel>
 
-        <KeycapButton
+        <KeycapButton.Keycap
           size="lg"
           hotkey="Enter"
           class="flex-1 px-8"
@@ -388,9 +386,9 @@ function WardrobeCarousel() {
           }}
         >
           <span class="text-base absolute bottom-0">to confirm</span>
-        </KeycapButton>
+        </KeycapButton.Keycap>
 
-        <KeycapButton
+        <KeycapButton.Keycap
           size="lg"
           hotkey="Escape"
           label="Esc"
@@ -404,10 +402,10 @@ function WardrobeCarousel() {
           }}
         >
           <span class="text-base absolute bottom-0">to discard</span>
-        </KeycapButton>
+        </KeycapButton.Keycap>
       </div>
 
       <div data-player ref={playerHostRef} class="absolute bottom-0 right-0 -translate-x-1/2 -translate-y-1/2" />
-    </div>
+    </>
   )
 }

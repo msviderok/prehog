@@ -10,7 +10,7 @@ export function DialogLayer() {
   const sceneName = useSceneContext()
   const content = createMemo(() => {
     const id = dialog.activeNodeId()
-    return id ? gameState.scene(sceneName).nodes.slots[id]?.dialogContent : undefined
+    return id ? gameState.scene(sceneName).nodes.slots[id]?.dialogContent?.component : undefined
   })
 
   return (
@@ -18,7 +18,9 @@ export function DialogLayer() {
       <DialogPrimitive.Backdrop
         data-slot="dialog-overlay"
         class={cn(
-          'fixed inset-0 isolate z-2 bg-glass-ph-dark-cornflower-blue/50 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+          'fixed -inset-100 isolate z-2 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+          dialog.variant() === 'blue' && 'bg-glass-ph-dark-cornflower-blue/50',
+          dialog.variant() === 'black' && 'bg-glass-black/50',
         )}
       />
 
